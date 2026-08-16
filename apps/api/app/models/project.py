@@ -45,4 +45,4 @@ class Project(Base):
         nullable=False,
     )
 
-    owner: Mapped["User"] = relationship("User", back_populates="projects")
+    owner: Mapped[User] = relationship("User", back_populates="projects")

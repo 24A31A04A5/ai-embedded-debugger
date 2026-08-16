@@ -22,7 +22,7 @@ scripts/        # Developer utility scripts
 - **Node.js** 20+
 - **pnpm** 9+
 - **Python** 3.12+
-- **Docker** and Docker Compose (for local PostgreSQL and MinIO)
+- **Neon PostgreSQL** account ([neon.tech](https://neon.tech)) — no Docker required
 
 ## Quick Start (Phase 0)
 
@@ -32,21 +32,9 @@ scripts/        # Developer utility scripts
 cp .env.example .env
 ```
 
-### 2. Start local infrastructure
+Edit `.env` and set `DATABASE_URL` to your Neon PostgreSQL connection string. See [`apps/api/README.md`](apps/api/README.md) for detailed setup.
 
-```bash
-docker compose up -d
-```
-
-Services:
-
-| Service    | URL                         | Purpose              |
-|------------|-----------------------------|----------------------|
-| PostgreSQL | `localhost:5432`          | Primary database     |
-| MinIO API  | `http://localhost:9000`     | S3-compatible storage|
-| MinIO UI   | `http://localhost:9001`     | Storage console      |
-
-### 3. Install frontend tooling
+### 2. Install frontend tooling
 
 ```bash
 pnpm install
@@ -54,7 +42,7 @@ pnpm lint
 pnpm typecheck
 ```
 
-### 4. Install Python tooling
+### 3. Install Python tooling
 
 ```bash
 python -m venv .venv
@@ -68,20 +56,27 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 ruff check apps/api
 mypy apps/api
+pytest apps/api/tests -v
 ```
 
-### 5. Run database migrations
+### 4. Run database migrations
 
 ```bash
 alembic -c db/alembic.ini upgrade head
+```
+
+### 5. Run the API
+
+```bash
+uvicorn app.main:app --app-dir apps/api --reload --host 127.0.0.1 --port 8000
 ```
 
 ## Development Status
 
 | Phase | Status | Description |
 |-------|--------|-------------|
-| Phase 0 Step 1 | **Complete** | Repo scaffold, CI, local infra, initial schema |
-| Phase 0 Step 2 | Planned | FastAPI skeleton + health check |
+| Phase 0 Step 1 | **Complete** | Repo scaffold, CI, initial schema |
+| Phase 0 Step 2 | **Complete** | FastAPI skeleton + health check |
 | Phase 1 | Planned | Auth, projects, Next.js app |
 | Phase 3 | Planned | AI debugging core |
 

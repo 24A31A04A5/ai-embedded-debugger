@@ -39,7 +39,7 @@ class User(Base):
         nullable=False,
     )
 
-    projects: Mapped[list["Project"]] = relationship(
+    projects: Mapped[list[Project]] = relationship(
         "Project",
         back_populates="owner",
         cascade="all, delete-orphan",

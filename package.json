@@ -6,8 +6,7 @@
     "typecheck": "pnpm --filter @ai-embedded-debugger/web typecheck",
     "lint:api": "ruff check apps/api && ruff format --check apps/api",
     "typecheck:api": "mypy apps/api",
-    "dev:infra": "docker compose up -d",
-    "dev:infra:down": "docker compose down"
+    "test:api": "pytest apps/api/tests"
   },
   "engines": {
     "node": ">=20"

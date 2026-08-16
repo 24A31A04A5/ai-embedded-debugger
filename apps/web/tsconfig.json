@@ -11,8 +11,7 @@
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "resolveJsonModule": true,
-    "rootDir": "src",
-    "baseUrl": "."
+    "rootDir": "src"
   },
   "include": ["src/**/*.ts", "eslint.config.mjs"],
   "exclude": ["node_modules"]

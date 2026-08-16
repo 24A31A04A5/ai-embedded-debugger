@@ -56,6 +56,9 @@ jobs:
       - name: Mypy
         run: mypy apps/api
 
+      - name: Pytest
+        run: pytest apps/api/tests -v
+
   migrations:
     name: Validate Alembic migration chain
     runs-on: ubuntu-latest

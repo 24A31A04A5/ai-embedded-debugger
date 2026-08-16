@@ -8,6 +8,9 @@ dependencies = [
     "sqlalchemy>=2.0.36",
     "alembic>=1.14.0",
     "psycopg[binary]>=3.2.3",
+    "fastapi>=0.115.0",
+    "pydantic-settings>=2.6.0",
+    "uvicorn[standard]>=0.32.0",
 ]
 
 [project.optional-dependencies]
@@ -15,6 +18,8 @@ dev = [
     "ruff>=0.8.0",
     "mypy>=1.13.0",
     "types-psycopg2>=2.9.21.20241019",
+    "pytest>=8.3.0",
+    "httpx>=0.28.0",
 ]
 
 [build-system]
@@ -47,3 +52,14 @@ disallow_untyped_defs = true
 [[tool.mypy.overrides]]
 module = ["alembic.*"]
 ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["fastapi.*", "starlette.*", "uvicorn.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["apps/api/tests"]
+pythonpath = ["apps/api"]
+markers = [
+    "integration: live PostgreSQL tests requiring RUN_DATABASE_INTEGRATION_TESTS=1",
+]
