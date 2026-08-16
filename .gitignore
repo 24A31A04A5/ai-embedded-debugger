@@ -26,9 +26,12 @@ venv/
 *.swo
 .DS_Store
 
-# Next.js (future)
+# Next.js
 .next/
 out/
+
+# TypeScript
+*.tsbuildinfo
 
 # Testing
 .coverage
