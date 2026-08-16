@@ -1,0 +1,16 @@
+{
+  "name": "ai-embedded-debugger",
+  "private": true,
+  "scripts": {
+    "lint": "pnpm --filter @ai-embedded-debugger/web lint",
+    "typecheck": "pnpm --filter @ai-embedded-debugger/web typecheck",
+    "lint:api": "ruff check apps/api && ruff format --check apps/api",
+    "typecheck:api": "mypy apps/api",
+    "dev:infra": "docker compose up -d",
+    "dev:infra:down": "docker compose down"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "pnpm@9.15.0"
+}
