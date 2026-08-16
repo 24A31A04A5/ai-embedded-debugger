@@ -14,6 +14,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Show, SignInButton, UserButton } from "@clerk/nextjs";
 
 /* ────────────────────────────────────────────────────────────
    Navbar
@@ -48,12 +49,24 @@ function Navbar() {
         </nav>
 
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="hidden text-sm sm:inline-flex">
-            Sign In
-          </Button>
-          <Button size="sm" className="text-sm">
-            Get Started
-          </Button>
+          <Show when="signed-out">
+            <SignInButton mode="modal">
+              <Button variant="ghost" size="sm" className="hidden text-sm sm:inline-flex">
+                Sign In
+              </Button>
+            </SignInButton>
+            <SignInButton mode="modal">
+              <Button size="sm" className="text-sm">
+                Get Started
+              </Button>
+            </SignInButton>
+          </Show>
+          <Show when="signed-in">
+            <Button size="sm" className="text-sm" asChild>
+              <Link href="/workspace">Go to Workspace</Link>
+            </Button>
+            <UserButton />
+          </Show>
         </div>
       </div>
     </header>

@@ -16,13 +16,13 @@ import {
   Search,
   Settings,
   Terminal,
-  User,
   Zap,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { UserButton } from "@clerk/nextjs";
 
 /* ────────────────────────────────────────────────────────────
    Constants — sample data
@@ -142,9 +142,7 @@ function AppHeader({ sidebarOpen, onToggleSidebar }: { sidebarOpen: boolean; onT
           Ready
         </Badge>
         <Separator orientation="vertical" className="h-5" />
-        <button className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-surface-overlay)] text-muted-foreground transition-colors hover:text-foreground" aria-label="User menu">
-          <User className="h-3.5 w-3.5" />
-        </button>
+        <UserButton />
       </div>
     </header>
   );
