@@ -24,6 +24,7 @@ class User(Base):
         primary_key=True,
         default=uuid.uuid4,
     )
+    clerk_id: Mapped[str] = mapped_column(String(128), unique=True, index=True, nullable=False)
     email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False)
     auth_provider: Mapped[str] = mapped_column(String(64), nullable=False, default="clerk")
     plan: Mapped[str] = mapped_column(String(32), nullable=False, default="free")

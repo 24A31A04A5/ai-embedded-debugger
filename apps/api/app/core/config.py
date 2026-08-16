@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     database_connect_timeout: int = 5
     app_env: str = "development"
     log_level: str = "INFO"
+    clerk_secret_key: str = ""
 
 
 @lru_cache

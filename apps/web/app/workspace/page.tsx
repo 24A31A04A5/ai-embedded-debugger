@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Bug,
@@ -10,6 +10,7 @@ import {
   FileTerminal,
   FolderOpen,
   Lightbulb,
+  Loader2,
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
@@ -23,16 +24,18 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { UserButton } from "@clerk/nextjs";
+import { useApiClient } from "@/lib/api-client";
+
+export type Project = {
+  id: string;
+  name: string;
+  description?: string;
+  active?: boolean; // UI state
+};
 
 /* ────────────────────────────────────────────────────────────
    Constants — sample data
    ──────────────────────────────────────────────────────────── */
-
-const SAMPLE_PROJECTS = [
-  { id: "1", name: "ESP32 Weather Station", active: true },
-  { id: "2", name: "STM32 Motor Controller", active: false },
-  { id: "3", name: "Arduino Sensor Hub", active: false },
-];
 
 const FIRMWARE_LINES = [
   { num: 1, content: '#include "driver/gpio.h"', tokens: [{ type: "directive" as const, text: "#include" }, { type: "string" as const, text: ' "driver/gpio.h"' }] },
@@ -102,7 +105,15 @@ const TOKEN_COLORS: Record<string, string> = {
    Application Header
    ──────────────────────────────────────────────────────────── */
 
-function AppHeader({ sidebarOpen, onToggleSidebar }: { sidebarOpen: boolean; onToggleSidebar: () => void }) {
+function AppHeader({ 
+  sidebarOpen, 
+  onToggleSidebar, 
+  activeProject 
+}: { 
+  sidebarOpen: boolean; 
+  onToggleSidebar: () => void;
+  activeProject?: Project;
+}) {
   return (
     <header className="flex h-12 shrink-0 items-center border-b border-border/60 bg-[var(--color-code-bg)] px-3">
       {/* Left — branding + sidebar toggle */}
@@ -132,7 +143,9 @@ function AppHeader({ sidebarOpen, onToggleSidebar }: { sidebarOpen: boolean; onT
       {/* Center — project name */}
       <div className="ml-4 flex items-center gap-2">
         <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="text-sm text-foreground/90">ESP32 Weather Station</span>
+        <span className="text-sm text-foreground/90">
+          {activeProject ? activeProject.name : "Select a project"}
+        </span>
         <ChevronDown className="h-3 w-3 text-muted-foreground" />
       </div>
 
@@ -152,7 +165,17 @@ function AppHeader({ sidebarOpen, onToggleSidebar }: { sidebarOpen: boolean; onT
    Sidebar
    ──────────────────────────────────────────────────────────── */
 
-function Sidebar({ open }: { open: boolean }) {
+function Sidebar({ 
+  open, 
+  projects, 
+  onCreateProject,
+  onSelectProject 
+}: { 
+  open: boolean; 
+  projects: Project[]; 
+  onCreateProject: () => void;
+  onSelectProject: (id: string) => void;
+}) {
   if (!open) return null;
 
   return (
@@ -162,7 +185,13 @@ function Sidebar({ open }: { open: boolean }) {
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Projects
         </span>
-        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-[var(--color-emerald)]" aria-label="New project">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="h-6 w-6 text-muted-foreground hover:text-[var(--color-emerald)]" 
+          aria-label="New project"
+          onClick={onCreateProject}
+        >
           <Plus className="h-3.5 w-3.5" />
         </Button>
       </div>
@@ -171,22 +200,29 @@ function Sidebar({ open }: { open: boolean }) {
 
       {/* Project list */}
       <nav className="flex-1 overflow-y-auto px-2 py-1.5" aria-label="Project list">
-        {SAMPLE_PROJECTS.map((project) => (
-          <button
-            key={project.id}
-            className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors ${
-              project.active
-                ? "bg-[var(--color-surface-overlay)] text-foreground"
-                : "text-muted-foreground hover:bg-[var(--color-surface-overlay)]/50 hover:text-foreground"
-            }`}
-          >
-            <FolderOpen className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{project.name}</span>
-            {project.active && (
-              <div className="ml-auto h-1.5 w-1.5 rounded-full bg-[var(--color-emerald)]" />
-            )}
-          </button>
-        ))}
+        {projects.length === 0 ? (
+          <div className="px-2 py-4 text-center text-xs text-muted-foreground">
+            No projects yet. Create one!
+          </div>
+        ) : (
+          projects.map((project) => (
+            <button
+              key={project.id}
+              onClick={() => onSelectProject(project.id)}
+              className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors ${
+                project.active
+                  ? "bg-[var(--color-surface-overlay)] text-foreground"
+                  : "text-muted-foreground hover:bg-[var(--color-surface-overlay)]/50 hover:text-foreground"
+              }`}
+            >
+              <FolderOpen className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{project.name}</span>
+              {project.active && (
+                <div className="ml-auto h-1.5 w-1.5 rounded-full bg-[var(--color-emerald)]" />
+              )}
+            </button>
+          ))
+        )}
       </nav>
 
       {/* Bottom nav */}
@@ -396,8 +432,17 @@ function DiagnosisPanel() {
    Main Area
    ──────────────────────────────────────────────────────────── */
 
-function MainArea() {
+function MainArea({ activeProject }: { activeProject?: Project }) {
   const [activeTab, setActiveTab] = useState<EvidenceTab>("firmware");
+
+  if (!activeProject) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center bg-[var(--color-surface-raised)] text-muted-foreground">
+        <FolderOpen className="h-10 w-10 opacity-20 mb-4" />
+        <p>Select or create a project from the sidebar.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
@@ -405,7 +450,7 @@ function MainArea() {
       <div className="flex items-center justify-between border-b border-border/60 bg-[var(--color-surface-raised)] px-4 py-2.5">
         <div className="flex items-center gap-2">
           <FolderOpen className="h-4 w-4 text-[var(--color-emerald)]" />
-          <h1 className="text-sm font-semibold text-foreground">ESP32 Weather Station</h1>
+          <h1 className="text-sm font-semibold text-foreground">{activeProject.name}</h1>
           <Badge variant="secondary" className="text-[10px]">
             ESP-IDF v5.1
           </Badge>
@@ -444,18 +489,74 @@ function MainArea() {
 
 export default function WorkspacePage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const api = useApiClient();
+
+  useEffect(() => {
+    async function loadProjects() {
+      try {
+        const data = await api.getProjects();
+        // Set first project active by default if available
+        if (data.length > 0) {
+          data[0].active = true;
+        }
+        setProjects(data);
+      } catch (e) {
+        console.error("Failed to load projects", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProjects();
+  }, [api]);
+
+  const handleCreateProject = async () => {
+    try {
+      const name = `New Project ${projects.length + 1}`;
+      const newProject = await api.createProject(name, "Autogenerated project");
+      
+      const updatedProjects = projects.map(p => ({ ...p, active: false }));
+      newProject.active = true;
+      setProjects([newProject, ...updatedProjects]);
+    } catch (e) {
+      console.error("Failed to create project", e);
+    }
+  };
+
+  const handleSelectProject = (id: string) => {
+    setProjects(projects.map(p => ({ ...p, active: p.id === id })));
+  };
+
+  const activeProject = projects.find((p) => p.active);
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
-      <AppHeader sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+      <AppHeader 
+        sidebarOpen={sidebarOpen} 
+        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} 
+        activeProject={activeProject}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar — hidden on mobile via CSS, toggled on desktop */}
         <div className="hidden md:contents">
-          <Sidebar open={sidebarOpen} />
+          {loading ? (
+            <aside className="flex w-56 shrink-0 items-center justify-center border-r border-border/60 bg-[var(--color-code-bg)] text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </aside>
+          ) : (
+            <Sidebar 
+              open={sidebarOpen} 
+              projects={projects} 
+              onCreateProject={handleCreateProject}
+              onSelectProject={handleSelectProject}
+            />
+          )}
         </div>
 
-        <MainArea />
+        <MainArea activeProject={activeProject} />
       </div>
     </div>
   );
