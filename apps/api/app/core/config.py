@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     app_env: str = "development"
     log_level: str = "INFO"
     clerk_secret_key: str = ""
+    gemini_api_key: str = ""
 
 
 @lru_cache

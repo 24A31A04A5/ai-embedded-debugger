@@ -40,5 +40,14 @@ export function useApiClient() {
         method: "POST",
         body: JSON.stringify({ name, description }),
       }),
+    analyzeDebug: (projectId: string, firmwareCode: string, compilerOutput: string, serialLogs: string) =>
+      fetchWithAuth(`/projects/${projectId}/debug`, {
+        method: "POST",
+        body: JSON.stringify({
+          firmware_code: firmwareCode,
+          compiler_output: compilerOutput,
+          serial_logs: serialLogs,
+        }),
+      }),
   };
 }

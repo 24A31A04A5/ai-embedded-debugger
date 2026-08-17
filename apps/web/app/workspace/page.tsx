@@ -33,72 +33,15 @@ export type Project = {
   active?: boolean; // UI state
 };
 
-/* ────────────────────────────────────────────────────────────
-   Constants — sample data
-   ──────────────────────────────────────────────────────────── */
-
-const FIRMWARE_LINES = [
-  { num: 1, content: '#include "driver/gpio.h"', tokens: [{ type: "directive" as const, text: "#include" }, { type: "string" as const, text: ' "driver/gpio.h"' }] },
-  { num: 2, content: '#include "freertos/FreeRTOS.h"', tokens: [{ type: "directive" as const, text: "#include" }, { type: "string" as const, text: ' "freertos/FreeRTOS.h"' }] },
-  { num: 3, content: '#include "freertos/task.h"', tokens: [{ type: "directive" as const, text: "#include" }, { type: "string" as const, text: ' "freertos/task.h"' }] },
-  { num: 4, content: "", tokens: [] },
-  { num: 5, content: '#define LED_PIN 2', tokens: [{ type: "directive" as const, text: "#define" }, { type: "plain" as const, text: " LED_PIN " }, { type: "number" as const, text: "2" }] },
-  { num: 6, content: '#define BLINK_PERIOD_MS 1000', tokens: [{ type: "directive" as const, text: "#define" }, { type: "plain" as const, text: " BLINK_PERIOD_MS " }, { type: "number" as const, text: "1000" }] },
-  { num: 7, content: "", tokens: [] },
-  { num: 8, content: "void app_main(void) {", tokens: [{ type: "keyword" as const, text: "void" }, { type: "function" as const, text: " app_main" }, { type: "plain" as const, text: "(void) {" }] },
-  { num: 9, content: "    gpio_config_t cfg = {", tokens: [{ type: "plain" as const, text: "    gpio_config_t cfg = {" }] },
-  { num: 10, content: "        .pin_bit_mask = GPIO_SEL_2,", tokens: [{ type: "plain" as const, text: "        .pin_bit_mask = " }, { type: "error" as const, text: "GPIO_SEL_2" }, { type: "plain" as const, text: "," }], error: true },
-  { num: 11, content: "        .mode = GPIO_MODE_OUPUT,", tokens: [{ type: "plain" as const, text: "        .mode = " }, { type: "error" as const, text: "GPIO_MODE_OUPUT" }, { type: "plain" as const, text: "," }], error: true },
-  { num: 12, content: "        .pull_up_en = GPIO_PULLUP_DISABLE,", tokens: [{ type: "plain" as const, text: "        .pull_up_en = GPIO_PULLUP_DISABLE," }] },
-  { num: 13, content: "        .pull_down_en = GPIO_PULLDOWN_DISABLE,", tokens: [{ type: "plain" as const, text: "        .pull_down_en = GPIO_PULLDOWN_DISABLE," }] },
-  { num: 14, content: "        .intr_type = GPIO_INTR_DISABLE,", tokens: [{ type: "plain" as const, text: "        .intr_type = GPIO_INTR_DISABLE," }] },
-  { num: 15, content: "    };", tokens: [{ type: "plain" as const, text: "    };" }] },
-  { num: 16, content: "    gpio_config(&cfg);", tokens: [{ type: "plain" as const, text: "    " }, { type: "function" as const, text: "gpio_config" }, { type: "plain" as const, text: "(&cfg);" }] },
-  { num: 17, content: "", tokens: [] },
-  { num: 18, content: "    while (1) {", tokens: [{ type: "plain" as const, text: "    " }, { type: "keyword" as const, text: "while" }, { type: "plain" as const, text: " (1) {" }] },
-  { num: 19, content: "        gpio_set_level(LED_PIN, 1);", tokens: [{ type: "plain" as const, text: "        " }, { type: "function" as const, text: "gpio_set_level" }, { type: "plain" as const, text: "(LED_PIN, 1);" }] },
-  { num: 20, content: "        vTaskDelay(BLINK_PERIOD_MS);", tokens: [{ type: "plain" as const, text: "        " }, { type: "function" as const, text: "vTaskDelay" }, { type: "plain" as const, text: "(BLINK_PERIOD_MS);" }] },
-  { num: 21, content: "        gpio_set_level(LED_PIN, 0);", tokens: [{ type: "plain" as const, text: "        " }, { type: "function" as const, text: "gpio_set_level" }, { type: "plain" as const, text: "(LED_PIN, 0);" }] },
-  { num: 22, content: "        vTaskDelay(BLINK_PERIOD_MS);", tokens: [{ type: "plain" as const, text: "        " }, { type: "function" as const, text: "vTaskDelay" }, { type: "plain" as const, text: "(BLINK_PERIOD_MS);" }] },
-  { num: 23, content: "    }", tokens: [{ type: "plain" as const, text: "    }" }] },
-  { num: 24, content: "}", tokens: [{ type: "plain" as const, text: "}" }] },
-];
-
-const COMPILER_OUTPUT = `$ idf.py build
-Compiling main/main.c...
-
-main/main.c:10:26: error: use of undeclared identifier 'GPIO_SEL_2'
-        .pin_bit_mask = GPIO_SEL_2,
-                        ^~~~~~~~~~
-main/main.c:11:17: error: use of undeclared identifier 'GPIO_MODE_OUPUT'
-        .mode = GPIO_MODE_OUPUT,
-                ^~~~~~~~~~~~~~~
-main/main.c:11:17: note: did you mean 'GPIO_MODE_OUTPUT'?
-
-2 errors generated.
-Build failed.`;
-
-const SERIAL_LOG = `[0;32mI (325) cpu_start: Starting scheduler on PRO CPU.[0m
-[0;32mI (0) cpu_start: Starting scheduler on APP CPU.[0m
-[0;32mI (345) gpio: GPIO[2]| InputEn: 0| OutputEn: 1| OpenDrain: 0[0m
-[0;31mE (346) gpio: gpio_set_level(226): GPIO output gpio_num error[0m
-[0;31mE (1346) gpio: gpio_set_level(226): GPIO output gpio_num error[0m
-[0;33mW (2347) task_wdt: Task watchdog got triggered.[0m
-[0;31mE (2347) task_wdt: - IDLE0 (CPU 0)[0m
-Guru Meditation Error: Core  0 panic'ed (LoadProhibited). Exception was unhandled.`;
-
-/* ────────────────────────────────────────────────────────────
-   Token color map
-   ──────────────────────────────────────────────────────────── */
-
-const TOKEN_COLORS: Record<string, string> = {
-  directive: "text-[var(--color-info-blue)]",
-  keyword: "text-[var(--color-info-blue)]",
-  string: "text-[var(--color-warning-amber)]",
-  function: "text-[var(--color-emerald)]",
-  number: "text-[var(--color-warning-amber)]",
-  error: "text-[var(--color-error-red)] underline underline-offset-2 decoration-[var(--color-error-red)]/40",
-  plain: "text-foreground/80",
+type DiagnosisResult = {
+  problem_observed: string;
+  evidence_used: string[];
+  likely_causes: { cause: string; plausibility: "high" | "medium" | "low" }[];
+  recommended_steps: string[];
+  proposed_fix: string;
+  corrected_code?: string | null;
+  risks_limitations?: string | null;
+  follow_up_required?: string | null;
 };
 
 /* ────────────────────────────────────────────────────────────
@@ -276,46 +219,20 @@ function EvidenceTabBar({ active, onTabChange }: { active: EvidenceTab; onTabCha
    Firmware Panel — code viewer
    ──────────────────────────────────────────────────────────── */
 
-function FirmwarePanel() {
+function FirmwarePanel({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <div className="flex-1 overflow-auto bg-[var(--color-code-bg)] font-mono text-[13px] leading-6">
-      {/* File bar */}
+    <div className="flex flex-1 flex-col bg-[var(--color-code-bg)] font-mono text-[13px] leading-6">
       <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-[var(--color-code-border)] bg-[var(--color-code-bg)] px-4 py-1.5">
         <FileCode className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="text-xs text-muted-foreground">main/main.c</span>
-        <Badge variant="outline" className="ml-auto border-[var(--color-error-red)]/40 text-[var(--color-error-red)] text-[10px]">
-          2 errors
-        </Badge>
+        <span className="text-xs text-muted-foreground">main.c</span>
       </div>
-
-      {/* Code lines */}
-      <div className="px-0 py-2">
-        {FIRMWARE_LINES.map((line) => (
-          <div
-            key={line.num}
-            className={`flex hover:bg-[var(--color-surface-overlay)]/30 ${
-              line.error ? "bg-[var(--color-error-red)]/5" : ""
-            }`}
-          >
-            {/* Line number gutter */}
-            <span className="inline-block w-12 shrink-0 select-none pr-4 text-right text-muted-foreground/40">
-              {line.num}
-            </span>
-            {/* Code content */}
-            <span className="flex-1 pr-4">
-              {line.tokens.length === 0 ? (
-                <span>&nbsp;</span>
-              ) : (
-                line.tokens.map((token, i) => (
-                  <span key={i} className={TOKEN_COLORS[token.type] || "text-foreground/80"}>
-                    {token.text}
-                  </span>
-                ))
-              )}
-            </span>
-          </div>
-        ))}
-      </div>
+      <textarea 
+        className="flex-1 w-full resize-none bg-transparent p-4 text-foreground/80 outline-none placeholder:text-muted-foreground/30"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Paste C/C++ firmware code here..."
+        spellCheck={false}
+      />
     </div>
   );
 }
@@ -324,22 +241,16 @@ function FirmwarePanel() {
    Compiler Output Panel
    ──────────────────────────────────────────────────────────── */
 
-function CompilerPanel() {
+function CompilerPanel({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <div className="flex-1 overflow-auto bg-[var(--color-code-bg)] p-4 font-mono text-[12px] leading-6">
-      {COMPILER_OUTPUT.split("\n").map((line, i) => {
-        let colorClass = "text-muted-foreground/70";
-        if (line.includes("error:")) colorClass = "text-[var(--color-error-red)]";
-        else if (line.includes("note:")) colorClass = "text-[var(--color-warning-amber)]";
-        else if (line.includes("Build failed")) colorClass = "text-[var(--color-error-red)] font-semibold";
-        else if (line.startsWith("$")) colorClass = "text-foreground/70";
-
-        return (
-          <p key={i} className={colorClass}>
-            {line || "\u00A0"}
-          </p>
-        );
-      })}
+    <div className="flex flex-1 flex-col bg-[var(--color-code-bg)] font-mono text-[13px] leading-6">
+      <textarea 
+        className="flex-1 w-full resize-none bg-transparent p-4 text-foreground/80 outline-none placeholder:text-muted-foreground/30"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Paste compiler output here..."
+        spellCheck={false}
+      />
     </div>
   );
 }
@@ -348,36 +259,25 @@ function CompilerPanel() {
    Serial Log Panel
    ──────────────────────────────────────────────────────────── */
 
-function SerialPanel() {
+function SerialPanel({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <div className="flex-1 overflow-auto bg-[var(--color-code-bg)] p-4 font-mono text-[12px] leading-6">
-      {SERIAL_LOG.split("\n").map((line, i) => {
-        let colorClass = "text-muted-foreground/70";
-        // Strip ANSI codes for display — color by content
-        const clean = line.replace(/\[[\d;]*m/g, "");
-        if (clean.includes("[0;31m") || line.includes("E (") || line.includes("Error") || line.includes("panic")) {
-          colorClass = "text-[var(--color-error-red)]";
-        } else if (clean.includes("[0;33m") || line.includes("W (")) {
-          colorClass = "text-[var(--color-warning-amber)]";
-        } else if (clean.includes("[0;32m") || line.includes("I (")) {
-          colorClass = "text-[var(--color-success-green)]";
-        }
-
-        return (
-          <p key={i} className={colorClass}>
-            {clean || "\u00A0"}
-          </p>
-        );
-      })}
+    <div className="flex flex-1 flex-col bg-[var(--color-code-bg)] font-mono text-[13px] leading-6">
+      <textarea 
+        className="flex-1 w-full resize-none bg-transparent p-4 text-foreground/80 outline-none placeholder:text-muted-foreground/30"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Paste serial logs here..."
+        spellCheck={false}
+      />
     </div>
   );
 }
 
 /* ────────────────────────────────────────────────────────────
-   Diagnosis Panel — empty/awaiting state
+   Diagnosis Panel
    ──────────────────────────────────────────────────────────── */
 
-function DiagnosisPanel() {
+function DiagnosisPanel({ diagnosis, isAnalyzing }: { diagnosis: DiagnosisResult | null; isAnalyzing: boolean }) {
   return (
     <div className="flex flex-1 flex-col overflow-hidden border-t border-border/60 lg:border-t-0 lg:border-l">
       {/* Panel header */}
@@ -385,44 +285,136 @@ function DiagnosisPanel() {
         <Zap className="h-3.5 w-3.5 text-[var(--color-emerald)]" />
         <span className="text-xs font-medium text-[var(--color-emerald)]">AI Diagnosis</span>
         <Badge variant="outline" className="ml-auto border-border/60 text-muted-foreground/60 text-[10px]">
-          Awaiting analysis
+          {isAnalyzing ? "Analyzing..." : diagnosis ? "Complete" : "Awaiting analysis"}
         </Badge>
       </div>
 
-      {/* Empty state */}
-      <div className="flex flex-1 flex-col items-center justify-center gap-4 bg-background/50 px-8 py-12 text-center">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border/60 bg-[var(--color-surface-overlay)]">
-          <Search className="h-6 w-6 text-muted-foreground/50" />
-        </div>
-        <div className="max-w-xs">
-          <h3 className="text-sm font-semibold text-foreground">No analysis yet</h3>
-          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-            Click <span className="font-medium text-[var(--color-emerald)]">&quot;Analyze with AI&quot;</span> to send your
-            firmware code, compiler output, and serial logs for evidence‑aware diagnosis.
-          </p>
-        </div>
+      <div className="flex-1 overflow-y-auto bg-[var(--color-code-bg)]">
+        {isAnalyzing && (
+          <div className="flex h-full flex-col items-center justify-center gap-4 text-muted-foreground">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p className="text-sm">Analyzing firmware and logs...</p>
+          </div>
+        )}
 
-        {/* Placeholder sections */}
-        <div className="mt-4 w-full max-w-xs space-y-3">
-          {[
-            { icon: Lightbulb, label: "Diagnosis", desc: "Root cause analysis" },
-            { icon: Code2, label: "Evidence", desc: "What the data shows" },
-            { icon: Zap, label: "Suggested Fix", desc: "Corrected code & steps" },
-          ].map((section) => (
-            <div
-              key={section.label}
-              className="flex items-center gap-3 rounded-lg border border-dashed border-border/60 px-3 py-2.5"
-            >
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--color-surface-overlay)]">
-                <section.icon className="h-3.5 w-3.5 text-muted-foreground/40" />
-              </div>
-              <div className="text-left">
-                <p className="text-xs font-medium text-muted-foreground/60">{section.label}</p>
-                <p className="text-[10px] text-muted-foreground/40">{section.desc}</p>
-              </div>
+        {!isAnalyzing && !diagnosis && (
+          <div className="flex h-full flex-col items-center justify-center gap-4 px-8 py-12 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border/60 bg-[var(--color-surface-overlay)]">
+              <Search className="h-6 w-6 text-muted-foreground/50" />
             </div>
-          ))}
-        </div>
+            <div className="max-w-xs">
+              <h3 className="text-sm font-semibold text-foreground">No analysis yet</h3>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                Click <span className="font-medium text-[var(--color-emerald)]">&quot;Analyze with AI&quot;</span> to send your
+                firmware code, compiler output, and serial logs for evidence‑aware diagnosis.
+              </p>
+            </div>
+
+            {/* Placeholder sections */}
+            <div className="mt-4 w-full max-w-xs space-y-3">
+              {[
+                { icon: Lightbulb, label: "Diagnosis", desc: "Root cause analysis" },
+                { icon: Code2, label: "Evidence", desc: "What the data shows" },
+                { icon: Zap, label: "Suggested Fix", desc: "Corrected code & steps" },
+              ].map((section) => (
+                <div
+                  key={section.label}
+                  className="flex items-center gap-3 rounded-lg border border-dashed border-border/60 px-3 py-2.5"
+                >
+                  <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[var(--color-surface-overlay)]">
+                    <section.icon className="h-3.5 w-3.5 text-muted-foreground/40" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-xs font-medium text-muted-foreground/60">{section.label}</p>
+                    <p className="text-[10px] text-muted-foreground/40">{section.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!isAnalyzing && diagnosis && (
+          <div className="flex flex-col gap-6 p-6">
+            <section>
+              <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Lightbulb className="h-4 w-4 text-[var(--color-emerald)]" /> Problem Observed
+              </h3>
+              <p className="text-sm leading-relaxed text-foreground/80">{diagnosis.problem_observed}</p>
+            </section>
+
+            <Separator className="bg-border/60" />
+
+            <section>
+              <h3 className="mb-2 text-sm font-semibold text-foreground">Likely Causes</h3>
+              <ul className="space-y-2">
+                {diagnosis.likely_causes.map((lc, i) => (
+                  <li key={i} className="flex items-start gap-2 rounded-md bg-[var(--color-surface-overlay)] p-3">
+                    <Badge variant="outline" className={`shrink-0 text-[10px] ${
+                      lc.plausibility === "high" ? "border-[var(--color-error-red)]/50 text-[var(--color-error-red)]" :
+                      lc.plausibility === "medium" ? "border-[var(--color-warning-amber)]/50 text-[var(--color-warning-amber)]" :
+                      "border-muted-foreground/50 text-muted-foreground"
+                    }`}>
+                      {lc.plausibility.toUpperCase()}
+                    </Badge>
+                    <span className="text-sm text-foreground/80">{lc.cause}</span>
+                  </li>
+                ))}
+              </ul>
+            </section>
+
+            <section>
+              <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Code2 className="h-4 w-4" /> Evidence Used
+              </h3>
+              <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
+                {diagnosis.evidence_used.map((e, i) => <li key={i}>{e}</li>)}
+              </ul>
+            </section>
+
+            <Separator className="bg-border/60" />
+
+            <section>
+              <h3 className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Zap className="h-4 w-4 text-[var(--color-warning-amber)]" /> Proposed Fix & Steps
+              </h3>
+              <p className="mb-3 text-sm leading-relaxed text-foreground/80">{diagnosis.proposed_fix}</p>
+              
+              <div className="space-y-2">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recommended Steps</h4>
+                <ol className="list-inside list-decimal space-y-1 text-sm text-foreground/80">
+                  {diagnosis.recommended_steps.map((s, i) => <li key={i}>{s}</li>)}
+                </ol>
+              </div>
+            </section>
+
+            {diagnosis.corrected_code && (
+              <section>
+                <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Corrected Code</h4>
+                <pre className="overflow-x-auto rounded-md border border-[var(--color-code-border)] bg-[#0d1117] p-4 font-mono text-[13px] text-foreground/80">
+                  <code>{diagnosis.corrected_code}</code>
+                </pre>
+              </section>
+            )}
+
+            {(diagnosis.risks_limitations || diagnosis.follow_up_required) && (
+              <section className="rounded-lg border border-[var(--color-warning-amber)]/20 bg-[var(--color-warning-amber)]/5 p-4">
+                {diagnosis.risks_limitations && (
+                  <div className="mb-2">
+                    <h4 className="text-xs font-semibold text-[var(--color-warning-amber)] uppercase tracking-wider">Risks & Limitations</h4>
+                    <p className="mt-1 text-sm text-[var(--color-warning-amber)]/90">{diagnosis.risks_limitations}</p>
+                  </div>
+                )}
+                {diagnosis.follow_up_required && (
+                  <div>
+                    <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Follow-up Info Needed</h4>
+                    <p className="mt-1 text-sm text-muted-foreground/90">{diagnosis.follow_up_required}</p>
+                  </div>
+                )}
+              </section>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -434,6 +426,32 @@ function DiagnosisPanel() {
 
 function MainArea({ activeProject }: { activeProject?: Project }) {
   const [activeTab, setActiveTab] = useState<EvidenceTab>("firmware");
+  
+  const [firmwareCode, setFirmwareCode] = useState("");
+  const [compilerOutput, setCompilerOutput] = useState("");
+  const [serialLogs, setSerialLogs] = useState("");
+  
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [diagnosis, setDiagnosis] = useState<DiagnosisResult | null>(null);
+
+  const api = useApiClient();
+
+  const handleAnalyze = async () => {
+    if (!activeProject) return;
+    if (!firmwareCode.trim() && !compilerOutput.trim() && !serialLogs.trim()) return;
+    
+    setIsAnalyzing(true);
+    setDiagnosis(null);
+    try {
+      const res = await api.analyzeDebug(activeProject.id, firmwareCode, compilerOutput, serialLogs);
+      setDiagnosis(res);
+    } catch (e) {
+      console.error(e);
+      alert("Analysis failed.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   if (!activeProject) {
     return (
@@ -451,14 +469,16 @@ function MainArea({ activeProject }: { activeProject?: Project }) {
         <div className="flex items-center gap-2">
           <FolderOpen className="h-4 w-4 text-[var(--color-emerald)]" />
           <h1 className="text-sm font-semibold text-foreground">{activeProject.name}</h1>
-          <Badge variant="secondary" className="text-[10px]">
-            ESP-IDF v5.1
-          </Badge>
         </div>
 
-        <Button size="sm" className="gap-2 text-xs font-semibold" id="analyze-button">
-          <Zap className="h-3.5 w-3.5" />
-          Analyze with AI
+        <Button 
+          size="sm" 
+          className="gap-2 text-xs font-semibold" 
+          onClick={handleAnalyze} 
+          disabled={isAnalyzing || (!firmwareCode.trim() && !compilerOutput.trim() && !serialLogs.trim())}
+        >
+          {isAnalyzing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Zap className="h-3.5 w-3.5" />}
+          {isAnalyzing ? "Analyzing..." : "Analyze with AI"}
         </Button>
       </div>
 
@@ -470,14 +490,14 @@ function MainArea({ activeProject }: { activeProject?: Project }) {
 
           {/* Tab panels */}
           <div className="flex flex-1 overflow-hidden" role="tabpanel">
-            {activeTab === "firmware" && <FirmwarePanel />}
-            {activeTab === "compiler" && <CompilerPanel />}
-            {activeTab === "serial" && <SerialPanel />}
+            {activeTab === "firmware" && <FirmwarePanel value={firmwareCode} onChange={setFirmwareCode} />}
+            {activeTab === "compiler" && <CompilerPanel value={compilerOutput} onChange={setCompilerOutput} />}
+            {activeTab === "serial" && <SerialPanel value={serialLogs} onChange={setSerialLogs} />}
           </div>
         </div>
 
         {/* Right — diagnosis */}
-        <DiagnosisPanel />
+        <DiagnosisPanel diagnosis={diagnosis} isAnalyzing={isAnalyzing} />
       </div>
     </div>
   );
