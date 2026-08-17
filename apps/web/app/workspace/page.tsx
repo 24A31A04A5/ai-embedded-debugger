@@ -24,13 +24,17 @@ import {
   Upload,
   X,
   Zap,
+  ThumbsUp,
+  ThumbsDown,
+  MessageSquare,
+  Clock,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { UserButton } from "@clerk/nextjs";
-import { useApiClient, type ProjectFileMetadata } from "@/lib/api-client";
+import { useApiClient, type ProjectFileMetadata, type DebugSessionSummary, type DebugSessionDetail, type FeedbackResponse } from "@/lib/api-client";
 
 export type Project = {
   id: string;
@@ -242,7 +246,7 @@ function Sidebar({
 }
 
 /* ────────────────────────────────────────────────────────────
-   Project Files Panel (sidebar sub-panel in main area)
+   Project Files & Sessions Panels
    ──────────────────────────────────────────────────────────── */
 
 function fileIcon(fileType: string, filename: string) {
@@ -276,7 +280,7 @@ function ProjectFilesPanel({
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="flex w-52 shrink-0 flex-col border-r border-border/60 bg-[var(--color-code-bg)]">
+    <div className="flex h-1/2 flex-col border-b border-border/60">
       {/* Header */}
       <div className="flex items-center justify-between px-3 py-2">
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -304,7 +308,6 @@ function ProjectFilesPanel({
           onChange={(e) => {
             const f = e.target.files?.[0];
             if (f) onUpload(f);
-            // Reset so the same file can be re-uploaded
             e.target.value = "";
           }}
         />
@@ -321,9 +324,7 @@ function ProjectFilesPanel({
           >
             <Upload className="h-5 w-5" />
             <span className="text-[10px] leading-tight">
-              Upload C/C++ source
-              <br />
-              or log files
+              Upload C/C++ source<br />or log files
             </span>
           </button>
         )}
@@ -365,25 +366,66 @@ function ProjectFilesPanel({
           </div>
         ))}
       </nav>
+    </div>
+  );
+}
 
-      {/* Upload button at bottom */}
-      {files.length > 0 && (
-        <>
-          <Separator />
-          <div className="px-2 py-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start gap-2 text-xs text-muted-foreground hover:text-[var(--color-emerald)]"
-              onClick={() => inputRef.current?.click()}
-              disabled={isUploading}
-            >
-              <Upload className="h-3 w-3" />
-              Upload file
-            </Button>
+function SessionsPanel({
+  sessions,
+  activeSessionId,
+  onSelectSession,
+  onDeleteSession,
+}: {
+  sessions: DebugSessionSummary[];
+  activeSessionId: string | null;
+  onSelectSession: (id: string) => void;
+  onDeleteSession: (id: string) => void;
+}) {
+  return (
+    <div className="flex h-1/2 flex-col">
+      <div className="flex items-center justify-between px-3 py-2">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          Sessions
+        </span>
+      </div>
+      <Separator />
+      <nav className="flex-1 overflow-y-auto px-1.5 py-1" aria-label="Session list">
+        {sessions.length === 0 ? (
+          <div className="px-2 py-4 text-center text-xs text-muted-foreground/50">
+            No history yet.
           </div>
-        </>
-      )}
+        ) : (
+          sessions.map((s) => (
+            <div
+              key={s.id}
+              className={`group flex items-center gap-1.5 rounded-md px-2 py-1.5 text-left transition-colors cursor-pointer ${
+                activeSessionId === s.id
+                  ? "bg-[var(--color-surface-overlay)] text-foreground"
+                  : "text-muted-foreground hover:bg-[var(--color-surface-overlay)]/50 hover:text-foreground"
+              }`}
+              onClick={() => onSelectSession(s.id)}
+            >
+              <Clock className="h-3.5 w-3.5 shrink-0" />
+              <div className="flex min-w-0 flex-1 flex-col">
+                <span className="truncate text-xs">{s.title}</span>
+                <span className="text-[10px] text-muted-foreground/60">
+                  {new Date(s.created_at).toLocaleDateString()}
+                </span>
+              </div>
+              <button
+                className="ml-auto hidden h-5 w-5 shrink-0 items-center justify-center rounded text-muted-foreground/40 hover:text-[var(--color-error-red)] group-hover:flex"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDeleteSession(s.id);
+                }}
+                aria-label={`Delete ${s.title}`}
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </div>
+          ))
+        )}
+      </nav>
     </div>
   );
 }
@@ -520,9 +562,15 @@ function SerialPanel({
 function DiagnosisPanel({
   diagnosis,
   isAnalyzing,
+  sessionId,
+  feedback,
+  onSubmitFeedback,
 }: {
   diagnosis: DiagnosisResult | null;
   isAnalyzing: boolean;
+  sessionId?: string | null;
+  feedback?: FeedbackResponse | null;
+  onSubmitFeedback?: (rating: number) => void;
 }) {
   return (
     <div className="flex flex-1 flex-col overflow-hidden border-t border-border/60 lg:border-t-0 lg:border-l">
@@ -724,6 +772,41 @@ function DiagnosisPanel({
                 )}
               </section>
             )}
+
+            {/* Feedback UI */}
+            {sessionId && onSubmitFeedback && (
+              <section className="mt-4 flex items-center justify-between rounded-lg border border-border/60 bg-[var(--color-surface-overlay)] p-3">
+                <span className="text-xs font-medium text-muted-foreground">
+                  Was this diagnosis helpful?
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`h-8 w-8 p-0 ${
+                      feedback?.rating === 1
+                        ? "bg-[var(--color-emerald)]/20 text-[var(--color-emerald)]"
+                        : "text-muted-foreground hover:text-[var(--color-emerald)]"
+                    }`}
+                    onClick={() => onSubmitFeedback(1)}
+                  >
+                    <ThumbsUp className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={`h-8 w-8 p-0 ${
+                      feedback?.rating === 0
+                        ? "bg-[var(--color-error-red)]/20 text-[var(--color-error-red)]"
+                        : "text-muted-foreground hover:text-[var(--color-error-red)]"
+                    }`}
+                    onClick={() => onSubmitFeedback(0)}
+                  >
+                    <ThumbsDown className="h-4 w-4" />
+                  </Button>
+                </div>
+              </section>
+            )}
           </div>
         )}
       </div>
@@ -748,6 +831,11 @@ function MainArea({ activeProject }: { activeProject?: Project }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [diagnosis, setDiagnosis] = useState<DiagnosisResult | null>(null);
 
+  // Phase 2.2 Sessions State
+  const [sessions, setSessions] = useState<DebugSessionSummary[]>([]);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<FeedbackResponse | null>(null);
+
   // Files state
   const [files, setFiles] = useState<ProjectFileMetadata[]>([]);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
@@ -766,24 +854,34 @@ function MainArea({ activeProject }: { activeProject?: Project }) {
 
   const api = useApiClient();
 
-  // Load files when project changes
+  // Load files and sessions when project changes
   useEffect(() => {
     if (!activeProject) {
       setFiles([]);
+      setSessions([]);
       setSelectedFileId(null);
+      setActiveSessionId(null);
+      setDiagnosis(null);
+      setFeedback(null);
       return;
     }
 
     let cancelled = false;
-    async function loadFiles() {
+    async function loadData() {
       try {
-        const data = await api.listFiles(activeProject!.id);
-        if (!cancelled) setFiles(data);
+        const [filesData, sessionsData] = await Promise.all([
+          api.listFiles(activeProject!.id),
+          api.listSessions(activeProject!.id),
+        ]);
+        if (!cancelled) {
+          setFiles(filesData);
+          setSessions(sessionsData);
+        }
       } catch (e) {
-        console.error("Failed to load files", e);
+        console.error("Failed to load project data", e);
       }
     }
-    loadFiles();
+    loadData();
     return () => {
       cancelled = true;
     };
@@ -868,23 +966,36 @@ function MainArea({ activeProject }: { activeProject?: Project }) {
 
   const handleAnalyze = async () => {
     if (!activeProject) return;
-    if (
-      !firmwareCode.trim() &&
-      !compilerOutput.trim() &&
-      !serialLogs.trim()
-    )
+    if (!firmwareCode.trim() && !compilerOutput.trim() && !serialLogs.trim())
       return;
 
     setIsAnalyzing(true);
     setDiagnosis(null);
+    setFeedback(null);
+    setActiveSessionId(null);
     try {
-      const res = await api.analyzeDebug(
+      const session = await api.createSession(
         activeProject.id,
         firmwareCode,
         compilerOutput,
         serialLogs
       );
-      setDiagnosis(res);
+      setSessions((prev) => [
+        {
+          id: session.id,
+          project_id: session.project_id,
+          title: session.title,
+          created_at: session.created_at,
+          updated_at: session.updated_at,
+        },
+        ...prev,
+      ]);
+      setActiveSessionId(session.id);
+
+      const aiMsg = session.messages.find((m) => m.role === "assistant");
+      if (aiMsg) {
+        setDiagnosis(JSON.parse(aiMsg.content));
+      }
     } catch (e) {
       console.error(e);
       showToast("Analysis failed. Please try again.", "error");
@@ -892,6 +1003,85 @@ function MainArea({ activeProject }: { activeProject?: Project }) {
       setIsAnalyzing(false);
     }
   };
+
+  const handleSelectSession = useCallback(
+    async (sessionId: string) => {
+      if (!activeProject) return;
+      setActiveSessionId(sessionId);
+      setDiagnosis(null);
+      setFeedback(null);
+      try {
+        const [sessionData, feedbackData] = await Promise.all([
+          api.getSession(activeProject.id, sessionId),
+          api.getFeedback(sessionId).catch(() => null),
+        ]);
+
+        const userMsg = sessionData.messages.find((m) => m.role === "user");
+        if (userMsg) {
+          // Parse user input back into editors if it matches our basic format
+          const content = userMsg.content;
+          const getSection = (marker: string) => {
+            const start = content.indexOf(`[${marker}]`);
+            if (start === -1) return "";
+            const textStart = start + `[${marker}]\n`.length;
+            const nextBracket = content.indexOf("\n\n[", textStart);
+            return nextBracket === -1
+              ? content.slice(textStart)
+              : content.slice(textStart, nextBracket);
+          };
+          setFirmwareCode(getSection("firmware_code"));
+          setCompilerOutput(getSection("compiler_output"));
+          setSerialLogs(getSection("serial_logs"));
+        }
+
+        const aiMsg = sessionData.messages.find((m) => m.role === "assistant");
+        if (aiMsg) {
+          setDiagnosis(JSON.parse(aiMsg.content));
+        }
+        
+        setFeedback(feedbackData);
+      } catch (e) {
+        console.error("Failed to load session", e);
+        showToast("Failed to load session", "error");
+      }
+    },
+    [activeProject, api, showToast]
+  );
+
+  const handleDeleteSession = useCallback(
+    async (sessionId: string) => {
+      if (!activeProject) return;
+      try {
+        await api.deleteSession(activeProject.id, sessionId);
+        setSessions((prev) => prev.filter((s) => s.id !== sessionId));
+        if (activeSessionId === sessionId) {
+          setActiveSessionId(null);
+          setDiagnosis(null);
+          setFeedback(null);
+        }
+        showToast("Session deleted", "success");
+      } catch (e) {
+        console.error("Failed to delete session", e);
+        showToast("Failed to delete session", "error");
+      }
+    },
+    [activeProject, api, activeSessionId, showToast]
+  );
+
+  const handleSubmitFeedback = useCallback(
+    async (rating: number) => {
+      if (!activeSessionId) return;
+      try {
+        const res = await api.submitFeedback(activeSessionId, rating);
+        setFeedback(res);
+        showToast("Feedback submitted", "success");
+      } catch (e) {
+        console.error("Failed to submit feedback", e);
+        showToast("Failed to submit feedback", "error");
+      }
+    },
+    [activeSessionId, api, showToast]
+  );
 
   if (!activeProject) {
     return (
@@ -938,8 +1128,8 @@ function MainArea({ activeProject }: { activeProject?: Project }) {
 
       {/* Content — files panel + evidence + diagnosis */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left — files sidebar */}
-        <div className="hidden lg:contents">
+        {/* Left — files & sessions sidebar */}
+        <div className="hidden w-52 shrink-0 flex-col border-r border-border/60 bg-[var(--color-code-bg)] lg:flex">
           <ProjectFilesPanel
             files={files}
             selectedFileId={selectedFileId}
@@ -947,6 +1137,12 @@ function MainArea({ activeProject }: { activeProject?: Project }) {
             onUpload={handleUpload}
             onSelectFile={handleSelectFile}
             onDeleteFile={handleDeleteFile}
+          />
+          <SessionsPanel
+            sessions={sessions}
+            activeSessionId={activeSessionId}
+            onSelectSession={handleSelectSession}
+            onDeleteSession={handleDeleteSession}
           />
         </div>
 
@@ -976,7 +1172,13 @@ function MainArea({ activeProject }: { activeProject?: Project }) {
         </div>
 
         {/* Right — diagnosis */}
-        <DiagnosisPanel diagnosis={diagnosis} isAnalyzing={isAnalyzing} />
+        <DiagnosisPanel 
+          diagnosis={diagnosis} 
+          isAnalyzing={isAnalyzing}
+          sessionId={activeSessionId}
+          feedback={feedback}
+          onSubmitFeedback={handleSubmitFeedback}
+        />
       </div>
 
       {/* Toast */}

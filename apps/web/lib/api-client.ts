@@ -20,6 +20,45 @@ export type ProjectFileContent = {
   content: string;
 };
 
+/* ── Session types ── */
+
+export type DebugSessionSummary = {
+  id: string;
+  project_id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DebugMessageResponse = {
+  id: string;
+  session_id: string;
+  role: "user" | "assistant";
+  content: string;
+  token_usage: number | null;
+  created_at: string;
+};
+
+export type DebugSessionDetail = {
+  id: string;
+  project_id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  messages: DebugMessageResponse[];
+};
+
+/* ── Feedback types ── */
+
+export type FeedbackResponse = {
+  id: string;
+  user_id: string;
+  session_id: string;
+  rating: number;
+  reason: string | null;
+  created_at: string;
+};
+
 export function useApiClient() {
   const { getToken } = useAuth();
 
@@ -87,7 +126,7 @@ export function useApiClient() {
           body: JSON.stringify({ name, description }),
         }),
 
-      // ── Debug ──
+      // ── Debug (legacy single-shot — kept for backwards compatibility) ──
       analyzeDebug: (
         projectId: string,
         firmwareCode: string,
@@ -121,6 +160,49 @@ export function useApiClient() {
 
       deleteFile: (projectId: string, fileId: string): Promise<null> =>
         fetchWithAuth(`/projects/${projectId}/files/${fileId}`, { method: "DELETE" }),
+
+      // ── Sessions (Phase 2.2) ──
+      createSession: (
+        projectId: string,
+        firmwareCode: string,
+        compilerOutput: string,
+        serialLogs: string,
+        title?: string
+      ): Promise<DebugSessionDetail> =>
+        fetchWithAuth(`/projects/${projectId}/sessions`, {
+          method: "POST",
+          body: JSON.stringify({
+            title: title || "Untitled Session",
+            firmware_code: firmwareCode,
+            compiler_output: compilerOutput,
+            serial_logs: serialLogs,
+          }),
+        }),
+
+      listSessions: (projectId: string): Promise<DebugSessionSummary[]> =>
+        fetchWithAuth(`/projects/${projectId}/sessions`),
+
+      getSession: (projectId: string, sessionId: string): Promise<DebugSessionDetail> =>
+        fetchWithAuth(`/projects/${projectId}/sessions/${sessionId}`),
+
+      deleteSession: (projectId: string, sessionId: string): Promise<null> =>
+        fetchWithAuth(`/projects/${projectId}/sessions/${sessionId}`, {
+          method: "DELETE",
+        }),
+
+      // ── Feedback (Phase 2.2) ──
+      submitFeedback: (
+        sessionId: string,
+        rating: number,
+        reason?: string
+      ): Promise<FeedbackResponse> =>
+        fetchWithAuth(`/sessions/${sessionId}/feedback`, {
+          method: "POST",
+          body: JSON.stringify({ rating, reason: reason || null }),
+        }),
+
+      getFeedback: (sessionId: string): Promise<FeedbackResponse | null> =>
+        fetchWithAuth(`/sessions/${sessionId}/feedback`),
     }),
     [fetchWithAuth, fetchRawAuth]
   );
