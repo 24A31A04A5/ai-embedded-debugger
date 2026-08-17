@@ -24,6 +24,16 @@ class Settings(BaseSettings):
     clerk_secret_key: str = ""
     gemini_api_key: str = ""
 
+    # Object Storage Settings
+    storage_backend: str = "local"  # "local" or "s3"
+    local_storage_path: str = "storage_data"
+    s3_endpoint_url: str | None = None
+    s3_access_key_id: str = ""
+    s3_secret_access_key: str = ""
+    s3_bucket_name: str = "ai-embedded-debugger-files"
+    s3_region: str = "us-east-1"
+    max_upload_size_mb: int = 10
+
 
 @lru_cache
 def get_settings() -> Settings:

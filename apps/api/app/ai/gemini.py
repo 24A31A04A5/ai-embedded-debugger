@@ -24,7 +24,7 @@ def analyze_debugging_context(
 ) -> DebugResponse:
     """Analyze the firmware and logs using Gemini and return a structured diagnosis."""
     settings = get_settings()
-    
+
     # Initialize the genai client with the API key from settings
     client = genai.Client(api_key=settings.gemini_api_key)
 

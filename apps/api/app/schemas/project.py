@@ -8,8 +8,10 @@ class ProjectBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)
     description: str | None = None
 
+
 class ProjectCreate(ProjectBase):
     pass
+
 
 class ProjectResponse(ProjectBase):
     model_config = ConfigDict(from_attributes=True)

@@ -23,15 +23,11 @@ class DebugResponse(BaseModel):
     evidence_used: list[str] = Field(
         ..., description="Key pieces of evidence from the code or logs."
     )
-    likely_causes: list[LikelyCause] = Field(
-        ..., description="Ranked list of likely causes."
-    )
+    likely_causes: list[LikelyCause] = Field(..., description="Ranked list of likely causes.")
     recommended_steps: list[str] = Field(
         ..., description="Actionable verification or debugging steps."
     )
-    proposed_fix: str = Field(
-        ..., description="Explanation of the proposed solution."
-    )
+    proposed_fix: str = Field(..., description="Explanation of the proposed solution.")
     corrected_code: str | None = Field(
         default=None, description="The corrected code snippet or patch, if applicable."
     )

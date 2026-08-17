@@ -12,6 +12,7 @@ from app.schemas.project import ProjectCreate, ProjectResponse
 
 router = APIRouter(prefix="/projects", tags=["projects"])
 
+
 @router.get("", response_model=list[ProjectResponse])
 def get_projects(
     current_user: Annotated[User, Depends(get_current_user)],
@@ -26,6 +27,7 @@ def get_projects(
         .all()
     )
     return projects
+
 
 @router.post("", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
 def create_project(

@@ -11,6 +11,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 
 if TYPE_CHECKING:
+    from app.models.project_file import ProjectFile
     from app.models.user import User
 
 
@@ -46,3 +47,8 @@ class Project(Base):
     )
 
     owner: Mapped[User] = relationship("User", back_populates="projects")
+    files: Mapped[list[ProjectFile]] = relationship(
+        "ProjectFile",
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )
