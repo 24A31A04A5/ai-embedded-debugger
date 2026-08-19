@@ -35,6 +35,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { UserButton } from "@clerk/nextjs";
 import { useApiClient, type ProjectFileMetadata, type DebugSessionSummary, type DebugSessionDetail, type FeedbackResponse } from "@/lib/api-client";
+import { CodeViewer } from "@/components/CodeViewer";
+import { CodeEditor } from "@/components/CodeEditor";
 
 export type Project = {
   id: string;
@@ -496,12 +498,11 @@ function FirmwarePanel({
           {activeFileName || "main.c"}
         </span>
       </div>
-      <textarea
-        className="flex-1 w-full resize-none bg-transparent p-4 text-foreground/80 outline-none placeholder:text-muted-foreground/30"
+      <CodeEditor
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
+        language="cpp"
         placeholder="Paste C/C++ firmware code here, or upload a file from the Files panel…"
-        spellCheck={false}
       />
     </div>
   );
@@ -520,12 +521,11 @@ function CompilerPanel({
 }) {
   return (
     <div className="flex flex-1 flex-col bg-[var(--color-code-bg)] font-mono text-[13px] leading-6">
-      <textarea
-        className="flex-1 w-full resize-none bg-transparent p-4 text-foreground/80 outline-none placeholder:text-muted-foreground/30"
+      <CodeEditor
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
+        language="bash"
         placeholder="Paste compiler output here…"
-        spellCheck={false}
       />
     </div>
   );
@@ -544,12 +544,11 @@ function SerialPanel({
 }) {
   return (
     <div className="flex flex-1 flex-col bg-[var(--color-code-bg)] font-mono text-[13px] leading-6">
-      <textarea
-        className="flex-1 w-full resize-none bg-transparent p-4 text-foreground/80 outline-none placeholder:text-muted-foreground/30"
+      <CodeEditor
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={onChange}
+        language="bash"
         placeholder="Paste serial logs here…"
-        spellCheck={false}
       />
     </div>
   );
@@ -742,9 +741,10 @@ function DiagnosisPanel({
                 <h4 className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                   Corrected Code
                 </h4>
-                <pre className="overflow-x-auto rounded-md border border-[var(--color-code-border)] bg-[#0d1117] p-4 font-mono text-[13px] text-foreground/80">
-                  <code>{diagnosis.corrected_code}</code>
-                </pre>
+                <CodeViewer
+                  code={diagnosis.corrected_code}
+                  language={diagnosis.corrected_code.includes("\\n+") || diagnosis.corrected_code.startsWith("+") ? "diff" : "cpp"}
+                />
               </section>
             )}
 
