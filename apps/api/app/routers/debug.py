@@ -6,9 +6,10 @@ from sqlalchemy.orm import Session
 from app.ai.gemini import analyze_debugging_context
 from app.core.auth import get_current_user
 from app.core.database import get_db
-from app.models.project import Project
 from app.models.user import User
 from app.schemas.debug import DebugRequest, DebugResponse
+from app.services.context_assembly import ContextAssemblyService
+from app.services.storage import BaseStorageService, get_storage_service
 
 router = APIRouter(prefix="/projects", tags=["debug"])
 
@@ -19,23 +20,23 @@ def analyze_project_debug_info(
     request: DebugRequest,
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
+    storage: Annotated[BaseStorageService, Depends(get_storage_service)] = None,  # type: ignore[assignment]
 ) -> DebugResponse:
-    """Analyze firmware and logs using AI and return a structured diagnosis."""
-    # Verify the project exists and belongs to the user
-    project = (
-        db.query(Project)
-        .filter(Project.id == project_id, Project.owner_id == current_user.id)
-        .first()
+    """Assemble debugging context from files/inputs and analyze with AI."""
+    context_service = ContextAssemblyService(db=db, storage=storage)
+    assembled_context = context_service.assemble_context(
+        project_id=project_id,
+        current_user=current_user,
+        firmware_code=request.firmware_code,
+        compiler_output=request.compiler_output,
+        serial_logs=request.serial_logs,
+        user_question=request.user_question,
+        selected_file_ids=request.selected_file_ids,
+        session_id=request.session_id,
     )
-    if not project:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Project not found")
 
     try:
-        diagnosis = analyze_debugging_context(
-            firmware_code=request.firmware_code,
-            compiler_output=request.compiler_output,
-            serial_logs=request.serial_logs,
-        )
+        diagnosis = analyze_debugging_context(assembled_context)
         return diagnosis
     except Exception as e:
         import traceback
@@ -47,3 +48,4 @@ def analyze_project_debug_info(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"AI Analysis failed: {str(e)}",
         ) from e
+

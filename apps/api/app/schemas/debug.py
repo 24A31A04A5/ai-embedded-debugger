@@ -1,12 +1,22 @@
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
 
 class DebugRequest(BaseModel):
-    firmware_code: str = Field(..., description="The C/C++ firmware source code.")
+    firmware_code: str = Field(default="", description="The C/C++ firmware source code.")
     compiler_output: str = Field(default="", description="The compiler error output.")
     serial_logs: str = Field(default="", description="The serial monitor or runtime logs.")
+    user_question: str | None = Field(
+        default=None, description="Optional specific debugging question or prompt."
+    )
+    selected_file_ids: list[UUID] | None = Field(
+        default=None, description="Optional list of uploaded project file IDs to include in context."
+    )
+    session_id: UUID | None = Field(
+        default=None, description="Optional session ID to incorporate prior session history."
+    )
 
 
 class LikelyCause(BaseModel):

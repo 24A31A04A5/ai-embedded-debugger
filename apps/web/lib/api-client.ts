@@ -126,12 +126,17 @@ export function useApiClient() {
           body: JSON.stringify({ name, description }),
         }),
 
-      // ── Debug (legacy single-shot — kept for backwards compatibility) ──
+      // ── Debug (single-shot) ──
       analyzeDebug: (
         projectId: string,
         firmwareCode: string,
         compilerOutput: string,
-        serialLogs: string
+        serialLogs: string,
+        options?: {
+          userQuestion?: string;
+          selectedFileIds?: string[];
+          sessionId?: string;
+        }
       ) =>
         fetchWithAuth(`/projects/${projectId}/debug`, {
           method: "POST",
@@ -139,6 +144,9 @@ export function useApiClient() {
             firmware_code: firmwareCode,
             compiler_output: compilerOutput,
             serial_logs: serialLogs,
+            user_question: options?.userQuestion,
+            selected_file_ids: options?.selectedFileIds,
+            session_id: options?.sessionId,
           }),
         }),
 
@@ -167,7 +175,11 @@ export function useApiClient() {
         firmwareCode: string,
         compilerOutput: string,
         serialLogs: string,
-        title?: string
+        title?: string,
+        options?: {
+          userQuestion?: string;
+          selectedFileIds?: string[];
+        }
       ): Promise<DebugSessionDetail> =>
         fetchWithAuth(`/projects/${projectId}/sessions`, {
           method: "POST",
@@ -176,6 +188,8 @@ export function useApiClient() {
             firmware_code: firmwareCode,
             compiler_output: compilerOutput,
             serial_logs: serialLogs,
+            user_question: options?.userQuestion,
+            selected_file_ids: options?.selectedFileIds,
           }),
         }),
 

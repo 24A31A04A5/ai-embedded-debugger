@@ -23,9 +23,15 @@ class DebugSessionCreate(BaseModel):
     """Schema for creating a new debug session from a debug request."""
 
     title: str = Field(default="Untitled Session", max_length=255)
-    firmware_code: str = Field(..., description="The C/C++ firmware source code.")
+    firmware_code: str = Field(default="", description="The C/C++ firmware source code.")
     compiler_output: str = Field(default="", description="The compiler error output.")
     serial_logs: str = Field(default="", description="The serial monitor or runtime logs.")
+    user_question: str | None = Field(
+        default=None, description="Optional specific debugging question or prompt."
+    )
+    selected_file_ids: list[uuid.UUID] | None = Field(
+        default=None, description="Optional list of uploaded project file IDs to include in context."
+    )
 
 
 class DebugSessionSummary(BaseModel):

@@ -5,11 +5,12 @@ from google.genai import types
 from pydantic import TypeAdapter
 
 from app.core.config import get_settings
+from app.schemas.context import AssembledDebugContext
 from app.schemas.debug import DebugResponse
 
 SYSTEM_INSTRUCTION = """
 You are an expert embedded systems and firmware engineer.
-Analyze the provided C/C++ firmware code, compiler output, and serial logs 
+Analyze the provided C/C++ firmware code, compiler output, serial logs, uploaded files, and context
 to diagnose the root cause of the issue.
 Adhere to the following rules:
 1. Distinguish evidence from inference.
@@ -20,30 +21,43 @@ Adhere to the following rules:
 
 
 def analyze_debugging_context(
-    firmware_code: str, compiler_output: str, serial_logs: str
+    context_or_firmware: AssembledDebugContext | str,
+    compiler_output: str = "",
+    serial_logs: str = "",
 ) -> DebugResponse:
-    """Analyze the firmware and logs using Gemini and return a structured diagnosis."""
+    """Analyze the debugging context using Gemini and return a structured diagnosis.
+
+    Accepts either a structured AssembledDebugContext or legacy positional string arguments.
+    """
     settings = get_settings()
 
     # Initialize the genai client with the API key from settings
     client = genai.Client(api_key=settings.gemini_api_key)
 
-    # Combine the inputs into a structured prompt
-    prompt = f"""
-    Please analyze the following embedded debugging context:
+    if isinstance(context_or_firmware, AssembledDebugContext):
+        assembled_body = context_or_firmware.format_prompt()
+        prompt = f"""
+Please analyze the following embedded debugging context:
 
-    <firmware_code>
-    {firmware_code}
-    </firmware_code>
+{assembled_body}
+"""
+    else:
+        firmware_code = context_or_firmware
+        prompt = f"""
+Please analyze the following embedded debugging context:
 
-    <compiler_output>
-    {compiler_output}
-    </compiler_output>
+<firmware_code>
+{firmware_code}
+</firmware_code>
 
-    <serial_logs>
-    {serial_logs}
-    </serial_logs>
-    """
+<compiler_output>
+{compiler_output}
+</compiler_output>
+
+<serial_logs>
+{serial_logs}
+</serial_logs>
+"""
 
     # Call Gemini using the structured output format
     response = client.models.generate_content(
@@ -64,3 +78,4 @@ def analyze_debugging_context(
 
     parsed_json = json.loads(response.text)
     return TypeAdapter(DebugResponse).validate_python(parsed_json)
+
