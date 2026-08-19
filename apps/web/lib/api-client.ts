@@ -59,6 +59,29 @@ export type FeedbackResponse = {
   created_at: string;
 };
 
+/* ── Document types (Phase 3.1) ── */
+
+export type DocumentMetadata = {
+  id: string;
+  project_id: string;
+  filename: string;
+  version: string | null;
+  size_bytes: number;
+  checksum: string;
+  extraction_status: "pending" | "processing" | "ready" | "failed";
+  page_count: number | null;
+  download_url: string | null;
+  error_message: string | null;
+  metadata_json: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type DocumentDetail = DocumentMetadata & {
+  extracted_text: string | null;
+  text_length: number;
+};
+
 export function useApiClient() {
   const { getToken } = useAuth();
 
@@ -217,6 +240,40 @@ export function useApiClient() {
 
       getFeedback: (sessionId: string): Promise<FeedbackResponse | null> =>
         fetchWithAuth(`/sessions/${sessionId}/feedback`),
+
+      // ── Documents (Phase 3.1) ──
+      uploadDocument: (
+        projectId: string,
+        file: File,
+        version?: string
+      ): Promise<DocumentMetadata> => {
+        const formData = new FormData();
+        formData.append("file", file);
+        if (version) {
+          formData.append("version", version);
+        }
+        return fetchRawAuth(`/projects/${projectId}/documents/upload`, {
+          method: "POST",
+          body: formData,
+        });
+      },
+
+      listDocuments: (projectId: string): Promise<DocumentMetadata[]> =>
+        fetchWithAuth(`/projects/${projectId}/documents`),
+
+      getDocument: (
+        projectId: string,
+        documentId: string
+      ): Promise<DocumentDetail> =>
+        fetchWithAuth(`/projects/${projectId}/documents/${documentId}`),
+
+      deleteDocument: (
+        projectId: string,
+        documentId: string
+      ): Promise<null> =>
+        fetchWithAuth(`/projects/${projectId}/documents/${documentId}`, {
+          method: "DELETE",
+        }),
     }),
     [fetchWithAuth, fetchRawAuth]
   );

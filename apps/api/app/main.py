@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import debug, feedback, files, health, projects, sessions
+from app.routers import debug, documents, feedback, files, health, projects, sessions
 
 API_VERSION = "0.1.0"
 
@@ -27,7 +27,9 @@ app.add_middleware(
 app.include_router(health.router, prefix="/v1")
 app.include_router(projects.router, prefix="/v1")
 app.include_router(files.router, prefix="/v1")
+app.include_router(documents.router, prefix="/v1")
 app.include_router(debug.router, prefix="/v1")
 app.include_router(sessions.router, prefix="/v1")
 app.include_router(feedback.router, prefix="/v1")
+
 

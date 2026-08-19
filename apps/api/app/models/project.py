@@ -12,6 +12,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.debug_session import DebugSession
+    from app.models.document import Document
     from app.models.project_file import ProjectFile
     from app.models.user import User
 
@@ -55,6 +56,11 @@ class Project(Base):
     )
     debug_sessions: Mapped[list[DebugSession]] = relationship(
         "DebugSession",
+        back_populates="project",
+        cascade="all, delete-orphan",
+    )
+    documents: Mapped[list[Document]] = relationship(
+        "Document",
         back_populates="project",
         cascade="all, delete-orphan",
     )
