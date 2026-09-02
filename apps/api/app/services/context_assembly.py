@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import uuid
-from typing import Sequence
+from typing import TYPE_CHECKING, Sequence
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -21,6 +21,9 @@ from app.schemas.context import (
 )
 from app.services.storage import BaseStorageService
 
+if TYPE_CHECKING:
+    from app.services.retrieval import DocumentRetrievalService
+
 logger = logging.getLogger(__name__)
 
 # Budget defaults (characters)
@@ -28,6 +31,7 @@ MAX_FILE_CHARS = 40_000
 MAX_TEXT_INPUT_CHARS = 50_000
 MAX_SESSION_HISTORY_MESSAGES = 10
 MAX_SESSION_HISTORY_CHARS = 20_000
+MAX_DOCUMENT_CHARS = 40_000
 MAX_TOTAL_CONTEXT_CHARS = 200_000
 
 
@@ -50,11 +54,12 @@ class ContextAssemblyService:
     def __init__(
         self,
         db: Session,
-        storage: BaseStorageService,
+        storage: BaseStorageService | None = None,
         max_file_chars: int = MAX_FILE_CHARS,
         max_text_chars: int = MAX_TEXT_INPUT_CHARS,
         max_session_history_messages: int = MAX_SESSION_HISTORY_MESSAGES,
         max_session_chars: int = MAX_SESSION_HISTORY_CHARS,
+        max_doc_chars: int = MAX_DOCUMENT_CHARS,
         max_total_chars: int = MAX_TOTAL_CONTEXT_CHARS,
     ) -> None:
         self.db = db
@@ -63,6 +68,7 @@ class ContextAssemblyService:
         self.max_text_chars = max_text_chars
         self.max_session_history_messages = max_session_history_messages
         self.max_session_chars = max_session_chars
+        self.max_doc_chars = max_doc_chars
         self.max_total_chars = max_total_chars
 
     def assemble_context(
@@ -74,8 +80,12 @@ class ContextAssemblyService:
         serial_logs: str = "",
         user_question: str | None = None,
         selected_file_ids: Sequence[uuid.UUID | str] | None = None,
+        selected_document_ids: Sequence[uuid.UUID | str] | None = None,
         session_id: uuid.UUID | str | None = None,
         document_context: list[DocumentContext] | None = None,
+        retrieval_service: DocumentRetrievalService | None = None,
+        top_k: int = 5,
+        similarity_threshold: float = 0.0,
     ) -> AssembledDebugContext:
         """Assemble debugging context with project isolation, storage retrieval, and budget limits."""
         # 1. Verify project ownership
@@ -256,6 +266,70 @@ class ContextAssemblyService:
                 if total_session_chars >= self.max_session_chars:
                     break
 
+        # 6. Retrieved Document Context (Phase 3.3 / Phase 3.4)
+        assembled_docs: list[DocumentContext] = []
+        raw_docs = list(document_context) if document_context else []
+
+        if not raw_docs and retrieval_service is not None:
+            retrieval_query = ""
+            if user_question and user_question.strip():
+                retrieval_query = user_question.strip()
+            elif compiler_output and compiler_output.strip():
+                retrieval_query = "\n".join(compiler_output.strip().splitlines()[:5])
+            elif serial_logs and serial_logs.strip():
+                retrieval_query = "\n".join(serial_logs.strip().splitlines()[:5])
+            elif firmware_code and firmware_code.strip():
+                retrieval_query = "\n".join(firmware_code.strip().splitlines()[:5])
+
+            if retrieval_query:
+                try:
+                    valid_doc_uuids = None
+                    if selected_document_ids:
+                        valid_doc_uuids = [
+                            uuid.UUID(str(did)) for did in selected_document_ids
+                        ]
+
+                    retrieved_results = retrieval_service.search(
+                        project_id=project.id,
+                        query=retrieval_query,
+                        top_k=top_k,
+                        similarity_threshold=similarity_threshold,
+                        document_ids=valid_doc_uuids,
+                    )
+                    raw_docs = [
+                        DocumentContext(
+                            doc_id=str(item.document_id),
+                            title=item.document_name,
+                            snippet=item.content,
+                            source=item.document_name,
+                            score=item.similarity_score,
+                            chunk_id=str(item.chunk_id),
+                            page_number=item.page_number,
+                            chunk_index=item.chunk_index,
+                        )
+                        for item in retrieved_results
+                    ]
+                except Exception as e:
+                    logger.warning("Vector retrieval during context assembly failed: %s", e)
+                    raw_docs = []
+
+        total_doc_chars = 0
+        for doc in raw_docs:
+            snippet_text = doc.snippet
+            if total_doc_chars + len(snippet_text) > self.max_doc_chars:
+                remaining_budget = max(0, self.max_doc_chars - total_doc_chars)
+                snippet_text, d_trunc, _, _, _ = truncate_text(
+                    snippet_text, remaining_budget, f"Document '{doc.title or doc.doc_id}'"
+                )
+                is_any_truncated = True
+                truncation_notes.append("Retrieved datasheet context truncated to character budget")
+                doc = doc.model_copy(update={"snippet": snippet_text})
+
+            total_doc_chars += len(snippet_text)
+            assembled_docs.append(doc)
+            if total_doc_chars >= self.max_doc_chars:
+                break
+
         return AssembledDebugContext(
             project=project_ctx,
             user_question=user_question,
@@ -264,7 +338,8 @@ class ContextAssemblyService:
             serial_logs=ser_logs,
             uploaded_files=assembled_files,
             session_history=session_history_items,
-            document_context=document_context or [],
+            document_context=assembled_docs,
             is_truncated=is_any_truncated,
             truncation_notes=truncation_notes,
         )
+

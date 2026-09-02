@@ -21,6 +21,7 @@ from app.schemas.session import (
     DebugSessionSummary,
 )
 from app.services.context_assembly import ContextAssemblyService
+from app.services.retrieval import DocumentRetrievalService
 from app.services.storage import BaseStorageService, get_storage_service
 
 router = APIRouter(prefix="/projects", tags=["sessions"])
@@ -70,6 +71,8 @@ def create_debug_session(
 
     # Assemble context
     context_service = ContextAssemblyService(db=db, storage=storage)
+    retrieval_service = DocumentRetrievalService(db=db)
+
     assembled_context = context_service.assemble_context(
         project_id=project_id,
         current_user=current_user,
@@ -78,6 +81,8 @@ def create_debug_session(
         serial_logs=request.serial_logs,
         user_question=request.user_question,
         selected_file_ids=request.selected_file_ids,
+        selected_document_ids=request.selected_document_ids,
+        retrieval_service=retrieval_service,
     )
 
     # Auto-generate a title from the user question or firmware code if not explicitly given
@@ -93,12 +98,15 @@ def create_debug_session(
     try:
         diagnosis: DebugResponse = analyze_debugging_context(assembled_context)
     except Exception as e:
-        import traceback
+        import logging
 
-        traceback.print_exc()
+        logging.getLogger(__name__).error("AI Analysis failed: %s", e)
+        error_msg = str(e)
+        if "api_key" in error_msg.lower() or "key" in error_msg.lower():
+            error_msg = "Gemini API connection or authentication failed."
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"AI Analysis failed: {e}",
+            detail=f"AI Analysis failed: {error_msg}",
         ) from e
 
     # Create the session
@@ -124,6 +132,12 @@ def create_debug_session(
     if assembled_context.uploaded_files:
         files_summary = ", ".join(f.filename for f in assembled_context.uploaded_files)
         user_content_parts.append(f"[files_included]\n{files_summary}")
+    if assembled_context.document_context:
+        docs_summary = ", ".join(
+            f"{d.title or d.source or 'Doc'} (p.{d.page_number})" if d.page_number is not None else (d.title or d.source or "Doc")
+            for d in assembled_context.document_context
+        )
+        user_content_parts.append(f"[documents_referenced]\n{docs_summary}")
     user_content = "\n\n".join(user_content_parts)
 
     user_msg = DebugMessage(

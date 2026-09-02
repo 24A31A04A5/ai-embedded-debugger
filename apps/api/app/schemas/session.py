@@ -32,6 +32,9 @@ class DebugSessionCreate(BaseModel):
     selected_file_ids: list[uuid.UUID] | None = Field(
         default=None, description="Optional list of uploaded project file IDs to include in context."
     )
+    selected_document_ids: list[uuid.UUID] | None = Field(
+        default=None, description="Optional list of uploaded project document IDs to scope retrieval."
+    )
 
 
 class DebugSessionSummary(BaseModel):

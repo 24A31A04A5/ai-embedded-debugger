@@ -177,6 +177,7 @@ export function useApiClient() {
         options?: {
           userQuestion?: string;
           selectedFileIds?: string[];
+          selectedDocumentIds?: string[];
           sessionId?: string;
         }
       ) =>
@@ -188,6 +189,7 @@ export function useApiClient() {
             serial_logs: serialLogs,
             user_question: options?.userQuestion,
             selected_file_ids: options?.selectedFileIds,
+            selected_document_ids: options?.selectedDocumentIds,
             session_id: options?.sessionId,
           }),
         }),
@@ -221,6 +223,7 @@ export function useApiClient() {
         options?: {
           userQuestion?: string;
           selectedFileIds?: string[];
+          selectedDocumentIds?: string[];
         }
       ): Promise<DebugSessionDetail> =>
         fetchWithAuth(`/projects/${projectId}/sessions`, {
@@ -232,6 +235,7 @@ export function useApiClient() {
             serial_logs: serialLogs,
             user_question: options?.userQuestion,
             selected_file_ids: options?.selectedFileIds,
+            selected_document_ids: options?.selectedDocumentIds,
           }),
         }),
 

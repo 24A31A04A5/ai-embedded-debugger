@@ -38,13 +38,16 @@ class UploadedFileContext(BaseModel):
 
 
 class DocumentContext(BaseModel):
-    """Placeholder model for future RAG document context (Phase 3)."""
+    """Retrieved document chunk context for grounded debugging."""
 
     doc_id: str | None = None
     title: str | None = None
     snippet: str
     source: str | None = None
     score: float | None = None
+    chunk_id: str | None = None
+    page_number: int | None = None
+    chunk_index: int | None = None
 
 
 class AssembledDebugContext(BaseModel):
@@ -106,14 +109,29 @@ class AssembledDebugContext(BaseModel):
                 history_blocks.append(f"[{item.role.upper()}]: {item.content}")
             sections.append("<session_history>\n" + "\n\n".join(history_blocks) + "\n</session_history>")
 
-        # Future RAG document context placeholder
+        # Retrieved datasheet & document context (RAG)
         if self.document_context:
             doc_blocks: list[str] = []
             for doc in self.document_context:
-                source_attr = f' source="{doc.source}"' if doc.source else ""
-                title_attr = f' title="{doc.title}"' if doc.title else ""
-                doc_blocks.append(f"<document{title_attr}{source_attr}>\n{doc.snippet}\n</document>")
-            sections.append("<indexed_documents>\n" + "\n".join(doc_blocks) + "\n</indexed_documents>")
+                attrs: list[str] = []
+                if doc.chunk_id:
+                    attrs.append(f'chunk_id="{doc.chunk_id}"')
+                if doc.doc_id:
+                    attrs.append(f'doc_id="{doc.doc_id}"')
+                doc_name = doc.title or doc.source
+                if doc_name:
+                    attrs.append(f'document="{doc_name}"')
+                if doc.page_number is not None:
+                    attrs.append(f'page="{doc.page_number}"')
+                if doc.score is not None:
+                    attrs.append(f'similarity="{doc.score:.2f}"')
+                attr_str = " " + " ".join(attrs) if attrs else ""
+                doc_blocks.append(f"<document_chunk{attr_str}>\n{doc.snippet}\n</document_chunk>")
+            sections.append(
+                "<retrieved_datasheets_and_documents>\n"
+                + "\n".join(doc_blocks)
+                + "\n</retrieved_datasheets_and_documents>"
+            )
 
         # Truncation notices
         if self.is_truncated and self.truncation_notes:
