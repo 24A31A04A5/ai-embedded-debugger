@@ -72,6 +72,89 @@ class CodeIssue(BaseModel):
         description="Recommended fix or next step for this specific issue.",
     )
 
+class CompilerMessage(BaseModel):
+    """A single parsed GCC/G++/linker diagnostic from the compiler output."""
+
+    message_type: Literal["error", "warning", "note", "linker_error", "linker_warning", "other"] = Field(
+        ..., description="Classification of the compiler/linker message."
+    )
+    severity: Literal["critical", "high", "medium", "low", "info"] = Field(
+        ..., description="Impact level: critical/high for build-blocking errors, medium/low for warnings, info for notes."
+    )
+    is_root_cause: bool = Field(
+        ...,
+        description="True for the primary error that causes the build failure or is the underlying root cause. False for secondary/cascading errors triggered by the root cause.",
+    )
+    file: str | None = Field(
+        default=None,
+        description="Source file name or path reported by the compiler (e.g. 'main.c', 'src/uart.cpp').",
+    )
+    line: int | None = Field(
+        default=None, description="Line number reported by the compiler, if present."
+    )
+    column: int | None = Field(
+        default=None, description="Column number reported by the compiler, if present."
+    )
+    message: str = Field(..., description="The compiler/linker diagnostic message text.")
+    code_context: str | None = Field(
+        default=None,
+        description="Relevant source code line or snippet at the reported location, if available in the provided source code.",
+    )
+    likely_cause: str | None = Field(
+        default=None,
+        description="Brief human-readable explanation of why this error/warning is occurring.",
+    )
+    suggested_fix: str | None = Field(
+        default=None,
+        description="Specific fix suggestion for this individual message.",
+    )
+
+
+class SerialLogEvent(BaseModel):
+    """A classified runtime or serial log event extracted from serial/UART/system logs."""
+
+    event_type: Literal[
+        "runtime_error",
+        "crash_fault",
+        "panic",
+        "watchdog_reset",
+        "brownout_reset",
+        "boot_failure",
+        "timeout",
+        "communication_error",
+        "warning",
+        "repeated_error",
+        "unexpected_value",
+        "timing_anomaly",
+        "info",
+        "other",
+    ] = Field(..., description="Classification of the runtime/serial log event.")
+    severity: Literal["critical", "high", "medium", "low", "info"] = Field(
+        ..., description="Severity of this runtime event: critical/high for crashes/panics/timeouts, medium for warnings, info for normal events."
+    )
+    is_repeated: bool = Field(
+        default=False,
+        description="True if this error or warning appears multiple times consecutively or cyclically in the logs.",
+    )
+    repeat_count: int | None = Field(
+        default=None,
+        description="Estimated number of times this event was repeated in the log stream, if applicable.",
+    )
+    timestamp: str | None = Field(
+        default=None,
+        description="Timestamp or log index reported in the log (e.g. '[12.450s]', '14:23:01.102', or None).",
+    )
+    message: str = Field(..., description="The relevant log line or extracted message text.")
+    evidence: str = Field(..., description="Exact snippet or excerpt from the serial logs.")
+    likely_cause: str | None = Field(
+        default=None,
+        description="Underlying hardware, firmware, or protocol reason for this log event.",
+    )
+    suggested_action: str | None = Field(
+        default=None,
+        description="Recommended action, test, or check for this specific runtime event.",
+    )
+
 
 class DocumentCitation(BaseModel):
     chunk_id: UUID | str | None = Field(
@@ -94,12 +177,20 @@ class DebugResponse(BaseModel):
     problem_observed: str = Field(
         ..., description="A concise summary of the problem based on the evidence."
     )
+    root_cause_summary: str | None = Field(
+        default=None,
+        description="Concise single-sentence summary of the primary root cause identified by the analysis.",
+    )
+    confidence_level: Literal["high", "medium", "low"] | None = Field(
+        default=None,
+        description="Overall confidence level in the diagnosis based on the completeness and directness of provided evidence.",
+    )
     evidence_used: list[str] = Field(
         ..., description="Key pieces of evidence from the code or logs."
     )
     likely_causes: list[LikelyCause] = Field(..., description="Ranked list of likely causes.")
     recommended_steps: list[str] = Field(
-        ..., description="Actionable verification or debugging steps."
+        ..., description="Actionable verification or debugging steps in logical execution order."
     )
     proposed_fix: str = Field(..., description="Explanation of the proposed solution.")
     corrected_code: str | None = Field(
@@ -127,3 +218,18 @@ class DebugResponse(BaseModel):
             "supporting evidence, and a fix suggestion."
         ),
     )
+    compiler_messages: list[CompilerMessage] | None = Field(
+        default=None,
+        description=(
+            "Structured list of parsed GCC/G++/linker diagnostics from the compiler output, identifying root cause vs cascading errors, source location, and individual fix suggestions."
+        ),
+    )
+    serial_log_events: list[SerialLogEvent] | None = Field(
+        default=None,
+        description=(
+            "Classified runtime log events, faults, panics, timeouts, or repeated anomalies extracted from serial logs."
+        ),
+    )
+
+
+
