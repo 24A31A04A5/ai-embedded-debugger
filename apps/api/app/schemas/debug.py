@@ -4,6 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
+
 class DebugRequest(BaseModel):
     firmware_code: str = Field(default="", description="The C/C++ firmware source code.")
     compiler_output: str = Field(default="", description="The compiler error output.")
@@ -26,6 +27,49 @@ class LikelyCause(BaseModel):
     cause: str = Field(..., description="The potential root cause of the issue.")
     plausibility: Literal["high", "medium", "low"] = Field(
         ..., description="How likely this is to be the actual root cause."
+    )
+
+
+class CodeIssue(BaseModel):
+    """A specific C/C++ code-level issue detected by static analysis reasoning."""
+
+    kind: Literal[
+        "syntax_error",
+        "compile_error",
+        "null_pointer",
+        "dangling_pointer",
+        "pointer_misuse",
+        "buffer_overflow",
+        "out_of_bounds",
+        "uninitialized_variable",
+        "incorrect_type",
+        "incorrect_cast",
+        "memory_leak",
+        "resource_misuse",
+        "logic_error",
+        "control_flow",
+        "peripheral_register",
+        "other",
+    ] = Field(..., description="Category of the detected code issue.")
+    severity: Literal["critical", "high", "medium", "low", "info"] = Field(
+        ..., description="Estimated severity of the issue."
+    )
+    confirmed: bool = Field(
+        ...,
+        description="True when there is direct evidence (compiler error, observable crash, etc.). False when suspected from static reasoning only.",
+    )
+    description: str = Field(..., description="Clear explanation of the issue.")
+    location: str | None = Field(
+        default=None,
+        description="File name, function name, or line reference where the issue was identified, if determinable.",
+    )
+    evidence: str | None = Field(
+        default=None,
+        description="Specific code excerpt, error message, or log line that supports this finding.",
+    )
+    suggestion: str | None = Field(
+        default=None,
+        description="Recommended fix or next step for this specific issue.",
     )
 
 
@@ -74,4 +118,12 @@ class DebugResponse(BaseModel):
     grounded_summary: str | None = Field(
         default=None,
         description="Key technical facts or constraints derived directly from referenced datasheets/manuals.",
+    )
+    code_issues: list[CodeIssue] | None = Field(
+        default=None,
+        description=(
+            "Structured list of detected C/C++ code issues. Each entry captures the issue kind, severity, "
+            "whether it is confirmed by direct evidence or only suspected, a description, optional location, "
+            "supporting evidence, and a fix suggestion."
+        ),
     )
