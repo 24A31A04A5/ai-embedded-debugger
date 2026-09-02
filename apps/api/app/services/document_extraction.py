@@ -73,6 +73,7 @@ class DocumentExtractionService:
                 text=full_text,
                 page_count=page_count,
                 metadata=pdf_metadata,
+                page_texts=extracted_page_texts,
             )
 
         except DocumentExtractionError:

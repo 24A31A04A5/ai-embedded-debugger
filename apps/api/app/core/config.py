@@ -34,6 +34,13 @@ class Settings(BaseSettings):
     s3_region: str = "us-east-1"
     max_upload_size_mb: int = 10
 
+    # RAG / Embedding Settings
+    embedding_provider: str = "gemini"
+    embedding_model: str = "gemini-embedding-001"
+    embedding_dimension: int = 3072
+    chunk_size: int = 1000
+    chunk_overlap: int = 200
+
 
 @lru_cache
 def get_settings() -> Settings:

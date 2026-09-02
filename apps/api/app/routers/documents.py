@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
@@ -13,11 +14,16 @@ from app.core.auth import get_current_user
 from app.core.config import get_settings
 from app.core.database import get_db
 from app.models.document import Document
+from app.models.document_chunk import DocumentChunk
 from app.models.project import Project
 from app.models.user import User
-from app.schemas.document import DocumentDetailResponse, DocumentResponse
+from app.schemas.document import DocumentChunkResponse, DocumentDetailResponse, DocumentResponse
 from app.services.document_extraction import DocumentExtractionError, DocumentExtractionService
+from app.services.document_processing import DocumentProcessingService
+from app.services.embedding import EmbeddingError
 from app.services.storage import BaseStorageService, get_storage_service
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/projects", tags=["documents"])
 
@@ -119,8 +125,28 @@ async def upload_document(
         doc.extracted_text = extraction_res.text
         doc.page_count = extraction_res.page_count
         doc.metadata_json = extraction_res.metadata
-        doc.extraction_status = "ready"
-        doc.error_message = None
+
+        # Phase 3.2: chunk and generate embeddings
+        try:
+            processor = DocumentProcessingService(db)
+            processor.process_document(
+                document=doc,
+                extracted_text=extraction_res.text,
+                page_texts=extraction_res.page_texts,
+            )
+            doc.extraction_status = "ready"
+            doc.error_message = None
+        except EmbeddingError as emb_err:
+            # Extraction succeeded but embedding failed — mark as ready
+            # but record the embedding error so it can be retried
+            logger.warning("Embedding failed for document %s: %s", doc.id, emb_err)
+            doc.extraction_status = "ready"
+            doc.error_message = f"Text extracted but embedding failed: {emb_err}"
+        except Exception as proc_err:
+            logger.warning("Document processing failed for %s: %s", doc.id, proc_err)
+            doc.extraction_status = "ready"
+            doc.error_message = f"Text extracted but chunking/embedding failed: {proc_err}"
+
     except DocumentExtractionError as err:
         doc.extraction_status = "failed"
         doc.error_message = str(err)
@@ -198,6 +224,54 @@ def get_project_document(
     res.download_url = storage.get_download_url(doc.storage_key)
     res.text_length = len(doc.extracted_text or "")
     return res
+
+
+@router.get(
+    "/{project_id}/documents/{document_id}/chunks",
+    response_model=list[DocumentChunkResponse],
+)
+def list_document_chunks(
+    project_id: str,
+    document_id: str,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> list[DocumentChunkResponse]:
+    """List all chunks for a document, ordered by chunk_index."""
+    project = get_project_for_user(project_id, current_user, db)
+
+    try:
+        doc_uuid = uuid.UUID(document_id)
+    except ValueError as err:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found",
+        ) from err
+
+    doc = (
+        db.query(Document)
+        .filter(Document.id == doc_uuid, Document.project_id == project.id)
+        .first()
+    )
+    if not doc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Document not found",
+        )
+
+    chunks = (
+        db.query(DocumentChunk)
+        .filter(DocumentChunk.document_id == doc.id)
+        .order_by(DocumentChunk.chunk_index)
+        .all()
+    )
+
+    results: list[DocumentChunkResponse] = []
+    for chunk in chunks:
+        resp = DocumentChunkResponse.model_validate(chunk)
+        resp.has_embedding = chunk.embedding is not None
+        results.append(resp)
+
+    return results
 
 
 @router.delete("/{project_id}/documents/{document_id}", status_code=status.HTTP_204_NO_CONTENT)

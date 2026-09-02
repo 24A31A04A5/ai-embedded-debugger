@@ -46,3 +46,29 @@ class DocumentExtractionResult(BaseModel):
     text: str
     page_count: int
     metadata: dict[str, Any] = Field(default_factory=dict)
+    page_texts: list[str] = Field(default_factory=list)
+
+
+class DocumentChunkResponse(BaseModel):
+    """Schema for a single document chunk in API responses."""
+
+    id: uuid.UUID
+    document_id: uuid.UUID
+    chunk_index: int
+    content: str
+    page_number: int | None = None
+    metadata_json: dict[str, Any] | None = None
+    embedding_model: str | None = None
+    has_embedding: bool = False
+    created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class RawChunk(BaseModel):
+    """In-memory representation of a chunk before persistence."""
+
+    chunk_index: int
+    content: str
+    page_number: int | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
