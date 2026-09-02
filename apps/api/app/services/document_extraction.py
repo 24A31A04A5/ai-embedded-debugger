@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import io
 import logging
+import re
+import unicodedata
 from typing import Any
 
 from pypdf import PdfReader
@@ -17,12 +19,43 @@ class DocumentExtractionError(Exception):
     pass
 
 
+def clean_technical_text(text: str) -> str:
+    """Clean common PDF extraction artifacts while preserving technical formatting.
+
+    - Normalizes Unicode ligatures (ﬁ -> fi, ﬂ -> fl, etc.)
+    - Removes non-printable control characters while preserving standard whitespace
+    - Normalizes excessive blank lines while preserving paragraph and table structure
+    """
+    if not text:
+        return ""
+
+    # Normalize unicode (compatibility decomposition & composition)
+    text = unicodedata.normalize("NFKC", text)
+
+    # Replace null and non-printable control characters (except newline, carriage return, tab)
+    text = re.sub(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]", "", text)
+
+    # Normalize line endings to \n
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+
+    # Clean trailing whitespaces per line while preserving indentation
+    lines = [line.rstrip() for line in text.split("\n")]
+
+    # Normalize 3+ consecutive newlines into 2
+    cleaned_text = "\n".join(lines)
+    cleaned_text = re.sub(r"\n{3,}", "\n\n", cleaned_text)
+
+    return cleaned_text.strip()
+
+
 class DocumentExtractionService:
     """Service responsible for extracting text and metadata from PDF datasheets / documentation."""
 
     @staticmethod
     def extract_pdf_content(pdf_bytes: bytes) -> DocumentExtractionResult:
         """Extract text, page count, and document metadata from raw PDF bytes.
+
+        Preserves page boundaries, technical tables, register blocks, and section headers.
 
         Raises:
             DocumentExtractionError: If the PDF is corrupted, empty, encrypted, or cannot be parsed.
@@ -53,15 +86,17 @@ class DocumentExtractionService:
             extracted_page_texts: list[str] = []
             for i, page in enumerate(reader.pages):
                 try:
-                    page_text = page.extract_text() or ""
-                    extracted_page_texts.append(page_text.strip())
+                    # extract_text preserves layout-oriented text blocks
+                    raw_page_text = page.extract_text() or ""
+                    cleaned_page_text = clean_technical_text(raw_page_text)
+                    extracted_page_texts.append(cleaned_page_text)
                 except Exception as page_err:
                     logger.warning("Error extracting text from page %d: %s", i + 1, page_err)
                     extracted_page_texts.append(f"[Page {i + 1} extraction failed: {page_err}]")
 
             full_text = "\n\n".join(t for t in extracted_page_texts if t).strip()
 
-            # Extract basic PDF metadata if available
+            # Extract PDF metadata if available
             pdf_metadata: dict[str, Any] = {}
             if reader.metadata:
                 for k, v in reader.metadata.items():
@@ -81,3 +116,4 @@ class DocumentExtractionService:
         except (PyPdfError, Exception) as e:
             logger.warning("PDF extraction failed: %s", e)
             raise DocumentExtractionError(f"Failed to extract text from PDF: {e}") from e
+

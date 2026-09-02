@@ -340,14 +340,30 @@ def search_project_documents(
     project = get_project_for_user(project_id, current_user, db)
 
     try:
-        results = retrieval.search(
-            project_id=project.id,
-            query=body.query,
-            top_k=body.top_k,
-            similarity_threshold=body.similarity_threshold,
-            document_ids=body.document_ids,
-        )
+        search_kwargs: dict[str, Any] = {
+            "project_id": project.id,
+            "query": body.query,
+            "top_k": body.top_k,
+            "similarity_threshold": body.similarity_threshold,
+            "document_ids": body.document_ids,
+        }
+        if body.section is not None:
+            search_kwargs["section"] = body.section
+        if body.content_type is not None:
+            search_kwargs["content_type"] = body.content_type
+        if body.page_number is not None:
+            search_kwargs["page_number"] = body.page_number
+        if body.has_register is not None:
+            search_kwargs["has_register"] = body.has_register
+        if body.has_table is not None:
+            search_kwargs["has_table"] = body.has_table
+        if body.has_pinout is not None:
+            search_kwargs["has_pinout"] = body.has_pinout
+
+        results = retrieval.search(**search_kwargs)
     except EmbeddingError as err:
+
+
         logger.error("Failed to generate embedding for query in project %s: %s", project.id, err)
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,

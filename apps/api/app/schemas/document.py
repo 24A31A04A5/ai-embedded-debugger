@@ -89,6 +89,31 @@ class DocumentSearchRequest(BaseModel):
         default=None,
         description="Optional filter by specific document IDs within the project",
     )
+    section: str | None = Field(
+        default=None,
+        description="Optional filter or focus for a specific section or heading",
+    )
+    content_type: str | None = Field(
+        default=None,
+        description="Optional content type filter ('register_description', 'table_or_specification', 'pin_configuration', 'text')",
+    )
+    page_number: int | None = Field(
+        default=None,
+        description="Optional page number filter",
+    )
+    has_register: bool | None = Field(
+        default=None,
+        description="Optional filter for chunks containing register definitions",
+    )
+    has_table: bool | None = Field(
+        default=None,
+        description="Optional filter for chunks containing tables or specifications",
+    )
+    has_pinout: bool | None = Field(
+        default=None,
+        description="Optional filter for chunks containing pinout configurations",
+    )
+
 
 
 class DocumentSearchResultItem(BaseModel):

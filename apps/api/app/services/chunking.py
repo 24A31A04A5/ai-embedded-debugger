@@ -4,21 +4,79 @@ from __future__ import annotations
 
 import logging
 import re
+from typing import Any
 
 from app.schemas.document import RawChunk
 
 logger = logging.getLogger(__name__)
 
+# Regex for common technical datasheet section/table/register headings
+HEADING_REGEX = re.compile(
+    r"^(?:"
+    r"(?:Section|Chapter|Appendix)\s+\d+(?:\.\d+)*[\.:]?\s+[^\n]+"
+    r"|\d+(?:\.\d+)+\s+[A-Za-z][^\n]+"
+    r"|[A-Za-z0-9_]{2,}\s*[-–—]\s*.+"
+    r"|Table\s+\d+(?:[-\.]\d+)*[\.:]?\s+[^\n]+"
+    r")$",
+    re.MULTILINE,
+)
+
+
+
+
+def classify_technical_content(text: str) -> dict[str, Any]:
+    """Detect presence of register maps, tables, pinouts, and technical specs."""
+    meta: dict[str, Any] = {}
+
+    has_register = bool(
+        re.search(
+            r"\b(?:Register|Bit[s]?\s+\d+|R/W|Reset\s+value|0x[0-9A-Fa-f]{2,})\b",
+            text,
+            re.IGNORECASE,
+        )
+    )
+    has_table = bool(
+        "|" in text
+        or "\t" in text
+        or bool(re.search(r"\b(?:Table\s+\d+|Min\s+Typ\s+Max|VIL|VIH|VDD|VSS|Symbol\s+Parameter)\b", text))
+    )
+    has_pinout = bool(
+        re.search(
+            r"\b(?:GPIO\d+|Pin\s+\d+|Pinout|SDA|SCL|MOSI|MISO|SCK|TXD|RXD|PWM|ADC\d+)\b",
+            text,
+            re.IGNORECASE,
+        )
+    )
+
+    if has_register:
+        meta["has_register"] = True
+    if has_table:
+        meta["has_table"] = True
+    if has_pinout:
+        meta["has_pinout"] = True
+
+    if has_register:
+        meta["content_type"] = "register_description"
+    elif has_table:
+        meta["content_type"] = "table_or_specification"
+    elif has_pinout:
+        meta["content_type"] = "pin_configuration"
+    else:
+        meta["content_type"] = "text"
+
+    return meta
+
 
 class DocumentChunkingService:
-    """Split document text into fixed-size, overlap-aware chunks.
+    """Split document text into fixed-size, overlap-aware chunks with technical structure tracking.
 
     Features:
     - Configurable chunk_size and chunk_overlap.
-    - Splits on paragraph / sentence boundaries when possible.
-    - Preserves deterministic ordering (chunk_index).
-    - Tracks which page each chunk belongs to.
-    - Safely handles empty / short documents.
+    - Structure-aware splitting on paragraph / section boundaries.
+    - Section and heading extraction with metadata tagging.
+    - Content-type classification (registers, tables, pinouts, specifications).
+    - Preserves deterministic ordering (chunk_index) and 1-indexed page boundaries.
+    - Safely handles empty, plain, or partially structured documents.
     """
 
     def __init__(self, chunk_size: int = 1000, chunk_overlap: int = 200) -> None:
@@ -53,7 +111,7 @@ class DocumentChunkingService:
         if not segments:
             return []
 
-        # Step 2: merge segments into chunks of ≤ chunk_size with overlap
+        # Step 2: merge segments into chunks of ≤ chunk_size with overlap and metadata
         chunks = self._merge_segments_into_chunks(segments, text, page_map)
         return chunks
 
@@ -79,7 +137,6 @@ class DocumentChunkingService:
     @staticmethod
     def _sentence_split(text: str) -> list[str]:
         """Best-effort sentence tokenisation (regex-based)."""
-        # Split on .!? followed by whitespace or end-of-string
         parts = re.split(r"(?<=[.!?])\s+", text)
         return [p.strip() for p in parts if p.strip()]
 
@@ -89,11 +146,12 @@ class DocumentChunkingService:
         full_text: str,
         page_map: list[tuple[int, int]] | None,
     ) -> list[RawChunk]:
-        """Greedily merge paragraph segments into chunks respecting size limits."""
+        """Greedily merge paragraph segments into chunks respecting size limits and tracking sections."""
         chunks: list[RawChunk] = []
         current_parts: list[str] = []
         current_len = 0
         chunk_index = 0
+        active_section: str | None = None
 
         def _flush() -> None:
             nonlocal chunk_index, current_parts, current_len
@@ -101,12 +159,17 @@ class DocumentChunkingService:
                 return
             chunk_text = "\n\n".join(current_parts)
             page_num = self._page_for_chunk(chunk_text, full_text, page_map)
+
+            meta = classify_technical_content(chunk_text)
+            if active_section:
+                meta["section"] = active_section
+
             chunks.append(
                 RawChunk(
                     chunk_index=chunk_index,
                     content=chunk_text,
                     page_number=page_num,
-                    metadata={},
+                    metadata=meta,
                 )
             )
             chunk_index += 1
@@ -127,6 +190,11 @@ class DocumentChunkingService:
                 current_len = 0
 
         for segment in segments:
+            # Check if segment starts with a section heading
+            first_line = segment.split("\n")[0].strip()
+            if HEADING_REGEX.match(first_line):
+                active_section = first_line
+
             # If a single segment exceeds chunk_size, sub-split it
             if len(segment) > self.chunk_size:
                 _flush()
@@ -148,6 +216,8 @@ class DocumentChunkingService:
 
         _flush()
         return chunks
+
+
 
     def _split_large_segment(self, segment: str) -> list[str]:
         """Break an oversized segment into sentence-level pieces, then

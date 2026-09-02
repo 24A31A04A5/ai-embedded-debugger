@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 import uuid
 from typing import TYPE_CHECKING, Sequence
 
@@ -34,6 +35,30 @@ MAX_SESSION_HISTORY_CHARS = 20_000
 MAX_DOCUMENT_CHARS = 40_000
 MAX_TOTAL_CONTEXT_CHARS = 200_000
 
+# Patterns for embedded technical identifiers
+_MCU_PERIPHERAL_RE = re.compile(
+    r"\b(?:GPIO\w+|TIM\w+|USART\w+|UART\w+|I2C\w*|SPI\w*|DMA\w*|ADC\w*|DAC\w*|RCC\w*|NVIC\w*|"
+    r"SysTick|EXTI\w*|FLASH\w*|PWR\w*|CRC\w*|WWDG|IWDG|"
+    r"ESP32|STM32\w*|nRF\w+|PIC\w*|AVR\w*|Cortex-M\w*|ARM\w*|Xtensa\w*)\b",
+    re.IGNORECASE,
+)
+_REGISTER_RE = re.compile(
+    r"\b(?:0x[0-9A-Fa-f]{2,}|CR\d+|SR\d+|DR\d+|CTRL|CONFIG|STATUS|INT|IRQ|ISR|"
+    r"register|bitfield|bit\s+\d+|R/W|reset\s+value|offset)\b",
+    re.IGNORECASE,
+)
+_PIN_RE = re.compile(
+    r"\b(?:GPIO\d+|Pin\s+\d+|PA\d+|PB\d+|PC\d+|PD\d+|PE\d+|"
+    r"SDA|SCL|MOSI|MISO|SCK|TXD|RXD|PWM|ADC\d+|alternate\s+function)\b",
+    re.IGNORECASE,
+)
+_SPEC_RE = re.compile(
+    r"\b(?:voltage|current|VCC|VDD|VSS|GND|timing|frequency|baud|"
+    r"MHz|kHz|Hz|mA|µA|nA|mV|µV|ms|µs|ns|min|max|typ|operating|"
+    r"electrical|absolute\s+maximum)\b",
+    re.IGNORECASE,
+)
+
 
 def truncate_text(
     text: str, max_chars: int, label: str
@@ -46,6 +71,54 @@ def truncate_text(
     truncated = text[:max_chars]
     note = f"{label} truncated from {orig_len} to {max_chars} characters"
     return truncated, True, orig_len, max_chars, note
+
+
+def _extract_technical_keywords(text: str) -> list[str]:
+    """Extract embedded-domain keywords from text for retrieval query enrichment."""
+    if not text:
+        return []
+    keywords: list[str] = []
+    for pattern in (_MCU_PERIPHERAL_RE, _REGISTER_RE, _PIN_RE, _SPEC_RE):
+        for m in pattern.finditer(text):
+            kw = m.group(0).strip()
+            if kw and kw not in keywords:
+                keywords.append(kw)
+    return keywords[:12]  # cap to avoid query bloat
+
+
+def _build_technical_retrieval_query(
+    user_question: str,
+    compiler_output: str,
+    firmware_code: str,
+    base_query: str,
+) -> str:
+    """Build a semantically richer retrieval query for embedded documentation.
+
+    Appends MCU/peripheral/register/pin/spec identifiers found in the supplied
+    text so that retrieval surfaces register descriptions, pinout tables, and
+    electrical specs ahead of generic prose chunks.
+
+    Returns the enriched query (or the base_query unchanged if no keywords found).
+    """
+    combined = " ".join(
+        [
+            user_question[:500],
+            compiler_output[:300],
+            firmware_code[:500],
+        ]
+    )
+    keywords = _extract_technical_keywords(combined)
+    if not keywords:
+        return base_query
+
+    # Append unique keywords not already in base_query
+    base_lower = base_query.lower()
+    extras = [kw for kw in keywords if kw.lower() not in base_lower]
+    if not extras:
+        return base_query
+
+    enriched = base_query.rstrip() + " " + " ".join(extras)
+    return enriched[:2000]  # guard against excessively long queries
 
 
 class ContextAssemblyService:
@@ -282,6 +355,15 @@ class ContextAssemblyService:
                 retrieval_query = "\n".join(firmware_code.strip().splitlines()[:5])
 
             if retrieval_query:
+                # Phase 5.3: Compose a richer technical query by appending peripheral/register
+                # keywords found in the user question and compiler output. This surfaces
+                # register, pinout and specification chunks over generic text.
+                enriched_query = _build_technical_retrieval_query(
+                    user_question=user_question or "",
+                    compiler_output=compiler_output or "",
+                    firmware_code=firmware_code or "",
+                    base_query=retrieval_query,
+                )
                 try:
                     valid_doc_uuids = None
                     if selected_document_ids:
@@ -291,7 +373,7 @@ class ContextAssemblyService:
 
                     retrieved_results = retrieval_service.search(
                         project_id=project.id,
-                        query=retrieval_query,
+                        query=enriched_query,
                         top_k=top_k,
                         similarity_threshold=similarity_threshold,
                         document_ids=valid_doc_uuids,
@@ -306,6 +388,10 @@ class ContextAssemblyService:
                             chunk_id=str(item.chunk_id),
                             page_number=item.page_number,
                             chunk_index=item.chunk_index,
+                            # Phase 5.3 — embedded source traceability
+                            content_type=(item.metadata_json or {}).get("content_type"),
+                            section=(item.metadata_json or {}).get("section"),
+                            metadata_json=item.metadata_json,
                         )
                         for item in retrieved_results
                     ]

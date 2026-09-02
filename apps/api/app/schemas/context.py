@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -38,7 +38,12 @@ class UploadedFileContext(BaseModel):
 
 
 class DocumentContext(BaseModel):
-    """Retrieved document chunk context for grounded debugging."""
+    """Retrieved document chunk context for grounded embedded debugging.
+
+    Phase 5.3: Extended with embedded-specific technical traceability fields so
+    register, pinout, and specification chunks carry their classification into
+    the Gemini prompt without inventing additional context.
+    """
 
     doc_id: str | None = None
     title: str | None = None
@@ -48,6 +53,11 @@ class DocumentContext(BaseModel):
     chunk_id: str | None = None
     page_number: int | None = None
     chunk_index: int | None = None
+
+    # Phase 5.3 — embedded source traceability
+    content_type: str | None = None          # register_description | table_or_specification | pin_configuration | text
+    section: str | None = None               # section heading from the source document
+    metadata_json: dict[str, Any] | None = None  # full chunk metadata passthrough
 
 
 class AssembledDebugContext(BaseModel):
@@ -110,6 +120,8 @@ class AssembledDebugContext(BaseModel):
             sections.append("<session_history>\n" + "\n\n".join(history_blocks) + "\n</session_history>")
 
         # Retrieved datasheet & document context (RAG)
+        # Phase 5.3: Emit embedded-specific source annotations (source_type, section)
+        # so Gemini can produce grounded citations with precise technical traceability.
         if self.document_context:
             doc_blocks: list[str] = []
             for doc in self.document_context:
@@ -123,8 +135,15 @@ class AssembledDebugContext(BaseModel):
                     attrs.append(f'document="{doc_name}"')
                 if doc.page_number is not None:
                     attrs.append(f'page="{doc.page_number}"')
+                if doc.chunk_index is not None:
+                    attrs.append(f'chunk_index="{doc.chunk_index}"')
                 if doc.score is not None:
                     attrs.append(f'similarity="{doc.score:.2f}"')
+                # Phase 5.3 — embedded source type and section
+                if doc.content_type:
+                    attrs.append(f'source_type="{doc.content_type}"')
+                if doc.section:
+                    attrs.append(f'section="{doc.section}"')
                 attr_str = " " + " ".join(attrs) if attrs else ""
                 doc_blocks.append(f"<document_chunk{attr_str}>\n{doc.snippet}\n</document_chunk>")
             sections.append(
