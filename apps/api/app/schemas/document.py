@@ -72,3 +72,43 @@ class RawChunk(BaseModel):
     content: str
     page_number: int | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class DocumentSearchRequest(BaseModel):
+    """Request payload for semantic vector search across project documents."""
+
+    query: str = Field(..., min_length=1, description="Search query text")
+    top_k: int = Field(default=5, ge=1, le=50, description="Maximum number of chunks to return")
+    similarity_threshold: float = Field(
+        default=0.0,
+        ge=-1.0,
+        le=1.0,
+        description="Minimum cosine similarity threshold (between -1.0 and 1.0)",
+    )
+    document_ids: list[uuid.UUID] | None = Field(
+        default=None,
+        description="Optional filter by specific document IDs within the project",
+    )
+
+
+class DocumentSearchResultItem(BaseModel):
+    """Schema for an individual search result chunk with traceability metadata."""
+
+    chunk_id: uuid.UUID
+    document_id: uuid.UUID
+    document_name: str
+    content: str
+    page_number: int | None = None
+    chunk_index: int
+    similarity_score: float
+    metadata_json: dict[str, Any] | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DocumentSearchResponse(BaseModel):
+    """Response payload for document search."""
+
+    query: str
+    results: list[DocumentSearchResultItem]
+    total_results: int

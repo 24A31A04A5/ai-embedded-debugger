@@ -17,15 +17,29 @@ from app.models.document import Document
 from app.models.document_chunk import DocumentChunk
 from app.models.project import Project
 from app.models.user import User
-from app.schemas.document import DocumentChunkResponse, DocumentDetailResponse, DocumentResponse
+from app.schemas.document import (
+    DocumentChunkResponse,
+    DocumentDetailResponse,
+    DocumentResponse,
+    DocumentSearchRequest,
+    DocumentSearchResponse,
+)
 from app.services.document_extraction import DocumentExtractionError, DocumentExtractionService
 from app.services.document_processing import DocumentProcessingService
 from app.services.embedding import EmbeddingError
+from app.services.retrieval import DocumentRetrievalService
 from app.services.storage import BaseStorageService, get_storage_service
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/projects", tags=["documents"])
+
+
+def get_retrieval_service(
+    db: Annotated[Session, Depends(get_db)],
+) -> DocumentRetrievalService:
+    """Dependency: return a DocumentRetrievalService instance."""
+    return DocumentRetrievalService(db)
 
 
 def get_project_for_user(
@@ -309,3 +323,46 @@ def delete_project_document(
     db.commit()
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
+    "/{project_id}/documents/search",
+    response_model=DocumentSearchResponse,
+)
+def search_project_documents(
+    project_id: str,
+    body: DocumentSearchRequest,
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+    retrieval: Annotated[DocumentRetrievalService, Depends(get_retrieval_service)],
+) -> DocumentSearchResponse:
+    """Search for relevant document chunks within a user's project using vector similarity."""
+    project = get_project_for_user(project_id, current_user, db)
+
+    try:
+        results = retrieval.search(
+            project_id=project.id,
+            query=body.query,
+            top_k=body.top_k,
+            similarity_threshold=body.similarity_threshold,
+            document_ids=body.document_ids,
+        )
+    except EmbeddingError as err:
+        logger.error("Failed to generate embedding for query in project %s: %s", project.id, err)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Embedding service failure: {err}",
+        ) from err
+    except Exception as err:
+        logger.error("Vector retrieval failed for project %s: %s", project.id, err)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to execute document search",
+        ) from err
+
+    return DocumentSearchResponse(
+        query=body.query,
+        results=results,
+        total_results=len(results),
+    )
+

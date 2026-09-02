@@ -82,6 +82,25 @@ export type DocumentDetail = DocumentMetadata & {
   text_length: number;
 };
 
+/* ── Document Search types (Phase 3.3) ── */
+
+export type DocumentSearchResultItem = {
+  chunk_id: string;
+  document_id: string;
+  document_name: string;
+  content: string;
+  page_number: number | null;
+  chunk_index: number;
+  similarity_score: number;
+  metadata_json: Record<string, unknown> | null;
+};
+
+export type DocumentSearchResponse = {
+  query: string;
+  results: DocumentSearchResultItem[];
+  total_results: number;
+};
+
 export function useApiClient() {
   const { getToken } = useAuth();
 
@@ -273,6 +292,26 @@ export function useApiClient() {
       ): Promise<null> =>
         fetchWithAuth(`/projects/${projectId}/documents/${documentId}`, {
           method: "DELETE",
+        }),
+
+      // ── Document Search (Phase 3.3) ──
+      searchDocuments: (
+        projectId: string,
+        query: string,
+        options?: {
+          topK?: number;
+          similarityThreshold?: number;
+          documentIds?: string[];
+        }
+      ): Promise<DocumentSearchResponse> =>
+        fetchWithAuth(`/projects/${projectId}/documents/search`, {
+          method: "POST",
+          body: JSON.stringify({
+            query,
+            top_k: options?.topK ?? 5,
+            similarity_threshold: options?.similarityThreshold ?? 0.0,
+            document_ids: options?.documentIds,
+          }),
         }),
     }),
     [fetchWithAuth, fetchRawAuth]
