@@ -24,6 +24,10 @@ def build_engine(
     }
     if poolclass is not None:
         engine_kwargs["poolclass"] = poolclass
+    else:
+        engine_kwargs["pool_size"] = settings.database_pool_size
+        engine_kwargs["max_overflow"] = settings.database_max_overflow
+        engine_kwargs["pool_recycle"] = settings.database_pool_recycle
 
     return create_engine(settings.database_url, **engine_kwargs)
 

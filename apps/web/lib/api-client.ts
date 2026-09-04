@@ -1,7 +1,24 @@
 import { useAuth } from "@clerk/nextjs";
 import { useCallback, useMemo } from "react";
+/**
+ * Normalizes the configured API URL:
+ * - Trims trailing slashes
+ * - Appends /v1 if omitted
+ * - Falls back to http://localhost:8000/v1 for local development
+ */
+export function getApiBaseUrl(): string {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!envUrl || !envUrl.trim()) {
+    return "http://localhost:8000/v1";
+  }
+  const trimmed = envUrl.trim().replace(/\/+$/, "");
+  if (!trimmed.endsWith("/v1")) {
+    return `${trimmed}/v1`;
+  }
+  return trimmed;
+}
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/v1";
+const API_URL = getApiBaseUrl();
 
 export type ProjectFileMetadata = {
   id: string;

@@ -48,5 +48,8 @@ pnpm-debug.log*
 # OS
 Thumbs.db
 
-# Docker volumes (local data)
+# Docker volumes and local storage data
 .docker-data/
+storage_data/
+.env.production
+.env.production.local

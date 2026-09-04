@@ -14,7 +14,7 @@ sys.path.insert(0, str(REPO_ROOT / "apps" / "api"))
 from app.core.config import get_settings  # noqa: E402
 from app.core.database import build_engine  # noqa: E402
 from app.db.base import Base  # noqa: E402
-from app.models import Project, User  # noqa: E402, F401
+import app.models  # noqa: E402, F401
 
 config = context.config
 

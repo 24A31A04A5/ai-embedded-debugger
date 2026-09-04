@@ -1,0 +1,63 @@
+# =============================================================================
+# Platform-Agnostic Production & Staging Orchestration
+# =============================================================================
+services:
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_CONNECT_TIMEOUT=${DATABASE_CONNECT_TIMEOUT:-5}
+      - DATABASE_POOL_SIZE=${DATABASE_POOL_SIZE:-5}
+      - DATABASE_MAX_OVERFLOW=${DATABASE_MAX_OVERFLOW:-10}
+      - DATABASE_POOL_RECYCLE=${DATABASE_POOL_RECYCLE:-300}
+      - APP_ENV=${APP_ENV:-production}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000}
+      - STORAGE_BACKEND=${STORAGE_BACKEND:-local}
+      - LOCAL_STORAGE_PATH=${LOCAL_STORAGE_PATH:-storage_data}
+      - MAX_UPLOAD_SIZE_MB=${MAX_UPLOAD_SIZE_MB:-10}
+      - RATE_LIMIT_ENABLED=${RATE_LIMIT_ENABLED:-true}
+      - RATE_LIMIT_GENERAL_REQUESTS_PER_MINUTE=${RATE_LIMIT_GENERAL_REQUESTS_PER_MINUTE:-120}
+      - RATE_LIMIT_AI_REQUESTS_PER_MINUTE=${RATE_LIMIT_AI_REQUESTS_PER_MINUTE:-20}
+      - RATE_LIMIT_UPLOAD_REQUESTS_PER_MINUTE=${RATE_LIMIT_UPLOAD_REQUESTS_PER_MINUTE:-30}
+      - ANALYTICS_ENABLED=${ANALYTICS_ENABLED:-true}
+      - REQUEST_ID_HEADER_NAME=${REQUEST_ID_HEADER_NAME:-X-Request-ID}
+      - EXPOSE_ERROR_DETAILS=${EXPOSE_ERROR_DETAILS:-false}
+    volumes:
+      - storage_data:/app/storage_data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000/v1}
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000/v1}
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  storage_data:
+    driver: local
