@@ -24,7 +24,7 @@ export function CodeViewer({ code, language = "c", className = "" }: CodeViewerP
   }, [code, language]);
 
   return (
-    <pre className={`overflow-x-auto rounded-md border border-[var(--color-code-border)] bg-[#0d1117] p-4 font-mono text-[13px] text-foreground/80 ${className}`}>
+    <pre className={`max-w-full overflow-x-auto rounded-md border border-[var(--color-code-border)] bg-[#0d1117] p-4 font-mono text-[13px] text-foreground/80 ${className}`}>
       <code ref={codeRef} className={`language-${language}`}>
         {code}
       </code>

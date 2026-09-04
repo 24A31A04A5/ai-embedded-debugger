@@ -53,12 +53,13 @@ export function CodeEditor({
 
       {/* Transparent Textarea Overlay */}
       <textarea
-        className="absolute inset-0 m-0 w-full resize-none bg-transparent p-4 text-transparent caret-white outline-none placeholder:text-muted-foreground/30"
+        className="absolute inset-0 m-0 w-full resize-none bg-transparent p-4 font-mono text-[13px] leading-6 whitespace-pre-wrap break-words text-transparent caret-white outline-none placeholder:text-muted-foreground/30 focus-visible:ring-0"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onScroll={handleScroll}
         placeholder={placeholder}
         spellCheck={false}
+        aria-label="Code editor input"
       />
     </div>
   );

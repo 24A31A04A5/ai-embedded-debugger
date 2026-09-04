@@ -82,7 +82,7 @@ function Toast({
 
   return (
     <div
-      className={`fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-lg border px-4 py-3 text-sm shadow-lg backdrop-blur-sm animate-in slide-in-from-bottom-4 ${
+      className={`fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 z-50 flex items-center gap-2 rounded-lg border px-4 py-3 text-sm shadow-lg backdrop-blur-sm sm:max-w-md animate-in slide-in-from-bottom-4 ${
         type === "success"
           ? "border-[var(--color-emerald)]/30 bg-[var(--color-emerald)]/10 text-[var(--color-emerald)]"
           : "border-[var(--color-error-red)]/30 bg-[var(--color-error-red)]/10 text-[var(--color-error-red)]"
@@ -93,8 +93,12 @@ function Toast({
       ) : (
         <AlertCircle className="h-4 w-4 shrink-0" />
       )}
-      <span className="max-w-xs truncate">{message}</span>
-      <button onClick={onClose} className="ml-1 opacity-60 hover:opacity-100">
+      <span className="min-w-0 flex-1 truncate">{message}</span>
+      <button
+        onClick={onClose}
+        className="ml-1 flex h-6 w-6 shrink-0 items-center justify-center rounded opacity-60 hover:opacity-100"
+        aria-label="Close notification"
+      >
         <X className="h-3.5 w-3.5" />
       </button>
     </div>
@@ -107,21 +111,26 @@ function Toast({
 
 function AppHeader({
   sidebarOpen,
+  mobileSidebarOpen,
   onToggleSidebar,
+  onToggleMobileSidebar,
   activeProject,
 }: {
   sidebarOpen: boolean;
+  mobileSidebarOpen: boolean;
   onToggleSidebar: () => void;
+  onToggleMobileSidebar: () => void;
   activeProject?: Project;
 }) {
   return (
-    <header className="flex h-12 shrink-0 items-center border-b border-border/60 bg-[var(--color-code-bg)] px-3">
+    <header className="flex h-12 shrink-0 items-center justify-between border-b border-border/60 bg-[var(--color-code-bg)] px-3">
       {/* Left — branding + sidebar toggle */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 min-w-0">
+        {/* Desktop sidebar toggle */}
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 text-muted-foreground hover:text-foreground"
+          className="hidden md:inline-flex h-7 w-7 text-muted-foreground hover:text-foreground"
           onClick={onToggleSidebar}
           aria-label={sidebarOpen ? "Close sidebar" : "Open sidebar"}
         >
@@ -132,9 +141,24 @@ function AppHeader({
           )}
         </Button>
 
-        <Separator orientation="vertical" className="mx-1 h-5" />
+        {/* Mobile sidebar toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="md:hidden h-7 w-7 text-muted-foreground hover:text-foreground"
+          onClick={onToggleMobileSidebar}
+          aria-label={mobileSidebarOpen ? "Close projects menu" : "Open projects menu"}
+        >
+          {mobileSidebarOpen ? (
+            <PanelLeftClose className="h-4 w-4" />
+          ) : (
+            <PanelLeftOpen className="h-4 w-4" />
+          )}
+        </Button>
 
-        <Link href="/" className="flex items-center gap-2" aria-label="Home">
+        <Separator orientation="vertical" className="mx-1 h-5 hidden sm:block" />
+
+        <Link href="/" className="flex items-center gap-2 shrink-0" aria-label="Home">
           <div className="flex h-5 w-5 items-center justify-center rounded bg-[var(--color-emerald)]">
             <Bug className="h-3 w-3 text-[var(--color-code-bg)]" />
           </div>
@@ -145,23 +169,23 @@ function AppHeader({
       </div>
 
       {/* Center — project name */}
-      <div className="ml-4 flex items-center gap-2">
-        <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" />
-        <span className="text-sm text-foreground/90">
+      <div className="mx-2 flex items-center gap-1.5 sm:gap-2 min-w-0">
+        <FolderOpen className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+        <span className="max-w-[120px] sm:max-w-[220px] md:max-w-xs truncate text-xs sm:text-sm text-foreground/90 font-medium">
           {activeProject ? activeProject.name : "Select a project"}
         </span>
-        <ChevronDown className="h-3 w-3 text-muted-foreground" />
+        <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0 hidden sm:inline" />
       </div>
 
       {/* Right — status + avatar */}
-      <div className="ml-auto flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         <Badge
           variant="outline"
           className="hidden border-[var(--color-emerald)]/30 text-[var(--color-emerald)] text-[10px] sm:inline-flex"
         >
           Ready
         </Badge>
-        <Separator orientation="vertical" className="h-5" />
+        <Separator orientation="vertical" className="h-5 hidden sm:block" />
         <UserButton />
       </div>
     </header>
@@ -177,30 +201,45 @@ function Sidebar({
   projects,
   onCreateProject,
   onSelectProject,
+  onClose,
 }: {
   open: boolean;
   projects: Project[];
   onCreateProject: () => void;
   onSelectProject: (id: string) => void;
+  onClose?: () => void;
 }) {
   if (!open) return null;
 
   return (
-    <aside className="flex w-56 shrink-0 flex-col border-r border-border/60 bg-[var(--color-code-bg)]">
+    <aside className="flex h-full w-full sm:w-56 shrink-0 flex-col border-r border-border/60 bg-[var(--color-code-bg)]">
       {/* Projects header */}
       <div className="flex items-center justify-between px-3 py-2.5">
         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Projects
         </span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 text-muted-foreground hover:text-[var(--color-emerald)]"
-          aria-label="New project"
-          onClick={onCreateProject}
-        >
-          <Plus className="h-3.5 w-3.5" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 text-muted-foreground hover:text-[var(--color-emerald)]"
+            aria-label="New project"
+            onClick={onCreateProject}
+          >
+            <Plus className="h-3.5 w-3.5" />
+          </Button>
+          {onClose && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground md:hidden"
+              aria-label="Close menu"
+              onClick={onClose}
+            >
+              <X className="h-3.5 w-3.5" />
+            </Button>
+          )}
+        </div>
       </div>
 
       <Separator />
@@ -221,14 +260,14 @@ function Sidebar({
               onClick={() => onSelectProject(project.id)}
               className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition-colors ${
                 project.active
-                  ? "bg-[var(--color-surface-overlay)] text-foreground"
+                  ? "bg-[var(--color-surface-overlay)] text-foreground font-medium"
                   : "text-muted-foreground hover:bg-[var(--color-surface-overlay)]/50 hover:text-foreground"
               }`}
             >
               <FolderOpen className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">{project.name}</span>
+              <span className="truncate" title={project.name}>{project.name}</span>
               {project.active && (
-                <div className="ml-auto h-1.5 w-1.5 rounded-full bg-[var(--color-emerald)]" />
+                <div className="ml-auto h-1.5 w-1.5 rounded-full bg-[var(--color-emerald)] shrink-0" />
               )}
             </button>
           ))
@@ -350,13 +389,15 @@ function ProjectFilesPanel({
           >
             {fileIcon(f.file_type, f.filename)}
             <div className="flex min-w-0 flex-1 flex-col">
-              <span className="truncate text-xs">{f.filename}</span>
+              <span className="truncate text-xs font-medium text-foreground/90" title={f.filename}>
+                {f.filename}
+              </span>
               <span className="text-[10px] text-muted-foreground/60">
                 {formatSize(f.size_bytes)}
               </span>
             </div>
             <button
-              className="ml-auto hidden h-5 w-5 shrink-0 items-center justify-center rounded text-muted-foreground/40 hover:text-[var(--color-error-red)] group-hover:flex"
+              className="ml-auto flex h-6 w-6 sm:h-5 sm:w-5 shrink-0 items-center justify-center rounded text-muted-foreground/50 hover:text-[var(--color-error-red)] sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
               onClick={(e) => {
                 e.stopPropagation();
                 onDeleteFile(f.id);
@@ -409,13 +450,15 @@ function SessionsPanel({
             >
               <Clock className="h-3.5 w-3.5 shrink-0" />
               <div className="flex min-w-0 flex-1 flex-col">
-                <span className="truncate text-xs">{s.title}</span>
+                <span className="truncate text-xs font-medium text-foreground/90" title={s.title}>
+                  {s.title}
+                </span>
                 <span className="text-[10px] text-muted-foreground/60">
                   {new Date(s.created_at).toLocaleDateString()}
                 </span>
               </div>
               <button
-                className="ml-auto hidden h-5 w-5 shrink-0 items-center justify-center rounded text-muted-foreground/40 hover:text-[var(--color-error-red)] group-hover:flex"
+                className="ml-auto flex h-6 w-6 sm:h-5 sm:w-5 shrink-0 items-center justify-center rounded text-muted-foreground/50 hover:text-[var(--color-error-red)] sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                 onClick={(e) => {
                   e.stopPropagation();
                   onDeleteSession(s.id);
@@ -783,24 +826,26 @@ function DiagnosisPanel({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={`h-8 w-8 p-0 ${
+                    className={`h-9 w-9 p-0 rounded-md ${
                       feedback?.rating === 1
                         ? "bg-[var(--color-emerald)]/20 text-[var(--color-emerald)]"
                         : "text-muted-foreground hover:text-[var(--color-emerald)]"
                     }`}
                     onClick={() => onSubmitFeedback(1)}
+                    aria-label="Mark diagnosis as helpful"
                   >
                     <ThumbsUp className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className={`h-8 w-8 p-0 ${
+                    className={`h-9 w-9 p-0 rounded-md ${
                       feedback?.rating === 0
                         ? "bg-[var(--color-error-red)]/20 text-[var(--color-error-red)]"
                         : "text-muted-foreground hover:text-[var(--color-error-red)]"
                     }`}
                     onClick={() => onSubmitFeedback(0)}
+                    aria-label="Mark diagnosis as unhelpful"
                   >
                     <ThumbsDown className="h-4 w-4" />
                   </Button>
@@ -818,8 +863,11 @@ function DiagnosisPanel({
    Main Area
    ──────────────────────────────────────────────────────────── */
 
+type WorkspaceView = "editor" | "diagnosis" | "files";
+
 function MainArea({ activeProject }: { activeProject?: Project }) {
   const [activeTab, setActiveTab] = useState<EvidenceTab>("firmware");
+  const [activeView, setActiveView] = useState<WorkspaceView>("editor");
 
   const [firmwareCode, setFirmwareCode] = useState("");
   const [compilerOutput, setCompilerOutput] = useState("");
@@ -937,6 +985,8 @@ function MainArea({ activeProject }: { activeProject?: Project }) {
             setActiveTab("serial");
           }
         }
+        // Auto switch view to editor so user sees loaded file
+        setActiveView("editor");
       } catch (e) {
         console.error("Failed to load file content", e);
         showToast("Failed to load file content", "error");
@@ -995,6 +1045,8 @@ function MainArea({ activeProject }: { activeProject?: Project }) {
       const aiMsg = session.messages.find((m) => m.role === "assistant");
       if (aiMsg) {
         setDiagnosis(JSON.parse(aiMsg.content));
+        // On small screens, automatically switch to diagnosis view to show results
+        setActiveView("diagnosis");
       }
     } catch (e) {
       console.error(e);
@@ -1037,6 +1089,8 @@ function MainArea({ activeProject }: { activeProject?: Project }) {
         const aiMsg = sessionData.messages.find((m) => m.role === "assistant");
         if (aiMsg) {
           setDiagnosis(JSON.parse(aiMsg.content));
+          // Switch to diagnosis on small screens
+          setActiveView("diagnosis");
         }
         
         setFeedback(feedbackData);
@@ -1085,9 +1139,9 @@ function MainArea({ activeProject }: { activeProject?: Project }) {
 
   if (!activeProject) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center bg-[var(--color-surface-raised)] text-muted-foreground">
+      <div className="flex flex-1 flex-col items-center justify-center bg-[var(--color-surface-raised)] text-muted-foreground p-6 text-center">
         <FolderOpen className="h-10 w-10 opacity-20 mb-4" />
-        <p>Select or create a project from the sidebar.</p>
+        <p className="text-sm">Select or create a project from the sidebar.</p>
       </div>
     );
   }
@@ -1095,20 +1149,20 @@ function MainArea({ activeProject }: { activeProject?: Project }) {
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       {/* Main header */}
-      <div className="flex items-center justify-between border-b border-border/60 bg-[var(--color-surface-raised)] px-4 py-2.5">
-        <div className="flex items-center gap-2">
-          <FolderOpen className="h-4 w-4 text-[var(--color-emerald)]" />
-          <h1 className="text-sm font-semibold text-foreground">
+      <div className="flex items-center justify-between border-b border-border/60 bg-[var(--color-surface-raised)] px-3 sm:px-4 py-2 sm:py-2.5 min-w-0">
+        <div className="flex items-center gap-2 min-w-0">
+          <FolderOpen className="h-4 w-4 text-[var(--color-emerald)] shrink-0" />
+          <h1 className="text-xs sm:text-sm font-semibold text-foreground truncate max-w-[140px] sm:max-w-xs md:max-w-md">
             {activeProject.name}
           </h1>
           {isLoadingFile && (
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground shrink-0" />
           )}
         </div>
 
         <Button
           size="sm"
-          className="gap-2 text-xs font-semibold"
+          className="gap-1.5 sm:gap-2 text-xs font-semibold shrink-0 px-2.5 sm:px-3"
           onClick={handleAnalyze}
           disabled={
             isAnalyzing ||
@@ -1122,14 +1176,79 @@ function MainArea({ activeProject }: { activeProject?: Project }) {
           ) : (
             <Zap className="h-3.5 w-3.5" />
           )}
-          {isAnalyzing ? "Analyzing..." : "Analyze with AI"}
+          <span>{isAnalyzing ? "Analyzing..." : "Analyze with AI"}</span>
         </Button>
+      </div>
+
+      {/* Responsive workspace switcher for < lg screens */}
+      <div
+        className="flex border-b border-border/60 bg-[var(--color-code-bg)] lg:hidden"
+        role="tablist"
+        aria-label="Workspace views"
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeView === "editor"}
+          onClick={() => setActiveView("editor")}
+          className={`flex flex-1 items-center justify-center gap-1.5 py-2 px-2 text-xs font-medium border-b-2 transition-colors ${
+            activeView === "editor"
+              ? "border-[var(--color-emerald)] text-foreground bg-[var(--color-surface-overlay)]/30"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Code2 className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">Editor</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeView === "diagnosis"}
+          onClick={() => setActiveView("diagnosis")}
+          className={`flex flex-1 items-center justify-center gap-1.5 py-2 px-2 text-xs font-medium border-b-2 transition-colors ${
+            activeView === "diagnosis"
+              ? "border-[var(--color-emerald)] text-foreground bg-[var(--color-surface-overlay)]/30"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Zap className="h-3.5 w-3.5 shrink-0 text-[var(--color-emerald)]" />
+          <span className="truncate">AI Diagnosis</span>
+          {diagnosis && (
+            <span className="h-2 w-2 rounded-full bg-[var(--color-emerald)] shrink-0" />
+          )}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={activeView === "files"}
+          onClick={() => setActiveView("files")}
+          className={`flex flex-1 items-center justify-center gap-1.5 py-2 px-2 text-xs font-medium border-b-2 transition-colors ${
+            activeView === "files"
+              ? "border-[var(--color-emerald)] text-foreground bg-[var(--color-surface-overlay)]/30"
+              : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <FolderOpen className="h-3.5 w-3.5 shrink-0" />
+          <span className="truncate">Files & History</span>
+          {(files.length > 0 || sessions.length > 0) && (
+            <Badge
+              variant="outline"
+              className="text-[9px] px-1 py-0 h-4 border-border/60 text-muted-foreground shrink-0"
+            >
+              {files.length + sessions.length}
+            </Badge>
+          )}
+        </button>
       </div>
 
       {/* Content — files panel + evidence + diagnosis */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left — files & sessions sidebar */}
-        <div className="hidden w-52 shrink-0 flex-col border-r border-border/60 bg-[var(--color-code-bg)] lg:flex">
+        {/* Left — files & sessions sidebar: visible on desktop, or when activeView is 'files' on mobile/tablet */}
+        <div
+          className={`w-full lg:w-56 shrink-0 flex-col border-r border-border/60 bg-[var(--color-code-bg)] ${
+            activeView === "files" ? "flex flex-1 lg:flex-none" : "hidden lg:flex"
+          }`}
+        >
           <ProjectFilesPanel
             files={files}
             selectedFileId={selectedFileId}
@@ -1146,8 +1265,12 @@ function MainArea({ activeProject }: { activeProject?: Project }) {
           />
         </div>
 
-        {/* Center — evidence input */}
-        <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Center — evidence input: visible on desktop, or when activeView is 'editor' on mobile/tablet */}
+        <div
+          className={`flex flex-1 flex-col overflow-hidden ${
+            activeView === "editor" ? "flex" : "hidden lg:flex"
+          }`}
+        >
           <EvidenceTabBar active={activeTab} onTabChange={setActiveTab} />
 
           {/* Tab panels */}
@@ -1171,14 +1294,20 @@ function MainArea({ activeProject }: { activeProject?: Project }) {
           </div>
         </div>
 
-        {/* Right — diagnosis */}
-        <DiagnosisPanel 
-          diagnosis={diagnosis} 
-          isAnalyzing={isAnalyzing}
-          sessionId={activeSessionId}
-          feedback={feedback}
-          onSubmitFeedback={handleSubmitFeedback}
-        />
+        {/* Right — diagnosis: visible on desktop, or when activeView is 'diagnosis' on mobile/tablet */}
+        <div
+          className={`flex flex-1 flex-col overflow-hidden border-t border-border/60 lg:border-t-0 lg:border-l ${
+            activeView === "diagnosis" ? "flex" : "hidden lg:flex"
+          }`}
+        >
+          <DiagnosisPanel
+            diagnosis={diagnosis}
+            isAnalyzing={isAnalyzing}
+            sessionId={activeSessionId}
+            feedback={feedback}
+            onSubmitFeedback={handleSubmitFeedback}
+          />
+        </div>
       </div>
 
       {/* Toast */}
@@ -1199,6 +1328,7 @@ function MainArea({ activeProject }: { activeProject?: Project }) {
 
 export default function WorkspacePage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -1245,12 +1375,37 @@ export default function WorkspacePage() {
     <div className="flex h-screen flex-col overflow-hidden bg-background">
       <AppHeader
         sidebarOpen={sidebarOpen}
+        mobileSidebarOpen={mobileSidebarOpen}
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+        onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
         activeProject={activeProject}
       />
 
+      {/* Mobile Drawer for Projects (< md) */}
+      {mobileSidebarOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in"
+            onClick={() => setMobileSidebarOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="fixed inset-y-0 left-0 z-50 flex w-64 max-w-[85vw] flex-col border-r border-border/60 bg-[var(--color-code-bg)] shadow-2xl animate-in slide-in-from-left duration-200">
+            <Sidebar
+              open={true}
+              projects={projects}
+              onCreateProject={handleCreateProject}
+              onSelectProject={(id) => {
+                handleSelectProject(id);
+                setMobileSidebarOpen(false);
+              }}
+              onClose={() => setMobileSidebarOpen(false)}
+            />
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar — hidden on mobile via CSS, toggled on desktop */}
+        {/* Desktop Sidebar (>= md) */}
         <div className="hidden md:contents">
           {loading ? (
             <aside className="flex w-56 shrink-0 items-center justify-center border-r border-border/60 bg-[var(--color-code-bg)] text-muted-foreground">
