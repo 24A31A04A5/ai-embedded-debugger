@@ -78,6 +78,18 @@ def submit_feedback(
     db.commit()
     db.refresh(feedback)
 
+    from app.schemas.analytics import AnalyticsEventType
+    from app.services.analytics import AnalyticsService
+
+    AnalyticsService.track_event(
+        db,
+        AnalyticsEventType.FEEDBACK_SUBMITTED,
+        user_id=current_user.id,
+        project_id=db_session.project_id,
+        session_id=session_uuid,
+        metadata={"rating": request.rating, "has_reason": bool(request.reason)},
+    )
+
     return FeedbackResponse.model_validate(feedback)
 
 

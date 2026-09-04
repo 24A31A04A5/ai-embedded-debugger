@@ -6,21 +6,28 @@ from pydantic import BaseModel, Field
 
 
 class DebugRequest(BaseModel):
-    firmware_code: str = Field(default="", description="The C/C++ firmware source code.")
-    compiler_output: str = Field(default="", description="The compiler error output.")
-    serial_logs: str = Field(default="", description="The serial monitor or runtime logs.")
+    firmware_code: str = Field(
+        default="", max_length=200_000, description="The C/C++ firmware source code."
+    )
+    compiler_output: str = Field(
+        default="", max_length=200_000, description="The compiler error output."
+    )
+    serial_logs: str = Field(
+        default="", max_length=200_000, description="The serial monitor or runtime logs."
+    )
     user_question: str | None = Field(
-        default=None, description="Optional specific debugging question or prompt."
+        default=None, max_length=10_000, description="Optional specific debugging question or prompt."
     )
     selected_file_ids: list[UUID] | None = Field(
-        default=None, description="Optional list of uploaded project file IDs to include in context."
+        default=None, max_length=50, description="Optional list of uploaded project file IDs to include in context."
     )
     selected_document_ids: list[UUID] | None = Field(
-        default=None, description="Optional list of uploaded project document IDs to scope retrieval."
+        default=None, max_length=50, description="Optional list of uploaded project document IDs to scope retrieval."
     )
     session_id: UUID | None = Field(
         default=None, description="Optional session ID to incorporate prior session history."
     )
+
 
 
 class LikelyCause(BaseModel):

@@ -52,11 +52,21 @@ class LocalStorageService(BaseStorageService):
 
     def _get_path(self, storage_key: str) -> Path:
         # Sanitize and resolve path safely
-        safe_key = os.path.normpath(storage_key).lstrip(r"\/")
+        safe_key = os.path.normpath(storage_key).lstrip("/\\")
+        base_resolved = self.base_dir.resolve()
         target_path = (self.base_dir / safe_key).resolve()
-        if not str(target_path).startswith(str(self.base_dir.resolve())):
+
+        # Enforce that target_path is strictly inside base_resolved and not the root itself
+        try:
+            target_path.relative_to(base_resolved)
+        except ValueError:
             raise ValueError(f"Invalid storage key path traversal: {storage_key}")
+
+        if target_path == base_resolved:
+            raise ValueError(f"Invalid storage key path traversal: {storage_key}")
+
         return target_path
+
 
     def upload_file(
         self, storage_key: str, data: bytes, content_type: str = "application/octet-stream"

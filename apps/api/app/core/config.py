@@ -23,8 +23,10 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     clerk_secret_key: str = ""
     gemini_api_key: str = ""
+    cors_origins: list[str] | str = ["http://localhost:3000"]
 
     # Object Storage Settings
+
     storage_backend: str = "local"  # "local" or "s3"
     local_storage_path: str = "storage_data"
     s3_endpoint_url: str | None = None
@@ -40,6 +42,22 @@ class Settings(BaseSettings):
     embedding_dimension: int = 3072
     chunk_size: int = 1000
     chunk_overlap: int = 200
+
+    # Abuse & Resource Limits
+    max_files_per_project: int = 50
+    max_documents_per_project: int = 20
+    max_document_pages: int = 500
+    max_chunks_per_document: int = 1000
+
+    # Rate Limiting Settings
+    rate_limit_enabled: bool = True
+    rate_limit_general_requests_per_minute: int = 120
+    rate_limit_ai_requests_per_minute: int = 20
+    rate_limit_upload_requests_per_minute: int = 30
+
+    # Product Analytics Settings
+    analytics_enabled: bool = True
+
 
 
 @lru_cache

@@ -69,12 +69,19 @@ def test_upload_file_success(
     mock_user: User, mock_project: Project, in_memory_storage: InMemoryStorageService
 ) -> None:
     mock_db = MagicMock()
-    # Mock query for project
-    mock_query = MagicMock()
-    mock_filter = MagicMock()
-    mock_db.query.return_value = mock_query
-    mock_query.filter.return_value = mock_filter
-    mock_filter.first.return_value = mock_project
+
+    # Separate mock chains for Project (first) and ProjectFile (count)
+    def _query_side_effect(model_class):
+        q = MagicMock()
+        f = MagicMock()
+        q.filter.return_value = f
+        if model_class.__name__ == "Project":
+            f.first.return_value = mock_project
+        else:  # ProjectFile quota check
+            f.count.return_value = 0
+        return q
+
+    mock_db.query.side_effect = _query_side_effect
 
     app.dependency_overrides[get_current_user] = lambda: mock_user
     app.dependency_overrides[get_db] = lambda: mock_db
@@ -103,9 +110,18 @@ def test_upload_disallowed_extension(
     mock_user: User, mock_project: Project, in_memory_storage: InMemoryStorageService
 ) -> None:
     mock_db = MagicMock()
-    mock_filter = MagicMock()
-    mock_db.query.return_value.filter.return_value = mock_filter
-    mock_filter.first.return_value = mock_project
+
+    def _query_side_effect(model_class):
+        q = MagicMock()
+        f = MagicMock()
+        q.filter.return_value = f
+        if model_class.__name__ == "Project":
+            f.first.return_value = mock_project
+        else:
+            f.count.return_value = 0
+        return q
+
+    mock_db.query.side_effect = _query_side_effect
 
     app.dependency_overrides[get_current_user] = lambda: mock_user
     app.dependency_overrides[get_db] = lambda: mock_db

@@ -88,8 +88,10 @@ def test_create_session_calls_ai_and_persists(
         data = response.json()
         assert data["title"] == "My Debug Session"
         assert data["project_id"] == str(mock_project.id)
-        # 3 adds: session + user message + assistant message
-        assert mock_db.add.call_count == 3
+        # 3 domain adds: session + user message + assistant message
+        from app.models.analytics_event import AnalyticsEvent
+        domain_adds = [c for c in mock_db.add.call_args_list if not isinstance(c.args[0], AnalyticsEvent)]
+        assert len(domain_adds) == 3
         assert mock_db.commit.called
     finally:
         app.dependency_overrides.clear()

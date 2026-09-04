@@ -10,10 +10,12 @@ from sqlalchemy.orm import Session
 from app.ai.gemini import analyze_debugging_context
 from app.core.auth import get_current_user
 from app.core.database import get_db
+from app.core.rate_limiter import check_ai_rate_limit
 from app.models.debug_message import DebugMessage
 from app.models.debug_session import DebugSession
 from app.models.project import Project
 from app.models.user import User
+
 from app.schemas.debug import DebugResponse
 from app.schemas.session import (
     DebugSessionCreate,
@@ -58,6 +60,7 @@ def _get_project_for_user(
     "/{project_id}/sessions",
     response_model=DebugSessionDetail,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(check_ai_rate_limit)],
 )
 def create_debug_session(
     project_id: str,
@@ -66,6 +69,7 @@ def create_debug_session(
     db: Annotated[Session, Depends(get_db)],
     storage: Annotated[BaseStorageService, Depends(get_storage_service)] = None,  # type: ignore[assignment]
 ) -> DebugSessionDetail:
+
     """Create a new debug session: run AI analysis and persist both the request and the response."""
     project = _get_project_for_user(project_id, current_user, db)
 
@@ -100,14 +104,15 @@ def create_debug_session(
     except Exception as e:
         import logging
 
-        logging.getLogger(__name__).error("AI Analysis failed: %s", e)
-        error_msg = str(e)
-        if "api_key" in error_msg.lower() or "key" in error_msg.lower():
-            error_msg = "Gemini API connection or authentication failed."
+        from app.core.security import sanitize_error_detail, sanitize_secrets
+
+        logging.getLogger(__name__).error("AI Analysis failed: %s", sanitize_secrets(str(e)))
+        error_msg = sanitize_error_detail(e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"AI Analysis failed: {error_msg}",
         ) from e
+
 
     # Create the session
     session_id = uuid.uuid4()
@@ -160,6 +165,21 @@ def create_debug_session(
 
     db.commit()
     db.refresh(db_session)
+
+    from app.schemas.analytics import AnalyticsEventType
+    from app.services.analytics import AnalyticsService
+
+    AnalyticsService.track_event(
+        db,
+        AnalyticsEventType.SESSION_CREATED,
+        user_id=current_user.id,
+        project_id=project.id,
+        session_id=db_session.id,
+        metadata={
+            "has_question": bool(request.user_question),
+            "confidence_level": diagnosis.confidence_level,
+        },
+    )
 
     return DebugSessionDetail.model_validate(db_session)
 

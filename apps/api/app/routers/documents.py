@@ -13,7 +13,11 @@ from sqlalchemy.orm import Session
 from app.core.auth import get_current_user
 from app.core.config import get_settings
 from app.core.database import get_db
+from app.core.rate_limiter import check_search_rate_limit, check_upload_rate_limit
+from app.core.security import sanitize_filename
 from app.models.document import Document
+
+
 from app.models.document_chunk import DocumentChunk
 from app.models.project import Project
 from app.models.user import User
@@ -73,6 +77,7 @@ def get_project_for_user(
     "/{project_id}/documents/upload",
     response_model=DocumentResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(check_upload_rate_limit)],
 )
 async def upload_document(
     project_id: str,
@@ -86,8 +91,21 @@ async def upload_document(
     project = get_project_for_user(project_id, current_user, db)
     settings = get_settings()
 
+    # Enforce maximum documents per project quota
+    current_doc_count = (
+        db.query(Document)
+        .filter(Document.project_id == project.id)
+        .count()
+    )
+    if current_doc_count >= settings.max_documents_per_project:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Project has reached the maximum allowed limit of {settings.max_documents_per_project} documents.",
+        )
+
     original_filename = file.filename or "document.pdf"
-    file_ext = Path(original_filename).suffix.lower()
+    safe_filename = sanitize_filename(original_filename, default="document.pdf")
+    file_ext = Path(safe_filename).suffix.lower()
 
     if file_ext != ".pdf":
         raise HTTPException(
@@ -106,8 +124,8 @@ async def upload_document(
 
     checksum = hashlib.sha256(content).hexdigest()
     doc_id = uuid.uuid4()
-    safe_filename = Path(original_filename).name
     storage_key = f"projects/{project.id}/documents/{doc_id}_{safe_filename}"
+
 
     # Upload original PDF to object storage
     storage.upload_file(
@@ -140,26 +158,35 @@ async def upload_document(
         doc.page_count = extraction_res.page_count
         doc.metadata_json = extraction_res.metadata
 
-        # Phase 3.2: chunk and generate embeddings
-        try:
-            processor = DocumentProcessingService(db)
-            processor.process_document(
-                document=doc,
-                extracted_text=extraction_res.text,
-                page_texts=extraction_res.page_texts,
+        # Enforce maximum page count limit to prevent unbounded processing
+        if extraction_res.page_count and extraction_res.page_count > settings.max_document_pages:
+            doc.extraction_status = "failed"
+            doc.error_message = (
+                f"Document exceeds the maximum allowed limit of {settings.max_document_pages} pages "
+                f"(contains {extraction_res.page_count} pages)."
             )
-            doc.extraction_status = "ready"
-            doc.error_message = None
-        except EmbeddingError as emb_err:
-            # Extraction succeeded but embedding failed — mark as ready
-            # but record the embedding error so it can be retried
-            logger.warning("Embedding failed for document %s: %s", doc.id, emb_err)
-            doc.extraction_status = "ready"
-            doc.error_message = f"Text extracted but embedding failed: {emb_err}"
-        except Exception as proc_err:
-            logger.warning("Document processing failed for %s: %s", doc.id, proc_err)
-            doc.extraction_status = "ready"
-            doc.error_message = f"Text extracted but chunking/embedding failed: {proc_err}"
+        else:
+            # Phase 3.2: chunk and generate embeddings
+            try:
+                processor = DocumentProcessingService(db)
+                processor.process_document(
+                    document=doc,
+                    extracted_text=extraction_res.text,
+                    page_texts=extraction_res.page_texts,
+                )
+                doc.extraction_status = "ready"
+                doc.error_message = None
+            except EmbeddingError as emb_err:
+                # Extraction succeeded but embedding failed — mark as ready
+                # but record the embedding error so it can be retried
+                logger.warning("Embedding failed for document %s: %s", doc.id, emb_err)
+                doc.extraction_status = "ready"
+                doc.error_message = f"Text extracted but embedding failed: {emb_err}"
+            except Exception as proc_err:
+                logger.warning("Document processing failed for %s: %s", doc.id, proc_err)
+                doc.extraction_status = "ready"
+                doc.error_message = f"Text extracted but chunking/embedding failed: {proc_err}"
+
 
     except DocumentExtractionError as err:
         doc.extraction_status = "failed"
@@ -171,6 +198,35 @@ async def upload_document(
     doc.updated_at = datetime.now(UTC)
     db.commit()
     db.refresh(doc)
+
+    from app.schemas.analytics import AnalyticsEventType
+    from app.services.analytics import AnalyticsService
+
+    AnalyticsService.track_event(
+        db,
+        AnalyticsEventType.DOCUMENT_UPLOADED,
+        user_id=current_user.id,
+        project_id=project.id,
+        metadata={"size_bytes": len(content), "page_count": doc.page_count},
+    )
+
+    if doc.extraction_status == "ready":
+        AnalyticsService.track_event(
+            db,
+            AnalyticsEventType.DOCUMENT_PROCESSED,
+            user_id=current_user.id,
+            project_id=project.id,
+            metadata={"page_count": doc.page_count, "has_warning": bool(doc.error_message)},
+        )
+    else:
+        AnalyticsService.track_event(
+            db,
+            AnalyticsEventType.DOCUMENT_PROCESSING_FAILED,
+            user_id=current_user.id,
+            project_id=project.id,
+            success=False,
+            metadata={"error_reason": "processing_or_page_limit_failed"},
+        )
 
     download_url = storage.get_download_url(storage_key)
     res = DocumentResponse.model_validate(doc)
@@ -328,6 +384,7 @@ def delete_project_document(
 @router.post(
     "/{project_id}/documents/search",
     response_model=DocumentSearchResponse,
+    dependencies=[Depends(check_search_rate_limit)],
 )
 def search_project_documents(
     project_id: str,
@@ -337,6 +394,7 @@ def search_project_documents(
     retrieval: Annotated[DocumentRetrievalService, Depends(get_retrieval_service)],
 ) -> DocumentSearchResponse:
     """Search for relevant document chunks within a user's project using vector similarity."""
+
     project = get_project_for_user(project_id, current_user, db)
 
     try:
@@ -363,7 +421,6 @@ def search_project_documents(
         results = retrieval.search(**search_kwargs)
     except EmbeddingError as err:
 
-
         logger.error("Failed to generate embedding for query in project %s: %s", project.id, err)
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -375,6 +432,17 @@ def search_project_documents(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to execute document search",
         ) from err
+
+    from app.schemas.analytics import AnalyticsEventType
+    from app.services.analytics import AnalyticsService
+
+    AnalyticsService.track_event(
+        db,
+        AnalyticsEventType.RETRIEVAL_PERFORMED,
+        user_id=current_user.id,
+        project_id=project.id,
+        metadata={"results_count": len(results), "top_k": body.top_k},
+    )
 
     return DocumentSearchResponse(
         query=body.query,

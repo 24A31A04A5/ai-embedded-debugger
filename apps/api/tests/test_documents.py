@@ -117,7 +117,17 @@ def test_upload_valid_pdf_success(mock_user: User, mock_project: Project) -> Non
     mock_storage = MagicMock()
     mock_storage.get_download_url.return_value = "https://example.com/download/doc.pdf"
 
-    mock_db.query.return_value.filter.return_value.first.return_value = mock_project
+    def _query_side_effect(model_class):
+        q = MagicMock()
+        f = MagicMock()
+        q.filter.return_value = f
+        if model_class.__name__ == "Project":
+            f.first.return_value = mock_project
+        else:  # Document quota check
+            f.count.return_value = 0
+        return q
+
+    mock_db.query.side_effect = _query_side_effect
 
     pdf_bytes = create_valid_pdf_bytes("Pin 1: VCC 3.3V, Pin 2: GND")
 
@@ -150,7 +160,18 @@ def test_upload_invalid_file_extension(mock_user: User, mock_project: Project) -
     """Uploading a non-PDF file returns 400 Bad Request."""
     mock_db = MagicMock()
     mock_storage = MagicMock()
-    mock_db.query.return_value.filter.return_value.first.return_value = mock_project
+
+    def _query_side_effect(model_class):
+        q = MagicMock()
+        f = MagicMock()
+        q.filter.return_value = f
+        if model_class.__name__ == "Project":
+            f.first.return_value = mock_project
+        else:
+            f.count.return_value = 0
+        return q
+
+    mock_db.query.side_effect = _query_side_effect
 
     app.dependency_overrides[get_current_user] = lambda: mock_user
     app.dependency_overrides[get_db] = lambda: mock_db
@@ -172,7 +193,18 @@ def test_upload_oversized_file(mock_user: User, mock_project: Project) -> None:
     """Uploading a PDF exceeding maximum upload size returns 413 Payload Too Large."""
     mock_db = MagicMock()
     mock_storage = MagicMock()
-    mock_db.query.return_value.filter.return_value.first.return_value = mock_project
+
+    def _query_side_effect(model_class):
+        q = MagicMock()
+        f = MagicMock()
+        q.filter.return_value = f
+        if model_class.__name__ == "Project":
+            f.first.return_value = mock_project
+        else:
+            f.count.return_value = 0
+        return q
+
+    mock_db.query.side_effect = _query_side_effect
 
     app.dependency_overrides[get_current_user] = lambda: mock_user
     app.dependency_overrides[get_db] = lambda: mock_db
@@ -197,7 +229,18 @@ def test_upload_malformed_pdf_sets_failed_status(mock_user: User, mock_project: 
     """Uploading a corrupt PDF still stores metadata and records failed extraction status."""
     mock_db = MagicMock()
     mock_storage = MagicMock()
-    mock_db.query.return_value.filter.return_value.first.return_value = mock_project
+
+    def _query_side_effect(model_class):
+        q = MagicMock()
+        f = MagicMock()
+        q.filter.return_value = f
+        if model_class.__name__ == "Project":
+            f.first.return_value = mock_project
+        else:
+            f.count.return_value = 0
+        return q
+
+    mock_db.query.side_effect = _query_side_effect
 
     app.dependency_overrides[get_current_user] = lambda: mock_user
     app.dependency_overrides[get_db] = lambda: mock_db

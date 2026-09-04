@@ -77,7 +77,7 @@ class RawChunk(BaseModel):
 class DocumentSearchRequest(BaseModel):
     """Request payload for semantic vector search across project documents."""
 
-    query: str = Field(..., min_length=1, description="Search query text")
+    query: str = Field(..., min_length=1, max_length=2000, description="Search query text")
     top_k: int = Field(default=5, ge=1, le=50, description="Maximum number of chunks to return")
     similarity_threshold: float = Field(
         default=0.0,
@@ -87,19 +87,23 @@ class DocumentSearchRequest(BaseModel):
     )
     document_ids: list[uuid.UUID] | None = Field(
         default=None,
+        max_length=50,
         description="Optional filter by specific document IDs within the project",
     )
     section: str | None = Field(
         default=None,
+        max_length=255,
         description="Optional filter or focus for a specific section or heading",
     )
     content_type: str | None = Field(
         default=None,
+        max_length=64,
         description="Optional content type filter ('register_description', 'table_or_specification', 'pin_configuration', 'text')",
     )
     page_number: int | None = Field(
         default=None,
-        description="Optional page number filter",
+        ge=1,
+        description="Optional page number filter (1-indexed)",
     )
     has_register: bool | None = Field(
         default=None,
@@ -113,6 +117,7 @@ class DocumentSearchRequest(BaseModel):
         default=None,
         description="Optional filter for chunks containing pinout configurations",
     )
+
 
 
 

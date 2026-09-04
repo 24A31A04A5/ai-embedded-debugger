@@ -1,3 +1,4 @@
+import logging
 import uuid
 from typing import Annotated, Any
 
@@ -8,7 +9,11 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.database import get_db
+from app.core.security import sanitize_secrets
 from app.models.user import User
+
+logger = logging.getLogger(__name__)
+
 
 
 class FastApiRequestAdapter:
@@ -53,10 +58,12 @@ def verify_clerk_token(
     except HTTPException:
         raise
     except Exception as e:
+        logger.warning("Clerk token verification failed: %s", sanitize_secrets(str(e)))
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid authentication credentials: {e}",
+            detail="Invalid authentication credentials",
         ) from e
+
 
 
 def get_current_user(

@@ -12,11 +12,15 @@ from sqlalchemy.orm import Session
 from app.core.auth import get_current_user
 from app.core.config import get_settings
 from app.core.database import get_db
+from app.core.rate_limiter import check_upload_rate_limit
+from app.core.security import sanitize_filename
 from app.models.project import Project
 from app.models.project_file import ProjectFile
 from app.models.user import User
 from app.schemas.file import ProjectFileContentResponse, ProjectFileResponse
 from app.services.storage import BaseStorageService, get_storage_service
+
+
 
 router = APIRouter(prefix="/projects", tags=["files"])
 
@@ -56,6 +60,7 @@ def get_project_for_user(
     "/{project_id}/files/upload",
     response_model=ProjectFileResponse,
     status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(check_upload_rate_limit)],
 )
 async def upload_project_file(
     project_id: str,
@@ -69,8 +74,22 @@ async def upload_project_file(
     project = get_project_for_user(project_id, current_user, db)
     settings = get_settings()
 
+    # Enforce maximum files per project quota
+    current_count = (
+        db.query(ProjectFile)
+        .filter(ProjectFile.project_id == project.id)
+        .count()
+    )
+    if current_count >= settings.max_files_per_project:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Project has reached the maximum allowed limit of {settings.max_files_per_project} files.",
+        )
+
     original_filename = file.filename or "uploaded_file"
-    file_ext = Path(original_filename).suffix.lower()
+
+    safe_filename = sanitize_filename(original_filename, default="uploaded_file")
+    file_ext = Path(safe_filename).suffix.lower()
 
     if file_ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
@@ -93,6 +112,11 @@ async def upload_project_file(
     # Read and check size
     max_bytes = settings.max_upload_size_mb * 1024 * 1024
     content = await file.read()
+    if len(content) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded file is empty (0 bytes).",
+        )
     if len(content) > max_bytes:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
@@ -102,8 +126,8 @@ async def upload_project_file(
     # Checksum & storage
     checksum = hashlib.sha256(content).hexdigest()
     file_id = uuid.uuid4()
-    safe_filename = Path(original_filename).name
     storage_key = f"projects/{project.id}/files/{file_id}_{safe_filename}"
+
 
     storage.upload_file(
         storage_key=storage_key,
@@ -126,6 +150,21 @@ async def upload_project_file(
     db.add(db_file)
     db.commit()
     db.refresh(db_file)
+
+    from app.schemas.analytics import AnalyticsEventType
+    from app.services.analytics import AnalyticsService
+
+    AnalyticsService.track_event(
+        db,
+        AnalyticsEventType.FILE_UPLOADED,
+        user_id=current_user.id,
+        project_id=project.id,
+        metadata={
+            "file_type": file_type,
+            "size_bytes": len(content),
+            "file_extension": Path(safe_filename).suffix.lower(),
+        },
+    )
 
     download_url = storage.get_download_url(storage_key)
     res = ProjectFileResponse.model_validate(db_file)
