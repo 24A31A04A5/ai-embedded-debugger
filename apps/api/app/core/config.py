@@ -58,6 +58,10 @@ class Settings(BaseSettings):
     # Product Analytics Settings
     analytics_enabled: bool = True
 
+    # Monitoring & Observability Settings
+    request_id_header_name: str = "X-Request-ID"
+    expose_error_details: bool = False
+
 
 
 @lru_cache

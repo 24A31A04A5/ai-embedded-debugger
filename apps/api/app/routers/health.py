@@ -1,6 +1,6 @@
 from typing import Literal
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Response, status
 from pydantic import BaseModel, Field
 
 from app.core.database import probe_database
@@ -24,6 +24,13 @@ class HealthResponse(BaseModel):
     checks: dict[str, DatabaseCheck]
 
 
+class ReadinessResponse(BaseModel):
+    """Readiness probe result for deployment orchestrators."""
+
+    status: Literal["ready", "unready"]
+    checks: dict[str, DatabaseCheck]
+
+
 @router.get("/health", response_model=HealthResponse)
 def health_check() -> HealthResponse:
     """Return API health status and database connectivity probe."""
@@ -36,4 +43,22 @@ def health_check() -> HealthResponse:
     return HealthResponse(
         status="ok" if database_reachable else "degraded",
         checks={"database": database_check},
+    )
+
+
+@router.get("/ready", response_model=ReadinessResponse)
+def readiness_check(response: Response) -> ReadinessResponse:
+    """Readiness probe verifying critical dependency (database) connectivity."""
+    database_reachable = probe_database()
+    if not database_reachable:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+
+    return ReadinessResponse(
+        status="ready" if database_reachable else "unready",
+        checks={
+            "database": DatabaseCheck(
+                status="ok" if database_reachable else "error",
+                reachable=database_reachable,
+            )
+        },
     )
