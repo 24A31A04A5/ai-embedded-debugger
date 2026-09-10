@@ -35,31 +35,33 @@ export function CodeEditor({
   }, [syncedValue, language]);
 
   const handleScroll = (e: React.UIEvent<HTMLTextAreaElement>) => {
-    if (highlightRef.current?.parentElement) {
-      highlightRef.current.parentElement.scrollTop = e.currentTarget.scrollTop;
-      highlightRef.current.parentElement.scrollLeft = e.currentTarget.scrollLeft;
+    const pre = highlightRef.current?.parentElement;
+    if (pre) {
+      pre.scrollTop = e.currentTarget.scrollTop;
+      pre.scrollLeft = e.currentTarget.scrollLeft;
     }
   };
 
   return (
     <div className="relative flex-1 w-full overflow-hidden font-mono text-[13px] leading-6">
-      {/* Syntax Highlighted Background */}
+      {/* Syntax Highlighted Background — scrolls in sync with textarea */}
       <pre
-        className="absolute inset-0 m-0 overflow-hidden bg-transparent p-4 text-foreground/80 whitespace-pre-wrap break-words"
+        className="absolute inset-0 m-0 overflow-auto bg-transparent p-4 text-foreground/80 whitespace-pre"
         aria-hidden="true"
       >
-        <code ref={highlightRef} className={`language-${language} block min-h-full`} />
+        <code ref={highlightRef} className={`language-${language} block min-h-full min-w-max`} />
       </pre>
 
       {/* Transparent Textarea Overlay */}
       <textarea
-        className="absolute inset-0 m-0 w-full resize-none bg-transparent p-4 font-mono text-[13px] leading-6 whitespace-pre-wrap break-words text-transparent caret-white outline-none placeholder:text-muted-foreground/30 focus-visible:ring-0"
+        className="absolute inset-0 m-0 w-full h-full resize-none bg-transparent p-4 font-mono text-[13px] leading-6 whitespace-pre text-transparent caret-white outline-none placeholder:text-muted-foreground/30 focus-visible:ring-0 overflow-auto"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onScroll={handleScroll}
         placeholder={placeholder}
         spellCheck={false}
         aria-label="Code editor input"
+        aria-multiline="true"
       />
     </div>
   );

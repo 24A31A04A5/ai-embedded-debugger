@@ -25,6 +25,18 @@
   --radius-xl: calc(var(--radius) + 4px);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-inter);
+
+  /* Phase 7.1 — New theme tokens for Tailwind */
+  --color-accent-purple: var(--accent-purple);
+  --color-accent-indigo: var(--accent-indigo);
+  --color-accent-violet: var(--accent-violet);
+
+  /* Animation durations */
+  --animate-glow-pulse: glow-pulse 3s ease-in-out infinite;
+  --animate-fade-in: fade-in 0.5s ease-out forwards;
+  --animate-slide-up: slide-up 0.5s ease-out forwards;
+  --animate-shimmer: shimmer 2s linear infinite;
 }
 
 /* Dark-first theme — developer tool aesthetic */
@@ -35,8 +47,8 @@
   --card-foreground: oklch(0.93 0.005 260);
   --popover: oklch(0.16 0.015 260);
   --popover-foreground: oklch(0.93 0.005 260);
-  --primary: oklch(0.65 0.19 145);
-  --primary-foreground: oklch(0.13 0.015 260);
+  --primary: oklch(0.60 0.22 290);
+  --primary-foreground: oklch(0.98 0 0);
   --secondary: oklch(0.20 0.015 260);
   --secondary-foreground: oklch(0.88 0.005 260);
   --muted: oklch(0.20 0.015 260);
@@ -46,7 +58,7 @@
   --destructive: oklch(0.55 0.2 25);
   --border: oklch(0.25 0.015 260);
   --input: oklch(0.25 0.015 260);
-  --ring: oklch(0.65 0.19 145);
+  --ring: oklch(0.60 0.22 290);
   --radius: 0.625rem;
 
   /* Landing page tokens */
@@ -60,6 +72,43 @@
   --color-warning-amber: oklch(0.75 0.15 75);
   --color-success-green: oklch(0.65 0.19 145);
   --color-info-blue: oklch(0.65 0.15 250);
+
+  /* ── Phase 7.1 — Purple / Indigo Atmospheric Accents ── */
+  --accent-purple: oklch(0.60 0.22 290);
+  --accent-indigo: oklch(0.55 0.20 275);
+  --accent-violet: oklch(0.58 0.21 300);
+  --accent-purple-dim: oklch(0.45 0.16 290);
+  --accent-indigo-dim: oklch(0.40 0.14 275);
+
+  /* ── Phase 7.1 — Gradient Tokens ── */
+  --gradient-primary: linear-gradient(
+    135deg,
+    var(--accent-purple),
+    var(--accent-indigo)
+  );
+  --gradient-accent: linear-gradient(135deg, oklch(0.60 0.22 290), oklch(0.55 0.20 275));
+  --gradient-atmospheric: linear-gradient(180deg, oklch(0.13 0.015 260) 0%, oklch(0.14 0.03 280) 50%, oklch(0.13 0.015 260) 100%);
+  --gradient-surface: linear-gradient(135deg, oklch(0.18 0.02 270 / 0.6), oklch(0.16 0.015 260 / 0.4));
+
+  /* ── Phase 7.1 — Glow / Shadow Tokens ── */
+  --glow-emerald: 0 0 20px oklch(0.65 0.19 145 / 0.25), 0 0 60px oklch(0.65 0.19 145 / 0.1);
+  --glow-purple: 0 0 20px oklch(0.60 0.22 290 / 0.25), 0 0 60px oklch(0.60 0.22 290 / 0.1);
+  --glow-indigo: 0 0 20px oklch(0.55 0.20 275 / 0.25), 0 0 60px oklch(0.55 0.20 275 / 0.1);
+  --shadow-elevated: 0 8px 32px oklch(0 0 0 / 0.4), 0 2px 8px oklch(0 0 0 / 0.3);
+  --shadow-card: 0 4px 16px oklch(0 0 0 / 0.3), 0 1px 4px oklch(0 0 0 / 0.2);
+
+  /* ── Phase 7.1 — Glass Surface Tokens ── */
+  --glass-bg: oklch(0.16 0.02 270 / 0.6);
+  --glass-bg-subtle: oklch(0.16 0.02 270 / 0.35);
+  --glass-border: oklch(0.40 0.03 270 / 0.15);
+  --glass-border-strong: oklch(0.50 0.04 280 / 0.20);
+  --glass-blur: 16px;
+  --glass-blur-strong: 24px;
+
+  /* ── Phase 7.1 — Panel / Layout Tokens ── */
+  --panel-radius: 1rem;
+  --bento-gap: 1rem;
+  --bento-gap-lg: 1.25rem;
 }
 
 @layer base {
@@ -69,13 +118,185 @@
 
   html {
     scroll-behavior: smooth;
+    /* Prevents horizontal overflow from causing a scroll bar */
+    overflow-x: hidden;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
+    /* Prevent horizontal overflow on mobile */
+    overflow-x: hidden;
+  }
+
+  /* Ensure buttons and links have clear focus rings */
+  :focus-visible {
+    outline: 2px solid oklch(0.60 0.22 290 / 0.7);
+    outline-offset: 2px;
+  }
+
+  /* Reset outline for elements that handle focus-visible themselves */
+  button:focus:not(:focus-visible),
+  a:focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Faster tap response on mobile — removes 300ms delay */
+  button,
+  a,
+  [role="button"],
+  [role="tab"] {
+    touch-action: manipulation;
   }
 
   ::selection {
-    background: oklch(0.65 0.19 145 / 0.3);
+    background: oklch(0.60 0.22 290 / 0.3);
+  }
+}
+
+/* ── Phase 7.1 — Keyframes ── */
+
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    filter: blur(0px);
+  }
+  50% {
+    opacity: 1;
+    filter: blur(1px);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* ── Phase 7.1 — Utility Classes ── */
+
+@layer utilities {
+  /* Glassmorphism panels */
+  .glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--panel-radius);
+  }
+
+  .glass-panel-subtle {
+    background: var(--glass-bg-subtle);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: var(--panel-radius);
+  }
+
+  .glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur-strong));
+    -webkit-backdrop-filter: blur(var(--glass-blur-strong));
+    border: 1px solid var(--glass-border-strong);
+    border-radius: var(--panel-radius);
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Glow effects */
+  .glow-emerald {
+    box-shadow: var(--glow-emerald);
+  }
+
+  .glow-purple {
+    box-shadow: var(--glow-purple);
+  }
+
+  .glow-indigo {
+    box-shadow: var(--glow-indigo);
+  }
+
+  /* Gradient text */
+  .gradient-text-primary {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .gradient-text-accent {
+    background: var(--gradient-accent);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Atmospheric background */
+  .bg-atmospheric {
+    background: var(--gradient-atmospheric);
+  }
+
+  /* Shadows */
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Phase 7.7 — Interactive card & micro-motion utilities */
+  .interactive-card {
+    transition: transform 200ms ease, border-color 200ms ease, box-shadow 200ms ease, background-color 200ms ease;
+  }
+  .interactive-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px oklch(0.60 0.22 290 / 0.12);
+  }
+}
+
+/* Phase 7.7 — Global Accessibility: Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .interactive-card,
+  .interactive-card:hover {
+    transform: none !important;
   }
 }
