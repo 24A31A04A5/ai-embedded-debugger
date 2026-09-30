@@ -32,6 +32,22 @@
   --color-accent-indigo: var(--accent-indigo);
   --color-accent-violet: var(--accent-violet);
 
+  /* Debug workspace (IDE) surfaces */
+  --color-ide-bg: var(--ide-bg);
+  --color-ide-titlebar: var(--ide-titlebar);
+  --color-ide-sidebar: var(--ide-sidebar);
+  --color-ide-editor: var(--ide-editor);
+  --color-ide-gutter: var(--ide-gutter);
+  --color-ide-tabbar: var(--ide-tabbar);
+  --color-ide-panel: var(--ide-panel);
+  --color-ide-ai: var(--ide-ai);
+  --color-ide-statusbar: var(--ide-statusbar);
+  --color-ide-border: var(--ide-border);
+  --color-ide-border-subtle: var(--ide-border-subtle);
+  --color-ide-hover: var(--ide-hover);
+  --color-ide-selected: var(--ide-selected);
+  --color-ide-active-line: var(--ide-active-line);
+
   /* Animation durations */
   --animate-glow-pulse: glow-pulse 3s ease-in-out infinite;
   --animate-fade-in: fade-in 0.5s ease-out forwards;
@@ -109,6 +125,26 @@
   --panel-radius: 1rem;
   --bento-gap: 1rem;
   --bento-gap-lg: 1.25rem;
+
+  /* ── Debug workspace (IDE) — neutral graphite, purple reserved for AI ── */
+  --ide-bg: oklch(0.155 0.004 270);
+  --ide-titlebar: oklch(0.175 0.004 270);
+  --ide-sidebar: oklch(0.175 0.004 270);
+  --ide-editor: oklch(0.195 0.004 270);
+  --ide-gutter: oklch(0.195 0.004 270);
+  --ide-tabbar: oklch(0.17 0.004 270);
+  --ide-panel: oklch(0.172 0.004 270);
+  --ide-ai: oklch(0.178 0.01 285);
+  --ide-statusbar: oklch(0.165 0.004 270);
+  --ide-border: oklch(0.29 0.005 270);
+  --ide-border-subtle: oklch(0.245 0.005 270);
+  --ide-hover: oklch(1 0 0 / 0.045);
+  --ide-selected: oklch(0.55 0.08 285 / 0.28);
+  --ide-active-line: oklch(1 0 0 / 0.04);
+  --editor-font-size: 13px;
+  --editor-line-height: 20px;
+  --editor-pad-y: 8px;
+  --editor-pad-x: 14px;
 }
 
 @layer base {
@@ -117,6 +153,7 @@
   }
 
   html {
+    color-scheme: dark;
     scroll-behavior: smooth;
     /* Prevents horizontal overflow from causing a scroll bar */
     overflow-x: hidden;
@@ -283,6 +320,46 @@
     transform: translateY(-2px);
     box-shadow: 0 8px 30px oklch(0.60 0.22 290 / 0.12);
   }
+}
+
+/* ── Code editor layers ──
+   The highlighted <pre> and the editable <textarea> are stacked on top of each
+   other; every property that affects glyph placement must be identical on both
+   or the caret drifts away from the visible text. */
+.code-editor-layer {
+  box-sizing: border-box;
+  margin: 0;
+  border: 0;
+  padding: var(--editor-pad-y) var(--editor-pad-x);
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: var(--editor-font-size);
+  font-weight: 400;
+  font-style: normal;
+  line-height: var(--editor-line-height);
+  letter-spacing: 0;
+  word-spacing: 0;
+  text-indent: 0;
+  text-transform: none;
+  text-align: left;
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  tab-size: 4;
+  font-kerning: none;
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+}
+
+.ide-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.45 0.005 270 / 0.7) transparent;
+}
+
+.code-editor-layer code {
+  display: inline;
+  padding: 0;
+  background: transparent;
+  font: inherit;
 }
 
 /* Phase 7.7 — Global Accessibility: Respect prefers-reduced-motion */

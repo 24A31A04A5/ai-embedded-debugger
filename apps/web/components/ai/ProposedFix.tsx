@@ -2,8 +2,7 @@
 
 import * as React from "react";
 import { useState } from "react";
-import { Check, Copy, Wrench } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Check, Copy } from "lucide-react";
 import { CodeViewer } from "@/components/CodeViewer";
 
 interface ProposedFixProps {
@@ -33,50 +32,32 @@ export function ProposedFix({ proposedFix, correctedCode }: ProposedFixProps) {
       correctedCode.startsWith("-"));
 
   return (
-    <div className="space-y-3">
-      {/* Explanation text */}
-      <div className="p-3.5 rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm">
-        <p className="text-xs sm:text-sm leading-relaxed text-foreground/90 font-medium">
-          {proposedFix}
-        </p>
-      </div>
+    <div className="space-y-2.5">
+      {proposedFix && <p className="text-xs leading-relaxed text-foreground/90">{proposedFix}</p>}
 
-      {/* Corrected Code Block */}
       {correctedCode && (
-        <div className="rounded-xl border border-border/60 bg-[var(--color-code-bg)] overflow-hidden shadow-lg">
-          <div className="flex items-center justify-between px-3.5 py-2 border-b border-border/50 bg-card/80 text-xs">
-            <div className="flex items-center gap-2 text-muted-foreground font-mono text-[11px]">
-              <Wrench className="h-3.5 w-3.5 text-[var(--accent-purple)]" />
-              <span>{isDiff ? "Proposed Patch Diff" : "Corrected Firmware Snippet"}</span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2.5 text-[11px] gap-1.5 text-muted-foreground hover:text-foreground"
+        <div className="overflow-hidden rounded border border-ide-border bg-ide-editor">
+          <div className="flex h-11 lg:h-7 items-center justify-between border-b border-ide-border-subtle bg-ide-tabbar pl-2.5 pr-1">
+            <span className="font-mono text-[11px] text-muted-foreground">
+              {isDiff ? "patch.diff" : "Corrected code"}
+            </span>
+            <button
+              type="button"
               onClick={handleCopy}
               aria-label="Copy corrected code"
+              className={`flex h-9 lg:h-6 items-center gap-1 rounded px-2 text-[11px] ${
+                copied ? "text-[var(--color-success-green)]" : "text-muted-foreground hover:bg-ide-hover hover:text-foreground"
+              }`}
             >
-              {copied ? (
-                <>
-                  <Check className="h-3.5 w-3.5 text-[var(--color-success-green)]" />
-                  <span className="text-[var(--color-success-green)] font-medium">Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3.5 w-3.5" />
-                  <span>Copy Code</span>
-                </>
-              )}
-            </Button>
+              {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+              {copied ? "Copied" : "Copy"}
+            </button>
           </div>
-
-          <div className="overflow-x-auto">
-            <CodeViewer
-              code={correctedCode}
-              language={isDiff ? "diff" : "cpp"}
-              className="border-0 rounded-none p-4 text-[12px] sm:text-[13px] leading-relaxed"
-            />
-          </div>
+          <CodeViewer
+            code={correctedCode}
+            language={isDiff ? "diff" : "cpp"}
+            className="max-h-80 rounded-none border-0 bg-transparent p-3 text-[12px] leading-[18px]"
+          />
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from "react";
 import hljs from "highlight.js";
 import "highlight.js/styles/github-dark.css"; // Using github dark style to match dark theme
+import { cn } from "@/lib/utils";
 
 interface CodeViewerProps {
   code: string;
@@ -24,7 +25,12 @@ export function CodeViewer({ code, language = "c", className = "" }: CodeViewerP
   }, [code, language]);
 
   return (
-    <pre className={`max-w-full overflow-x-auto rounded-md border border-[var(--color-code-border)] bg-[#0d1117] p-4 font-mono text-[13px] text-foreground/80 ${className}`}>
+    <pre
+      className={cn(
+        "max-w-full overflow-auto rounded-md border border-[var(--color-code-border)] bg-[#0d1117] p-4 font-mono text-[13px] text-foreground/80 whitespace-pre [&_code.hljs]:!bg-transparent [&_code.hljs]:!p-0 [&_code.hljs]:!overflow-visible",
+        className
+      )}
+    >
       <code ref={codeRef} className={`language-${language}`}>
         {code}
       </code>
