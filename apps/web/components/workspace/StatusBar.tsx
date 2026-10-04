@@ -42,16 +42,16 @@ export function StatusBar({
   return (
     <footer
       aria-label="Status bar"
-      className={`h-6 shrink-0 items-stretch justify-between border-t border-ide-border bg-ide-statusbar font-mono text-[11px] text-muted-foreground select-none ${className}`}
+      className={`lg-glass h-9 shrink-0 items-center justify-between gap-2 px-1.5 font-mono text-[11px] text-muted-foreground select-none lg:rounded-[14px] ${className}`}
     >
-      <div className="flex min-w-0 items-stretch">
+      <div className="flex min-w-0 items-center gap-1">
         <span
           role="status"
           aria-live="polite"
-          className={`flex items-center gap-1.5 px-2.5 ${
+          className={`flex h-6 items-center gap-1.5 rounded-full px-2.5 ${
             aiStatus === "error"
               ? "bg-[var(--color-error-red)]/15 text-[var(--color-error-red)]"
-              : "bg-[var(--accent-purple)]/15 text-[oklch(0.80_0.10_290)]"
+              : "bg-[var(--accent-purple)]/20 text-white shadow-[inset_0_0_0_1px_oklch(0.74_0.16_158/0.35)]"
           }`}
         >
           {aiStatus === "analyzing" ? (
@@ -65,36 +65,36 @@ export function StatusBar({
         <button
           type="button"
           onClick={onShowProblems}
-          className="flex items-center gap-2 px-2.5 hover:bg-ide-hover hover:text-foreground focus-visible:outline-none focus-visible:bg-ide-hover"
+          className="lg-ghost flex h-6 items-center gap-2 rounded-full px-2.5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/60"
           aria-label={`${errorCount} errors, ${warningCount} warnings. Show problems`}
         >
           <span className="flex items-center gap-1">
-            <CircleX className={`h-3 w-3 ${errorCount ? "text-[var(--color-error-red)]" : ""}`} />
+            <CircleX className="lg-red h-3 w-3" />
             {errorCount}
           </span>
           <span className="flex items-center gap-1">
-            <AlertTriangle className={`h-3 w-3 ${warningCount ? "text-[var(--color-warning-amber)]" : ""}`} />
+            <AlertTriangle className="lg-yellow h-3 w-3" />
             {warningCount}
           </span>
         </button>
 
         {projectName && (
           <span className="hidden md:flex min-w-0 items-center gap-1.5 px-2.5">
-            <FolderOpen className="h-3 w-3 shrink-0" />
+            <FolderOpen className="lg-green h-3 w-3 shrink-0" />
             <span className="truncate">{projectName}</span>
           </span>
         )}
       </div>
 
-      <div className="flex shrink-0 items-stretch">
-        <span className="flex items-center px-2.5 text-foreground/75">
+      <div className="flex shrink-0 items-center">
+        <span className="flex items-center px-2.5 text-foreground/80">
           Ln {cursor.line}, Col {cursor.column}
           {cursor.selected > 0 && <span className="ml-1 text-muted-foreground">({cursor.selected} selected)</span>}
         </span>
         <span className="hidden md:flex items-center px-2.5">Spaces: {tabSize}</span>
         <span className="hidden md:flex items-center px-2.5">UTF-8</span>
         <span className="hidden md:flex items-center px-2.5">{lineEnding}</span>
-        <span className="flex items-center px-2.5">{languageLabel}</span>
+        <span className="ml-1 flex h-6 items-center rounded-full bg-white/[0.06] px-2.5 text-foreground/85">{languageLabel}</span>
       </div>
     </footer>
   );

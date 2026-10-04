@@ -35,7 +35,7 @@ export function CauseList({ causes, rootCauseSummary, confidenceLevel }: CauseLi
             <li key={idx} className="flex items-start justify-between gap-3">
               <p className="min-w-0 flex-1 text-xs leading-relaxed text-foreground/90">{item.cause}</p>
               <span
-                className={`shrink-0 rounded px-1.5 py-px font-mono text-[10px] font-medium uppercase ${meta.className}`}
+                className={`shrink-0 rounded-full px-2 py-px font-mono text-[10px] font-medium uppercase ${meta.className}`}
                 title={`${meta.label} plausibility`}
               >
                 {meta.label}

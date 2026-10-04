@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowRight,
-  Bug,
   ChevronDown,
   ChevronRight,
   Clock,
@@ -23,6 +22,7 @@ import {
   Zap,
 } from "lucide-react";
 
+import { LiquidBackdrop } from "@/components/ui/liquid-backdrop";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -114,15 +114,19 @@ function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 border-b border-border/40 bg-[oklch(0.13_0.015_260/0.85)] backdrop-blur-xl">
+    <header className="lg-glass fixed top-3 right-3 left-3 z-50 rounded-[22px]">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4 sm:px-6">
         {/* Brand / Logo */}
         <Link href="/" className="flex items-center gap-2.5 shrink-0 group" aria-label="AI Embedded Debugger Home">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-[var(--accent-purple)] to-[var(--accent-indigo)] shadow-sm shadow-[var(--accent-purple)]/25 border border-purple-400/30 transition-transform duration-200 group-hover:scale-105">
-            <Bug className="h-4 w-4 text-white" />
-          </div>
+          <img
+            src="/brand/ai-embedded-debugger-logo.png"
+            alt=""
+            width={1536}
+            height={1024}
+            className="h-10 w-auto shrink-0 object-contain"
+          />
           <span className="font-semibold tracking-tight text-foreground flex items-center gap-1.5">
-            <span className="rounded bg-[var(--accent-purple)]/20 px-1.5 py-0.5 text-[10px] font-bold text-purple-200 border border-[var(--accent-purple)]/30 tracking-wide">
+            <span className="rounded bg-[var(--accent-purple)]/20 px-1.5 py-0.5 text-[10px] font-bold text-white border border-[var(--accent-purple)]/30 tracking-wide">
               AI
             </span>
             <span className="text-[14px] sm:text-[15px] text-foreground/95">
@@ -135,25 +139,25 @@ function Navbar() {
         <nav className="hidden items-center gap-1 md:flex" aria-label="Main navigation">
           <a
             href="#bento-dashboard"
-            className="rounded-md px-3 py-1.5 text-xs sm:text-sm font-medium text-foreground bg-white/5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/60"
+            className="lg-chip-active rounded-full px-3 py-1.5 text-xs sm:text-sm font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/60"
           >
             Dashboard
           </a>
           <a
             href="#problem"
-            className="rounded-md px-3 py-1.5 text-xs sm:text-sm font-medium text-muted-foreground transition-all hover:bg-white/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/60"
+            className="rounded-full px-3 py-1.5 text-xs sm:text-sm font-medium text-muted-foreground transition-all hover:bg-white/[0.08] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/60"
           >
             Capabilities
           </a>
           <a
             href="#how-it-works"
-            className="rounded-md px-3 py-1.5 text-xs sm:text-sm font-medium text-muted-foreground transition-all hover:bg-white/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/60"
+            className="rounded-full px-3 py-1.5 text-xs sm:text-sm font-medium text-muted-foreground transition-all hover:bg-white/[0.08] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/60"
           >
             Architecture
           </a>
           <a
             href="#demo"
-            className="rounded-md px-3 py-1.5 text-xs sm:text-sm font-medium text-muted-foreground transition-all hover:bg-white/5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/60"
+            className="rounded-full px-3 py-1.5 text-xs sm:text-sm font-medium text-muted-foreground transition-all hover:bg-white/[0.08] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/60"
           >
             Diagnostic Demo
           </a>
@@ -187,19 +191,23 @@ function Navbar() {
                 <Button
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8 border-border/60 text-muted-foreground hover:text-foreground"
+                  className="lg-chip h-11 w-11 rounded-full border-0 text-muted-foreground hover:text-foreground"
                   aria-label="Open navigation menu"
                 >
                   <Menu className="h-4 w-4" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-[280px] sm:w-[320px] bg-[oklch(0.13_0.015_260/0.95)] backdrop-blur-2xl border-border/60 p-6 flex flex-col justify-between">
+              <SheetContent side="right" className="lg-glass lg-glass-strong flex w-[280px] flex-col justify-between rounded-l-[22px] border-0 p-6 sm:w-[320px]">
                 <div>
                   <SheetHeader className="text-left pb-4 border-b border-border/40">
                     <SheetTitle className="flex items-center gap-2">
-                      <div className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-br from-[var(--accent-purple)] to-[var(--accent-indigo)]">
-                        <Bug className="h-3.5 w-3.5 text-white" />
-                      </div>
+                      <img
+                        src="/brand/ai-embedded-debugger-logo.png"
+                        alt=""
+                        width={1536}
+                        height={1024}
+                        className="h-8 w-auto shrink-0 object-contain"
+                      />
                       <span className="text-sm font-semibold text-foreground">
                         AI Embedded Debugger
                       </span>
@@ -300,7 +308,7 @@ function CreateProjectDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="lg-glass lg-glass-strong border-0 sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Create Debugging Project</DialogTitle>
           <DialogDescription>
@@ -466,7 +474,7 @@ function BentoDashboard() {
   const activeProject = projects.find((p) => p.id === activeProjectId);
 
   return (
-    <section id="bento-dashboard" className="pt-20 pb-16 px-4 sm:px-6 max-w-7xl mx-auto">
+    <section id="bento-dashboard" className="mx-auto max-w-7xl px-4 pt-28 pb-16 sm:px-6">
       {/* Platform Control Strip */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-4 border-b border-border/40">
         <div>
@@ -501,12 +509,12 @@ function BentoDashboard() {
                   size="sm"
                   className="h-8 gap-2 px-3 text-xs font-medium border-border/60 bg-card/60 hover:bg-white/5"
                 >
-                  <FolderOpen className="h-3.5 w-3.5 text-[var(--accent-purple)] shrink-0" />
+                  <FolderOpen className="lg-green h-3.5 w-3.5 shrink-0" />
                   <span className="max-w-[140px] truncate">{activeProject ? activeProject.name : "Select Project"}</span>
                   <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 bg-[oklch(0.16_0.015_260/0.95)] backdrop-blur-xl border-border/80">
+              <DropdownMenuContent align="end" className="lg-glass lg-glass-strong w-56 rounded-2xl border-0 p-1.5">
                 <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
                   Active Projects
                 </DropdownMenuLabel>
@@ -544,7 +552,7 @@ function BentoDashboard() {
               onClick={() => setCreateDialogOpen(true)}
               className="h-8 gap-1.5 text-xs border-border/60 hover:bg-white/5"
             >
-              <Plus className="h-3.5 w-3.5 text-[var(--accent-purple)]" />
+              <Plus className="lg-green h-3.5 w-3.5" />
               <span>New Project</span>
             </Button>
           )}
@@ -564,7 +572,7 @@ function BentoDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-4 sm:gap-6 items-stretch">
 
         {/* ── CARD 1: PRIMARY "NEW DEBUG SESSION" HERO CARD (Col 8) ── */}
-        <Card variant="ai" className="md:col-span-12 lg:col-span-8 flex flex-col justify-between overflow-hidden relative group interactive-card">
+        <Card variant="ai" className="md:col-span-12 lg:col-span-8 flex flex-col justify-between overflow-hidden relative group interactive-card lg-glass lg-panel border-0 shadow-none">
           <div className="absolute -right-20 -top-20 w-60 h-60 bg-[var(--accent-purple)]/10 rounded-full blur-3xl pointer-events-none transition-opacity duration-300 group-hover:opacity-100 opacity-60" />
 
           <CardHeader className="pb-3 relative z-10">
@@ -587,10 +595,10 @@ function BentoDashboard() {
 
           {/* Diagnostic Code Snippet Preview */}
           <CardContent className="pb-4 relative z-10">
-            <div className="rounded-lg border border-[var(--color-code-border)] bg-[var(--color-code-bg)] p-3 font-mono text-xs overflow-hidden shadow-inner group-hover:border-[var(--accent-purple)]/40 transition-colors">
+            <div className="lg-well overflow-hidden p-3 font-mono text-xs">
               <div className="flex items-center justify-between border-b border-[var(--color-code-border)]/60 pb-2 mb-2 text-muted-foreground text-[11px]">
                 <div className="flex items-center gap-1.5">
-                  <Terminal className="h-3.5 w-3.5 text-[var(--accent-purple)]" />
+                  <Terminal className="lg-green h-3.5 w-3.5" />
                   <span>main.c — assertion failed (GPIO_SEL_2 undeclared)</span>
                 </div>
                 <Badge variant="error" className="text-[10px] py-0 px-1.5">
@@ -622,7 +630,7 @@ function BentoDashboard() {
             </div>
             <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
               <span className="flex items-center gap-1">
-                <ShieldCheck className="h-3.5 w-3.5 text-[var(--accent-purple)]" />
+                <ShieldCheck className="lg-green h-3.5 w-3.5" />
                 Zero Hallucinations Guarantee
               </span>
             </div>
@@ -630,11 +638,11 @@ function BentoDashboard() {
         </Card>
 
         {/* ── CARD 6: SYSTEM / AI ENGINE STATUS (Col 4) ── */}
-        <Card variant="glass" className="md:col-span-6 lg:col-span-4 flex flex-col justify-between interactive-card group">
+        <Card variant="glass" className="md:col-span-6 lg:col-span-4 flex flex-col justify-between interactive-card lg-glass lg-panel border-0 shadow-none group">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Cpu className="h-4 w-4 text-[var(--accent-purple)] group-hover:scale-105 transition-transform motion-reduce:group-hover:scale-100" />
+                <span className="lg-tile lg-white"><Cpu className="h-4 w-4" /></span>
                 System & AI Engine Status
               </CardTitle>
               <div className="flex items-center gap-1.5">
@@ -653,28 +661,28 @@ function BentoDashboard() {
           </CardHeader>
 
           <CardContent className="space-y-3 text-xs">
-            <div className="flex items-center justify-between p-2 rounded-lg bg-card/60 border border-border/40 hover:border-border/70 transition-colors">
+            <div className="lg-card flex items-center justify-between p-2.5">
               <span className="text-muted-foreground">API Gateway</span>
               <Badge variant={apiHealth === "healthy" ? "success" : "outline"} className="text-[10px]">
                 {apiHealth === "healthy" ? "Online (v1)" : apiHealth === "checking" ? "Verifying" : "Unreachable"}
               </Badge>
             </div>
 
-            <div className="flex items-center justify-between p-2 rounded-lg bg-card/60 border border-border/40 hover:border-border/70 transition-colors">
+            <div className="lg-card flex items-center justify-between p-2.5">
               <span className="text-muted-foreground">AI Diagnostic Model</span>
               <Badge variant="ai" className="text-[10px]">
                 Gemini 2.5 Flash
               </Badge>
             </div>
 
-            <div className="flex items-center justify-between p-2 rounded-lg bg-card/60 border border-border/40 hover:border-border/70 transition-colors">
+            <div className="lg-card flex items-center justify-between p-2.5">
               <span className="text-muted-foreground">RAG Vector Index</span>
-              <Badge variant="outline" className="text-[10px] border-[var(--accent-purple)]/40 text-purple-300">
+              <Badge variant="outline" className="text-[10px] border-[var(--accent-purple)]/40 text-white">
                 ChromaDB Active
               </Badge>
             </div>
 
-            <div className="flex items-center justify-between p-2 rounded-lg bg-card/60 border border-border/40 hover:border-border/70 transition-colors">
+            <div className="lg-card flex items-center justify-between p-2.5">
               <span className="text-muted-foreground">Code Sanitizer</span>
               <Badge variant="outline" className="text-[10px] text-[var(--color-success-green)] border-[var(--color-success-green)]/30">
                 Enforced
@@ -688,11 +696,11 @@ function BentoDashboard() {
         </Card>
 
         {/* ── CARD 3: PROJECTS (Col 4) ── */}
-        <Card variant="default" className="md:col-span-6 lg:col-span-4 flex flex-col justify-between interactive-card group">
+        <Card variant="default" className="md:col-span-6 lg:col-span-4 flex flex-col justify-between interactive-card lg-glass lg-panel border-0 shadow-none group">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <FolderOpen className="h-4 w-4 text-[var(--accent-purple)] group-hover:scale-105 transition-transform motion-reduce:group-hover:scale-100" />
+                <span className="lg-tile lg-green"><FolderOpen className="h-4 w-4" /></span>
                 Projects Workspace
               </CardTitle>
               {isSignedIn && (
@@ -751,7 +759,7 @@ function BentoDashboard() {
                   }`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <FolderOpen className={`h-3.5 w-3.5 shrink-0 transition-colors ${p.id === activeProjectId ? "text-[var(--accent-purple)]" : ""}`} />
+                    <FolderOpen className="lg-green h-3.5 w-3.5 shrink-0" />
                     <span className="truncate font-medium">{p.name}</span>
                   </div>
                   {p.id === activeProjectId && (
@@ -772,11 +780,11 @@ function BentoDashboard() {
         </Card>
 
         {/* ── CARD 2: RECENT DEBUG SESSIONS (Col 5) ── */}
-        <Card variant="default" className="md:col-span-6 lg:col-span-5 flex flex-col justify-between interactive-card group">
+        <Card variant="default" className="md:col-span-6 lg:col-span-5 flex flex-col justify-between interactive-card lg-glass lg-panel border-0 shadow-none group">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Terminal className="h-4 w-4 text-[var(--color-emerald)] group-hover:scale-105 transition-transform motion-reduce:group-hover:scale-100" />
+                <span className="lg-tile lg-green"><Terminal className="h-4 w-4" /></span>
                 Recent Debug Sessions
               </CardTitle>
               <Badge variant="outline" className="text-[10px]">
@@ -811,7 +819,7 @@ function BentoDashboard() {
                 <Link
                   key={s.id}
                   href="/workspace"
-                  className="flex items-center justify-between p-2.5 rounded-lg bg-card/40 border border-border/40 hover:border-[var(--accent-purple)]/40 hover:bg-white/5 transition-all text-left group active:scale-[0.99]"
+                  className="lg-card flex items-center justify-between p-2.5 text-left transition-colors hover:bg-white/[0.04] active:scale-[0.99]"
                 >
                   <div className="min-w-0 flex-1 pr-2">
                     <p className="font-medium text-foreground/90 truncate group-hover:text-[var(--accent-purple)] transition-colors">
@@ -840,10 +848,10 @@ function BentoDashboard() {
         </Card>
 
         {/* ── CARD 7: QUICK ACTIONS (Col 3) ── */}
-        <Card variant="glassCard" className="md:col-span-6 lg:col-span-3 flex flex-col justify-between interactive-card group">
+        <Card variant="glassCard" className="md:col-span-6 lg:col-span-3 flex flex-col justify-between interactive-card lg-glass lg-panel border-0 shadow-none group">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Zap className="h-4 w-4 text-[var(--accent-purple)] group-hover:scale-105 transition-transform motion-reduce:group-hover:scale-100" />
+              <span className="lg-tile lg-green"><Zap className="h-4 w-4" /></span>
               Quick Actions
             </CardTitle>
             <CardDescription className="text-xs">
@@ -859,7 +867,7 @@ function BentoDashboard() {
               className="w-full justify-start gap-2 h-9 text-xs border-border/60 hover:border-[var(--accent-purple)]/50 hover:bg-[var(--accent-purple)]/10 active:scale-[0.99] transition-all"
             >
               <Link href="/workspace">
-                <Zap className="h-3.5 w-3.5 text-[var(--accent-purple)]" />
+                <Zap className="lg-green h-3.5 w-3.5" />
                 <span>New Debug Session</span>
               </Link>
             </Button>
@@ -871,7 +879,7 @@ function BentoDashboard() {
               className="w-full justify-start gap-2 h-9 text-xs border-border/60 hover:border-[var(--color-emerald)]/50 hover:bg-[var(--color-emerald)]/10 active:scale-[0.99] transition-all"
             >
               <Link href="/workspace">
-                <FileCode className="h-3.5 w-3.5 text-[var(--color-emerald)]" />
+                <FileCode className="lg-green h-3.5 w-3.5" />
                 <span>Upload Firmware (.c, .ino)</span>
               </Link>
             </Button>
@@ -883,7 +891,7 @@ function BentoDashboard() {
               className="w-full justify-start gap-2 h-9 text-xs border-border/60 hover:border-[var(--color-info-blue)]/50 hover:bg-[var(--color-info-blue)]/10 active:scale-[0.99] transition-all"
             >
               <Link href="/workspace">
-                <FileText className="h-3.5 w-3.5 text-[var(--color-info-blue)]" />
+                <FileText className="lg-white h-3.5 w-3.5" />
                 <span>Upload Datasheet (.pdf)</span>
               </Link>
             </Button>
@@ -895,7 +903,7 @@ function BentoDashboard() {
               className="w-full justify-start gap-2 h-9 text-xs border-border/60 hover:bg-white/5 active:scale-[0.99] transition-all"
             >
               <Link href="/workspace">
-                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+                <ExternalLink className="lg-white h-3.5 w-3.5" />
                 <span>Open IDE Workspace</span>
               </Link>
             </Button>
@@ -907,11 +915,11 @@ function BentoDashboard() {
         </Card>
 
         {/* ── CARD 5: DEBUG ACTIVITY & TELEMETRY (Col 7) ── */}
-        <Card variant="default" className="md:col-span-12 lg:col-span-7 flex flex-col justify-between interactive-card group">
+        <Card variant="default" className="md:col-span-12 lg:col-span-7 flex flex-col justify-between interactive-card lg-glass lg-panel border-0 shadow-none group">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <Layers className="h-4 w-4 text-[var(--accent-purple)] group-hover:scale-105 transition-transform motion-reduce:group-hover:scale-100" />
+                <span className="lg-tile lg-green"><Layers className="h-4 w-4" /></span>
                 Project Activity & Evidence Telemetry
               </CardTitle>
               <Badge variant="outline" className="text-[10px]">
@@ -926,7 +934,7 @@ function BentoDashboard() {
           <CardContent className="space-y-4 text-xs">
             {/* Real Stats Grid */}
             <div className="grid grid-cols-3 gap-3">
-              <div className="p-3 rounded-lg bg-card/60 border border-border/40 text-center">
+              <div className="lg-card p-3 text-center">
                 <span className="text-[10px] uppercase font-semibold text-muted-foreground">Sessions</span>
                 <p className="text-xl sm:text-2xl font-bold font-display text-foreground mt-0.5">
                   {sessions.length}
@@ -934,7 +942,7 @@ function BentoDashboard() {
                 <span className="text-[10px] text-muted-foreground/80">Diagnostic runs</span>
               </div>
 
-              <div className="p-3 rounded-lg bg-card/60 border border-border/40 text-center">
+              <div className="lg-card p-3 text-center">
                 <span className="text-[10px] uppercase font-semibold text-muted-foreground">Firmware Files</span>
                 <p className="text-xl sm:text-2xl font-bold font-display text-foreground mt-0.5">
                   {files.length}
@@ -942,7 +950,7 @@ function BentoDashboard() {
                 <span className="text-[10px] text-muted-foreground/80">Code & logs indexed</span>
               </div>
 
-              <div className="p-3 rounded-lg bg-card/60 border border-border/40 text-center">
+              <div className="lg-card p-3 text-center">
                 <span className="text-[10px] uppercase font-semibold text-muted-foreground">Datasheets</span>
                 <p className="text-xl sm:text-2xl font-bold font-display text-foreground mt-0.5">
                   {documents.length}
@@ -967,7 +975,7 @@ function BentoDashboard() {
                       key={f.id}
                       className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-card border border-border/60 text-[11px] text-foreground/80"
                     >
-                      <FileCode className="h-3 w-3 text-[var(--color-emerald)]" />
+                      <FileCode className="lg-green h-3 w-3" />
                       <span className="truncate max-w-[140px]">{f.filename}</span>
                       <span className="text-[9px] text-muted-foreground">({formatBytes(f.size_bytes)})</span>
                     </span>
@@ -987,11 +995,11 @@ function BentoDashboard() {
         </Card>
 
         {/* ── CARD 4: DOCUMENTS & DATASHEETS (Col 5) ── */}
-        <Card variant="default" className="md:col-span-12 lg:col-span-5 flex flex-col justify-between interactive-card group">
+        <Card variant="default" className="md:col-span-12 lg:col-span-5 flex flex-col justify-between interactive-card lg-glass lg-panel border-0 shadow-none group">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                <FileText className="h-4 w-4 text-[var(--accent-indigo)] group-hover:scale-105 transition-transform motion-reduce:group-hover:scale-100" />
+                <span className="lg-tile lg-white"><FileText className="h-4 w-4" /></span>
                 Hardware Datasheets (RAG)
               </CardTitle>
               <Badge variant="outline" className="text-[10px]">
@@ -1027,10 +1035,10 @@ function BentoDashboard() {
               documents.map((doc) => (
                 <div
                   key={doc.id}
-                  className="flex items-center justify-between p-2.5 rounded-lg bg-card/40 border border-border/40 hover:border-border/70 transition-colors"
+                  className="lg-card flex items-center justify-between p-2.5"
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <FileText className="h-3.5 w-3.5 text-[var(--accent-indigo)] shrink-0" />
+                    <FileText className="lg-white h-3.5 w-3.5 shrink-0" />
                     <div className="truncate">
                       <p className="font-medium text-foreground truncate">{doc.filename}</p>
                       <p className="text-[10px] text-muted-foreground">{formatBytes(doc.size_bytes)} {doc.page_count ? `• ${doc.page_count} pages` : ""}</p>
@@ -1082,9 +1090,9 @@ function CapabilitiesOverview() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card variant="default" className="p-6 interactive-card group border-border/40 hover:border-[var(--accent-purple)]/30">
-          <div className="h-10 w-10 rounded-lg bg-[var(--accent-purple)]/15 flex items-center justify-center text-[var(--accent-purple)] mb-4 group-hover:bg-[var(--accent-purple)]/25 transition-colors">
-            <Terminal className="h-5 w-5 group-hover:scale-110 transition-transform motion-reduce:group-hover:scale-100" />
+        <Card variant="default" className="p-6 interactive-card lg-glass lg-panel border-0 shadow-none group border-border/40 hover:border-[var(--accent-purple)]/30">
+          <div className="lg-tile lg-tile-lg lg-green mb-4">
+            <Terminal className="h-5 w-5" />
           </div>
           <h3 className="font-semibold text-base mb-1.5 text-foreground">Compiler Error Disassembly</h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
@@ -1092,9 +1100,9 @@ function CapabilitiesOverview() {
           </p>
         </Card>
 
-        <Card variant="default" className="p-6 interactive-card group border-border/40 hover:border-[var(--color-emerald)]/30">
-          <div className="h-10 w-10 rounded-lg bg-[var(--color-emerald)]/15 flex items-center justify-center text-[var(--color-emerald)] mb-4 group-hover:bg-[var(--color-emerald)]/25 transition-colors">
-            <FileTerminal className="h-5 w-5 group-hover:scale-110 transition-transform motion-reduce:group-hover:scale-100" />
+        <Card variant="default" className="p-6 interactive-card lg-glass lg-panel border-0 shadow-none group border-border/40 hover:border-[var(--color-emerald)]/30">
+          <div className="lg-tile lg-tile-lg lg-white mb-4">
+            <FileTerminal className="h-5 w-5" />
           </div>
           <h3 className="font-semibold text-base mb-1.5 text-foreground">Serial Panic Trace Analysis</h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
@@ -1102,9 +1110,9 @@ function CapabilitiesOverview() {
           </p>
         </Card>
 
-        <Card variant="default" className="p-6 interactive-card group border-border/40 hover:border-[var(--accent-indigo)]/30">
-          <div className="h-10 w-10 rounded-lg bg-[var(--accent-indigo)]/15 flex items-center justify-center text-[var(--accent-indigo)] mb-4 group-hover:bg-[var(--accent-indigo)]/25 transition-colors">
-            <FileText className="h-5 w-5 group-hover:scale-110 transition-transform motion-reduce:group-hover:scale-100" />
+        <Card variant="default" className="p-6 interactive-card lg-glass lg-panel border-0 shadow-none group border-border/40 hover:border-[var(--accent-indigo)]/30">
+          <div className="lg-tile lg-tile-lg lg-green mb-4">
+            <FileText className="h-5 w-5" />
           </div>
           <h3 className="font-semibold text-base mb-1.5 text-foreground">Datasheet RAG Grounding</h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
@@ -1144,7 +1152,7 @@ function InteractiveDemoReference() {
           </div>
         </div>
 
-        <div className="w-full max-w-lg rounded-xl border border-[var(--color-code-border)] bg-[var(--color-code-bg)] overflow-hidden shadow-2xl">
+        <div className="lg-well w-full max-w-lg overflow-hidden">
           <div className="flex items-center justify-between border-b border-[var(--color-code-border)] px-4 py-2.5 text-xs text-muted-foreground">
             <span className="font-mono">idf.py build — ESP32-S3</span>
             <Badge variant="error" className="text-[10px]">Error 1</Badge>
@@ -1171,13 +1179,18 @@ function InteractiveDemoReference() {
 
 function Footer() {
   return (
-    <footer className="border-t border-border/40 bg-[oklch(0.11_0.015_260)]">
+    <footer className="px-3 pb-3">
+      <div className="lg-glass rounded-[22px]">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="flex h-5 w-5 items-center justify-center rounded bg-gradient-to-br from-[var(--accent-purple)] to-[var(--accent-indigo)]">
-              <Bug className="h-3 w-3 text-white" />
-            </div>
+            <img
+              src="/brand/ai-embedded-debugger-logo.png"
+              alt=""
+              width={1536}
+              height={1024}
+              className="h-7 w-auto shrink-0 object-contain"
+            />
             <span className="text-xs font-semibold text-foreground">
               AI Embedded Debugger
             </span>
@@ -1186,6 +1199,7 @@ function Footer() {
             &copy; {new Date().getFullYear()} AI Embedded Debugger. Grounded firmware intelligence.
           </p>
         </div>
+      </div>
       </div>
     </footer>
   );
@@ -1197,7 +1211,8 @@ function Footer() {
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
+    <div className="relative isolate flex min-h-screen flex-col text-foreground">
+      <LiquidBackdrop />
       <Navbar />
       <main className="flex-1">
         <BentoDashboard />

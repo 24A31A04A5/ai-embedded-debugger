@@ -36,8 +36,8 @@ export function ProposedFix({ proposedFix, correctedCode }: ProposedFixProps) {
       {proposedFix && <p className="text-xs leading-relaxed text-foreground/90">{proposedFix}</p>}
 
       {correctedCode && (
-        <div className="overflow-hidden rounded border border-ide-border bg-ide-editor">
-          <div className="flex h-11 lg:h-7 items-center justify-between border-b border-ide-border-subtle bg-ide-tabbar pl-2.5 pr-1">
+        <div className="lg-well overflow-hidden">
+          <div className="flex h-12 lg:h-8 items-center justify-between border-b border-white/[0.06] pl-3 pr-1">
             <span className="font-mono text-[11px] text-muted-foreground">
               {isDiff ? "patch.diff" : "Corrected code"}
             </span>
@@ -45,8 +45,8 @@ export function ProposedFix({ proposedFix, correctedCode }: ProposedFixProps) {
               type="button"
               onClick={handleCopy}
               aria-label="Copy corrected code"
-              className={`flex h-9 lg:h-6 items-center gap-1 rounded px-2 text-[11px] ${
-                copied ? "text-[var(--color-success-green)]" : "text-muted-foreground hover:bg-ide-hover hover:text-foreground"
+              className={`flex h-11 lg:h-6 items-center gap-1 rounded-full px-3 lg:px-2.5 text-[11px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/60 ${
+                copied ? "bg-[var(--color-success-green)]/15 text-[var(--color-success-green)]" : "lg-ghost text-muted-foreground hover:text-foreground"
               }`}
             >
               {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}

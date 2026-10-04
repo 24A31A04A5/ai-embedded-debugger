@@ -33,15 +33,11 @@ const UNTITLED: EditorTab = { id: "", name: "Untitled", kind: "scratch" };
 
 function TabIcon({ tab }: { tab: EditorTab }) {
   if (tab.kind === "session") {
-    return <History className="h-3.5 w-3.5 shrink-0 text-[var(--accent-purple)]/80" />;
+    return <History className="lg-white h-3.5 w-3.5 shrink-0" />;
   }
   const ext = tab.name.split(".").pop()?.toLowerCase();
   const color =
-    ext === "h" || ext === "hpp"
-      ? "text-[oklch(0.72_0.12_300)]"
-      : ext === "ino"
-        ? "text-[oklch(0.72_0.12_190)]"
-        : "text-[oklch(0.70_0.12_250)]";
+    ext === "h" || ext === "hpp" || ext === "ino" ? "lg-white" : "lg-green";
   return <FileCode className={`h-3.5 w-3.5 shrink-0 ${color}`} />;
 }
 
@@ -99,14 +95,14 @@ export function CodeWorkspace({
   return (
     <section
       aria-label="Code editor"
-      className={`flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden bg-ide-editor ${className}`}
+      className={`flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden ${className}`}
     >
       {/* Tab strip */}
-      <div className="flex h-11 lg:h-9 shrink-0 items-stretch border-b border-ide-border bg-ide-tabbar select-none">
+      <div className="flex h-12 lg:h-11 shrink-0 items-center gap-2 px-2 select-none">
         <div
           role="tablist"
           aria-label="Open editors"
-          className="flex min-w-0 flex-1 items-stretch overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           onKeyDown={handleTabKeyDown}
         >
           {visibleTabs.map((tab) => {
@@ -114,25 +110,17 @@ export function CodeWorkspace({
             return (
               <div
                 key={tab.id || "untitled"}
-                className={`group relative flex shrink-0 items-center border-r border-ide-border-subtle ${
-                  isActive
-                    ? "bg-ide-editor text-foreground"
-                    : "bg-ide-tabbar text-muted-foreground hover:bg-ide-hover hover:text-foreground/90"
+                className={`group relative flex h-10 lg:h-8 shrink-0 items-center rounded-full ${
+                  isActive ? "lg-chip-active text-foreground" : "lg-ghost text-muted-foreground hover:text-foreground/90"
                 }`}
               >
-                {isActive && (
-                  <span aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-[var(--accent-purple)]" />
-                )}
-                {isActive && (
-                  <span aria-hidden="true" className="absolute inset-x-0 -bottom-px h-px bg-ide-editor" />
-                )}
                 <button
                   type="button"
                   role="tab"
                   aria-selected={isActive}
                   tabIndex={isActive ? 0 : -1}
                   onClick={() => tab.id && onSelectTab?.(tab.id)}
-                  className="flex h-full items-center gap-1.5 pl-3 pr-1.5 font-mono text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[var(--accent-purple)]/60"
+                  className="flex h-full items-center gap-1.5 rounded-full pl-3 pr-1.5 font-mono text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent-purple)]/60"
                   title={tab.modified ? `${tab.name} (modified in editor, not saved to project)` : tab.name}
                 >
                   <TabIcon tab={tab} />
@@ -145,7 +133,7 @@ export function CodeWorkspace({
                     type="button"
                     onClick={() => onCloseTab(tab.id)}
                     aria-label={`Close ${tab.name}`}
-                    className="relative mr-1.5 flex h-8 w-8 lg:h-5 lg:w-5 items-center justify-center rounded text-muted-foreground hover:bg-white/10 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-purple)]/60"
+                    className="relative mr-1.5 flex h-8 w-8 lg:h-5 lg:w-5 items-center justify-center rounded-full text-muted-foreground hover:bg-white/15 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/60"
                   >
                     {tab.modified && (
                       <span
@@ -168,7 +156,7 @@ export function CodeWorkspace({
         </div>
 
         {/* Editor actions */}
-        <div className="flex shrink-0 items-center gap-0.5 border-l border-ide-border-subtle px-1.5">
+        <div className="flex shrink-0 items-center gap-1">
           {value && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -176,10 +164,8 @@ export function CodeWorkspace({
                   type="button"
                   onClick={handleCopy}
                   aria-label="Copy source code"
-                  className={`flex h-9 w-9 lg:h-7 lg:w-7 items-center justify-center rounded transition-colors ${
-                    copied
-                      ? "text-[var(--color-emerald)]"
-                      : "text-muted-foreground hover:bg-ide-hover hover:text-foreground"
+                  className={`lg-chip flex h-10 w-10 lg:h-8 lg:w-8 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/60 ${
+                    copied ? "text-[var(--color-emerald)]" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
@@ -195,10 +181,8 @@ export function CodeWorkspace({
                   type="button"
                   onClick={handleClear}
                   aria-label="Clear code editor"
-                  className={`flex h-9 w-9 lg:h-7 lg:w-7 items-center justify-center rounded transition-colors ${
-                    cleared
-                      ? "text-[var(--color-warning-amber)]"
-                      : "text-muted-foreground hover:bg-ide-hover hover:text-[var(--color-error-red)]"
+                  className={`lg-chip flex h-10 w-10 lg:h-8 lg:w-8 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/60 ${
+                    cleared ? "text-[var(--color-warning-amber)]" : "text-muted-foreground hover:text-[var(--color-error-red)]"
                   }`}
                 >
                   {cleared ? <Check className="h-3.5 w-3.5" /> : <RotateCcw className="h-3.5 w-3.5" />}
@@ -211,27 +195,29 @@ export function CodeWorkspace({
       </div>
 
       {/* Breadcrumbs */}
-      <div className="flex h-6 shrink-0 items-center gap-1 overflow-hidden border-b border-ide-border-subtle bg-ide-editor px-3 font-mono text-[11px] text-muted-foreground/80 select-none">
+      <div className="flex h-7 shrink-0 items-center gap-1 overflow-hidden px-4 font-mono text-[11px] text-muted-foreground/80 select-none">
         {projectName && (
           <>
             <span className="truncate">{projectName}</span>
             <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/50" />
           </>
         )}
-        <span className="truncate text-foreground/75">{activeTab.name}</span>
-        <span className="ml-auto shrink-0 pl-3 text-muted-foreground/60">{language.label}</span>
+        <span className="truncate text-foreground/80">{activeTab.name}</span>
+        <span className="ml-auto shrink-0 pl-3 text-muted-foreground/70">{language.label}</span>
       </div>
 
-      <CodeEditor
-        ref={editorRef}
-        value={value}
-        onChange={onChange}
-        language={language.id}
-        documentKey={activeTab.id || "untitled"}
-        onCursorChange={onCursorChange}
-        ariaLabel={`Source editor: ${activeTab.name}`}
-        placeholder="Paste C/C++ firmware source here, or open a file from the Explorer…"
-      />
+      <div className="lg-well mx-2 mb-2 flex min-h-0 flex-1 flex-col">
+        <CodeEditor
+          ref={editorRef}
+          value={value}
+          onChange={onChange}
+          language={language.id}
+          documentKey={activeTab.id || "untitled"}
+          onCursorChange={onCursorChange}
+          ariaLabel={`Source editor: ${activeTab.name}`}
+          placeholder="Paste C/C++ firmware source here, or open a file from the Explorer…"
+        />
+      </div>
     </section>
   );
 }

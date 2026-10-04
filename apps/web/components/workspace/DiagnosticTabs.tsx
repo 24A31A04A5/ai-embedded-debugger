@@ -7,8 +7,11 @@ import {
   ChevronDown,
   ChevronUp,
   CircleX,
+  FileTerminal,
   Info,
   RotateCcw,
+  Terminal,
+  Usb,
 } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -48,7 +51,10 @@ interface DiagnosticTabsProps {
 }
 
 const TRIGGER_CLASS =
-  "relative h-full rounded-none border-0 bg-transparent px-2.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground shadow-none hover:text-foreground data-[state=active]:border-0 data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none data-[state=active]:after:absolute data-[state=active]:after:inset-x-2 data-[state=active]:after:bottom-0 data-[state=active]:after:h-px data-[state=active]:after:bg-foreground/80 focus-visible:ring-1 focus-visible:ring-inset min-h-11 lg:min-h-0";
+  "h-10 lg:h-7 shrink-0 gap-1.5 rounded-full border-0 bg-transparent px-3 text-[11px] font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-0 data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none";
+
+const ICON_BUTTON =
+  "lg-chip flex h-10 w-10 lg:h-7 lg:w-7 items-center justify-center rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/60";
 
 function CountBadge({ count, tone = "neutral" }: { count: number; tone?: "neutral" | "error" }) {
   if (count <= 0) return null;
@@ -112,33 +118,37 @@ export function DiagnosticTabs({
   return (
     <section
       aria-label="Diagnostics panel"
-      className={`flex flex-col overflow-hidden bg-ide-panel ${className}`}
+      className={`flex flex-col overflow-hidden ${className}`}
     >
       <Tabs
         value={activeTab}
         onValueChange={(v) => setTab(v as BottomPanelTab)}
         className="flex h-full flex-1 flex-col overflow-hidden"
       >
-        <div className="flex h-11 lg:h-9 shrink-0 items-stretch justify-between gap-2 border-b border-ide-border-subtle pl-1.5 pr-1.5">
-          <TabsList className="h-full min-w-0 justify-start gap-0 overflow-x-auto rounded-none border-0 bg-transparent p-0 backdrop-blur-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="flex h-14 lg:h-12 shrink-0 items-center justify-between gap-2 px-2">
+          <TabsList className="lg-segmented h-auto min-w-0 justify-start gap-0.5 overflow-x-auto border-0 backdrop-blur-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <TabsTrigger value="problems" className={TRIGGER_CLASS} onClick={expandOnClick}>
+              <CircleX className="lg-red h-3.5 w-3.5" />
               Problems
               <CountBadge count={problems.length} tone={errorCount > 0 ? "error" : "neutral"} />
             </TabsTrigger>
             <TabsTrigger value="output" className={TRIGGER_CLASS} onClick={expandOnClick}>
+              <FileTerminal className="lg-white h-3.5 w-3.5" />
               Output
               <CountBadge count={compilerLines} />
             </TabsTrigger>
             <TabsTrigger value="terminal" className={TRIGGER_CLASS} onClick={expandOnClick}>
+              <Terminal className="lg-green h-3.5 w-3.5" />
               Terminal
             </TabsTrigger>
             <TabsTrigger value="serial" className={TRIGGER_CLASS} onClick={expandOnClick}>
+              <Usb className="lg-green h-3.5 w-3.5" />
               Serial / UART
               <CountBadge count={serialLines} />
             </TabsTrigger>
           </TabsList>
 
-          <div className="flex shrink-0 items-center gap-0.5">
+          <div className="flex shrink-0 items-center gap-1">
             {!isCollapsed && clearable && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -146,10 +156,8 @@ export function DiagnosticTabs({
                     type="button"
                     onClick={handleClearCurrent}
                     aria-label={`Clear ${activeTab === "output" ? "compiler output" : "serial logs"}`}
-                    className={`flex h-9 w-9 lg:h-6 lg:w-6 items-center justify-center rounded transition-colors ${
-                      cleared
-                        ? "text-[var(--color-warning-amber)]"
-                        : "text-muted-foreground hover:bg-ide-hover hover:text-[var(--color-error-red)]"
+                    className={`${ICON_BUTTON} ${
+                      cleared ? "text-[var(--color-warning-amber)]" : "text-muted-foreground hover:text-[var(--color-error-red)]"
                     }`}
                   >
                     {cleared ? <Check className="h-3.5 w-3.5" /> : <RotateCcw className="h-3.5 w-3.5" />}
@@ -169,7 +177,7 @@ export function DiagnosticTabs({
                     onClick={onToggleCollapse}
                     aria-label={isCollapsed ? "Expand diagnostics panel" : "Collapse diagnostics panel"}
                     aria-expanded={!isCollapsed}
-                    className="flex h-9 w-9 lg:h-6 lg:w-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-ide-hover hover:text-foreground"
+                    className={`${ICON_BUTTON} text-muted-foreground hover:text-foreground`}
                   >
                     {isCollapsed ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                   </button>
@@ -181,7 +189,7 @@ export function DiagnosticTabs({
         </div>
 
         {!isCollapsed && (
-          <div className="relative flex min-h-0 flex-1 overflow-hidden">
+          <div className="lg-well relative mx-2 mb-2 flex min-h-0 flex-1 overflow-hidden">
             <TabsContent value="problems" className="ide-scroll m-0 flex-1 overflow-y-auto data-[state=inactive]:hidden">
               {problems.length === 0 ? (
                 <p className="px-4 py-3 text-xs text-muted-foreground">
@@ -190,7 +198,7 @@ export function DiagnosticTabs({
                     : "No problems detected yet. Run Analyze with AI to parse compiler diagnostics and code issues."}
                 </p>
               ) : (
-                <ul className="py-1 font-mono text-xs" aria-label="Problems">
+                <ul className="space-y-0.5 p-1.5 font-mono text-xs" aria-label="Problems">
                   {problems.map((p, idx) => {
                     const where = p.file || p.location;
                     const pos = typeof p.line === "number" ? `[Ln ${p.line}${p.column ? `, Col ${p.column}` : ""}]` : "";
@@ -201,7 +209,7 @@ export function DiagnosticTabs({
                           type="button"
                           disabled={!clickable}
                           onClick={() => clickable && onSelectProblem?.(p)}
-                          className="flex w-full items-start gap-2 px-3 py-1.5 lg:py-1 text-left min-h-11 lg:min-h-0 enabled:hover:bg-ide-hover focus-visible:outline-none focus-visible:bg-ide-selected disabled:cursor-default"
+                          className="flex w-full items-start gap-2 rounded-lg px-2.5 py-2 lg:py-1.5 text-left min-h-11 lg:min-h-0 transition-colors enabled:hover:bg-white/[0.06] focus-visible:outline-none focus-visible:bg-ide-selected disabled:cursor-default"
                         >
                           <ProblemIcon severity={p.severity} />
                           <span className="min-w-0 flex-1 text-foreground/90 [overflow-wrap:anywhere]">{p.message}</span>

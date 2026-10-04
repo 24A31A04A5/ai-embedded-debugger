@@ -47,6 +47,9 @@ export const metadata: Metadata = {
 
 import { ClerkProvider } from "@clerk/nextjs";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { WelcomeGate } from "@/components/brand/WelcomeGate";
+import { welcomeBootScript } from "@/components/brand/welcome-boot";
+import { clerkAppearance } from "@/lib/clerk-appearance";
 
 export default function RootLayout({
   children,
@@ -54,18 +57,21 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en" className="dark">
+    <ClerkProvider appearance={clerkAppearance} signInUrl="/sign-in" signUpUrl="/sign-up">
+      <html lang="en" className="dark" suppressHydrationWarning>
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${inter.variable} font-sans min-h-screen bg-background text-foreground antialiased selection:bg-[var(--accent-purple)]/30 selection:text-white relative`}
         >
+          <script dangerouslySetInnerHTML={{ __html: welcomeBootScript }} />
+          <WelcomeGate />
+
           {/* Ambient atmospheric glow in top background */}
           <div
             className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
             aria-hidden="true"
           >
-            <div className="absolute -top-40 left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,oklch(0.60_0.22_290/0.09)_0%,oklch(0.55_0.20_275/0.04)_40%,transparent_70%)] blur-3xl" />
-            <div className="absolute -top-20 -right-20 h-[350px] w-[350px] rounded-full bg-[radial-gradient(circle_at_center,oklch(0.58_0.21_300/0.05)_0%,transparent_70%)] blur-3xl" />
+            <div className="absolute -top-40 left-1/2 h-[500px] w-[800px] -translate-x-1/2 rounded-full bg-[radial-gradient(circle_at_center,oklch(0.62_0.16_158/0.12)_0%,oklch(0.96_0.01_155/0.04)_40%,transparent_70%)] blur-3xl" />
+            <div className="absolute -top-20 -right-20 h-[350px] w-[350px] rounded-full bg-[radial-gradient(circle_at_center,oklch(0.9_0.02_155/0.06)_0%,transparent_70%)] blur-3xl" />
           </div>
 
           <TooltipProvider delayDuration={200}>

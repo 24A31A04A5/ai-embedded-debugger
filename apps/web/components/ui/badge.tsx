@@ -17,7 +17,7 @@ const badgeVariants = cva(
         error:
           "border-[oklch(0.65_0.2_25/0.3)] bg-[oklch(0.65_0.2_25/0.15)] text-[var(--color-error-red)]",
         outline: "text-foreground border-border",
-        ai: "border-[oklch(0.60_0.22_290/0.3)] bg-[oklch(0.60_0.22_290/0.15)] text-[var(--accent-purple)] shadow-[0_0_8px_oklch(0.60_0.22_290/0.15)]",
+        ai: "border-[oklch(0.72_0.17_158/0.35)] bg-[oklch(0.72_0.17_158/0.15)] text-white shadow-[0_0_8px_oklch(0.72_0.17_158/0.18)]",
         success:
           "border-[oklch(0.65_0.19_145/0.3)] bg-[oklch(0.65_0.19_145/0.15)] text-[var(--color-success-green)]",
         warning:

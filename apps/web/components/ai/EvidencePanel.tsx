@@ -14,9 +14,9 @@ interface EvidencePanelProps {
 type EvidenceKind = "source" | "compiler" | "serial" | "other";
 
 const KIND_META: Record<EvidenceKind, { label: string; icon: React.ReactNode }> = {
-  source: { label: "Source", icon: <FileCode className="h-3.5 w-3.5 text-[oklch(0.70_0.12_250)]" /> },
+  source: { label: "Source", icon: <FileCode className="lg-white h-3.5 w-3.5" /> },
   compiler: { label: "Compiler", icon: <FileTerminal className="h-3.5 w-3.5 text-[var(--color-warning-amber)]" /> },
-  serial: { label: "Serial", icon: <Terminal className="h-3.5 w-3.5 text-[oklch(0.72_0.12_190)]" /> },
+  serial: { label: "Serial", icon: <Terminal className="lg-green h-3.5 w-3.5" /> },
   other: { label: "Other signals", icon: <FileText className="h-3.5 w-3.5 text-muted-foreground" /> },
 };
 
@@ -48,7 +48,7 @@ function Group({
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex w-full min-h-11 lg:min-h-7 items-center gap-1.5 rounded px-1 text-left text-xs font-medium text-foreground/85 hover:bg-ide-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-purple)]/60"
+        className="flex w-full min-h-11 lg:min-h-7 items-center gap-1.5 rounded-lg px-1.5 text-left text-xs font-medium text-foreground/85 transition-colors hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/60"
       >
         {open ? (
           <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
@@ -134,7 +134,7 @@ export function EvidencePanel({ evidence, citations, groundedSummary }: Evidence
                   <p className="text-[11px] leading-relaxed text-muted-foreground">{cite.relevance_explanation}</p>
                 )}
                 {cite.relevant_snippet && (
-                  <p className="line-clamp-3 rounded bg-black/25 px-2 py-1 font-mono text-[11px] text-foreground/75 [overflow-wrap:anywhere]">
+                  <p className="line-clamp-3 rounded-lg bg-black/25 px-2 py-1 font-mono text-[11px] text-foreground/75 [overflow-wrap:anywhere]">
                     {cite.relevant_snippet}
                   </p>
                 )}

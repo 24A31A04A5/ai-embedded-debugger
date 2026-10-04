@@ -19,11 +19,11 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
         ghost: "hover:bg-accent/80 hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        ai: "bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-indigo)] text-white shadow-sm hover:brightness-110 border border-purple-400/20",
+        ai: "bg-gradient-to-r from-[var(--accent-purple)] to-[oklch(0.58_0.14_158)] text-white shadow-sm hover:brightness-110 border border-white/20",
         "ai-outline":
-          "border border-[var(--accent-purple)]/40 bg-[var(--accent-purple)]/10 text-purple-200 hover:bg-[var(--accent-purple)]/20 hover:border-[var(--accent-purple)]/60",
+          "border border-[var(--accent-purple)]/40 bg-[var(--accent-purple)]/10 text-white hover:bg-[var(--accent-purple)]/20 hover:border-[var(--accent-purple)]/60",
         "ai-glow":
-          "bg-gradient-to-r from-[var(--accent-purple)] to-[var(--accent-indigo)] text-white shadow-sm glow-purple hover:brightness-110 border border-purple-400/30",
+          "bg-gradient-to-r from-[var(--accent-purple)] to-[oklch(0.58_0.14_158)] text-white shadow-sm glow-purple hover:brightness-110 border border-white/25",
         glass:
           "glass-panel text-foreground hover:bg-white/5 shadow-sm",
       },

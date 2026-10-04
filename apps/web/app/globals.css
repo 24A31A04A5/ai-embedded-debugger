@@ -57,13 +57,13 @@
 
 /* Dark-first theme — developer tool aesthetic */
 :root {
-  --background: oklch(0.13 0.015 260);
+  --background: oklch(0.13 0.016 165);
   --foreground: oklch(0.93 0.005 260);
   --card: oklch(0.16 0.015 260);
   --card-foreground: oklch(0.93 0.005 260);
   --popover: oklch(0.16 0.015 260);
   --popover-foreground: oklch(0.93 0.005 260);
-  --primary: oklch(0.60 0.22 290);
+  --primary: oklch(0.72 0.17 158);
   --primary-foreground: oklch(0.98 0 0);
   --secondary: oklch(0.20 0.015 260);
   --secondary-foreground: oklch(0.88 0.005 260);
@@ -74,7 +74,7 @@
   --destructive: oklch(0.55 0.2 25);
   --border: oklch(0.25 0.015 260);
   --input: oklch(0.25 0.015 260);
-  --ring: oklch(0.60 0.22 290);
+  --ring: oklch(0.72 0.17 158);
   --radius: 0.625rem;
 
   /* Landing page tokens */
@@ -89,12 +89,12 @@
   --color-success-green: oklch(0.65 0.19 145);
   --color-info-blue: oklch(0.65 0.15 250);
 
-  /* ── Phase 7.1 — Purple / Indigo Atmospheric Accents ── */
-  --accent-purple: oklch(0.60 0.22 290);
-  --accent-indigo: oklch(0.55 0.20 275);
-  --accent-violet: oklch(0.58 0.21 300);
-  --accent-purple-dim: oklch(0.45 0.16 290);
-  --accent-indigo-dim: oklch(0.40 0.14 275);
+  /* Emerald + white. Names kept so existing accent classes pick up the new theme. */
+  --accent-purple: oklch(0.74 0.17 158);
+  --accent-indigo: oklch(0.94 0.03 155);
+  --accent-violet: oklch(0.82 0.12 158);
+  --accent-purple-dim: oklch(0.48 0.12 158);
+  --accent-indigo-dim: oklch(0.78 0.04 155);
 
   /* ── Phase 7.1 — Gradient Tokens ── */
   --gradient-primary: linear-gradient(
@@ -102,14 +102,14 @@
     var(--accent-purple),
     var(--accent-indigo)
   );
-  --gradient-accent: linear-gradient(135deg, oklch(0.60 0.22 290), oklch(0.55 0.20 275));
-  --gradient-atmospheric: linear-gradient(180deg, oklch(0.13 0.015 260) 0%, oklch(0.14 0.03 280) 50%, oklch(0.13 0.015 260) 100%);
+  --gradient-accent: linear-gradient(135deg, oklch(0.74 0.17 158), oklch(0.96 0.02 155));
+  --gradient-atmospheric: linear-gradient(180deg, oklch(0.13 0.016 165) 0%, oklch(0.14 0.03 160) 50%, oklch(0.12 0.014 165) 100%);
   --gradient-surface: linear-gradient(135deg, oklch(0.18 0.02 270 / 0.6), oklch(0.16 0.015 260 / 0.4));
 
   /* ── Phase 7.1 — Glow / Shadow Tokens ── */
   --glow-emerald: 0 0 20px oklch(0.65 0.19 145 / 0.25), 0 0 60px oklch(0.65 0.19 145 / 0.1);
-  --glow-purple: 0 0 20px oklch(0.60 0.22 290 / 0.25), 0 0 60px oklch(0.60 0.22 290 / 0.1);
-  --glow-indigo: 0 0 20px oklch(0.55 0.20 275 / 0.25), 0 0 60px oklch(0.55 0.20 275 / 0.1);
+  --glow-purple: 0 0 20px oklch(0.72 0.17 158 / 0.28), 0 0 60px oklch(0.72 0.17 158 / 0.1);
+  --glow-indigo: 0 0 20px oklch(0.96 0.02 155 / 0.2), 0 0 60px oklch(0.96 0.02 155 / 0.08);
   --shadow-elevated: 0 8px 32px oklch(0 0 0 / 0.4), 0 2px 8px oklch(0 0 0 / 0.3);
   --shadow-card: 0 4px 16px oklch(0 0 0 / 0.3), 0 1px 4px oklch(0 0 0 / 0.2);
 
@@ -126,21 +126,31 @@
   --bento-gap: 1rem;
   --bento-gap-lg: 1.25rem;
 
-  /* ── Debug workspace (IDE) — neutral graphite, purple reserved for AI ── */
-  --ide-bg: oklch(0.155 0.004 270);
-  --ide-titlebar: oklch(0.175 0.004 270);
-  --ide-sidebar: oklch(0.175 0.004 270);
-  --ide-editor: oklch(0.195 0.004 270);
-  --ide-gutter: oklch(0.195 0.004 270);
-  --ide-tabbar: oklch(0.17 0.004 270);
-  --ide-panel: oklch(0.172 0.004 270);
-  --ide-ai: oklch(0.178 0.01 285);
-  --ide-statusbar: oklch(0.165 0.004 270);
-  --ide-border: oklch(0.29 0.005 270);
-  --ide-border-subtle: oklch(0.245 0.005 270);
-  --ide-hover: oklch(1 0 0 / 0.045);
-  --ide-selected: oklch(0.55 0.08 285 / 0.28);
-  --ide-active-line: oklch(1 0 0 / 0.04);
+  /* ── Debug workspace (IDE) — Liquid Glass chrome over solid code wells ──
+     Chrome surfaces are transparent because the glass panel behind them supplies
+     the material; code surfaces stay opaque for legibility. */
+  --ide-bg: oklch(0.13 0.016 165);
+  --ide-titlebar: transparent;
+  --ide-sidebar: transparent;
+  --ide-editor: oklch(0.15 0.012 165);
+  --ide-gutter: oklch(0.15 0.012 165);
+  --ide-tabbar: transparent;
+  --ide-panel: transparent;
+  --ide-ai: transparent;
+  --ide-statusbar: transparent;
+  --ide-border: oklch(1 0 0 / 0.09);
+  --ide-border-subtle: oklch(1 0 0 / 0.06);
+  --ide-hover: oklch(1 0 0 / 0.06);
+  --ide-selected: oklch(0.74 0.12 158 / 0.2);
+  --ide-active-line: oklch(1 0 0 / 0.045);
+
+  /* ── Liquid Glass material ── */
+  --lg-tint: oklch(0.18 0.02 162 / 0.56);
+  --lg-tint-strong: oklch(0.17 0.018 162 / 0.84);
+  --lg-edge: oklch(1 0 0 / 0.085);
+  --lg-highlight: oklch(1 0 0 / 0.11);
+  --lg-blur: 28px;
+  --lg-radius: 18px;
   --editor-font-size: 13px;
   --editor-line-height: 20px;
   --editor-pad-y: 8px;
@@ -167,7 +177,7 @@
 
   /* Ensure buttons and links have clear focus rings */
   :focus-visible {
-    outline: 2px solid oklch(0.60 0.22 290 / 0.7);
+    outline: 2px solid oklch(0.74 0.17 158 / 0.75);
     outline-offset: 2px;
   }
 
@@ -186,7 +196,7 @@
   }
 
   ::selection {
-    background: oklch(0.60 0.22 290 / 0.3);
+    background: oklch(0.74 0.17 158 / 0.35);
   }
 }
 
@@ -318,7 +328,7 @@
   }
   .interactive-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 30px oklch(0.60 0.22 290 / 0.12);
+    box-shadow: 0 8px 30px oklch(0.72 0.17 158 / 0.16);
   }
 }
 
@@ -360,6 +370,313 @@
   padding: 0;
   background: transparent;
   font: inherit;
+}
+
+/* ── Liquid Glass ──
+   Unlayered on purpose: these must win over component-library `bg-*` utilities
+   (dropdowns, sheets) they are applied to. */
+
+.lg-wallpaper {
+  background-color: oklch(0.12 0.016 165);
+  background-image:
+    radial-gradient(60% 50% at 8% 0%, oklch(0.55 0.16 158 / 0.42), transparent 70%),
+    radial-gradient(45% 45% at 100% 18%, oklch(0.96 0.01 155 / 0.1), transparent 68%),
+    radial-gradient(50% 45% at 20% 100%, oklch(0.45 0.12 158 / 0.28), transparent 70%),
+    radial-gradient(40% 40% at 85% 95%, oklch(0.9 0.02 155 / 0.08), transparent 70%);
+}
+
+/* Unlayered, so it would beat Tailwind's `fixed`/`absolute`/`sticky` utilities. */
+.lg-glass:not(.fixed, .absolute, .sticky) {
+  position: relative;
+}
+
+.lg-glass {
+  isolation: isolate;
+  background:
+    linear-gradient(180deg, oklch(1 0 0 / 0.06), oklch(1 0 0 / 0.012) 45%, oklch(1 0 0 / 0)),
+    var(--lg-tint);
+  -webkit-backdrop-filter: blur(var(--lg-blur)) saturate(170%);
+  backdrop-filter: blur(var(--lg-blur)) saturate(170%);
+  border: 0;
+  box-shadow:
+    inset 0 0 0 1px var(--lg-edge),
+    inset 0 1px 0 0 var(--lg-highlight),
+    0 14px 36px -14px oklch(0 0 0 / 0.7),
+    0 2px 6px -2px oklch(0 0 0 / 0.35);
+}
+
+/* Specular rim: light catches the upper-left edge like the lip of a lens. */
+.lg-glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    140deg,
+    oklch(1 0 0 / 0.3),
+    oklch(1 0 0 / 0.06) 28%,
+    oklch(1 0 0 / 0) 55%,
+    oklch(1 0 0 / 0.09)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.lg-glass-strong {
+  --lg-tint: var(--lg-tint-strong);
+}
+
+.lg-panel {
+  border-radius: var(--lg-radius);
+  overflow: hidden;
+}
+
+/* Opaque inset surface for code and logs. */
+.lg-well {
+  background: var(--ide-editor);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 0 1px oklch(1 0 0 / 0.06),
+    inset 0 2px 10px oklch(0 0 0 / 0.35);
+}
+
+.lg-card {
+  border-radius: 14px;
+  background: linear-gradient(180deg, oklch(1 0 0 / 0.055), oklch(1 0 0 / 0.022));
+  box-shadow:
+    inset 0 0 0 1px oklch(1 0 0 / 0.07),
+    inset 0 1px 0 oklch(1 0 0 / 0.07);
+}
+
+.lg-chip {
+  background: oklch(1 0 0 / 0.05);
+  box-shadow:
+    inset 0 0 0 1px oklch(1 0 0 / 0.08),
+    inset 0 1px 0 oklch(1 0 0 / 0.06);
+  transition: background-color 180ms ease, box-shadow 180ms ease, color 180ms ease;
+}
+.lg-chip:hover {
+  background: oklch(1 0 0 / 0.09);
+}
+
+.lg-chip-active,
+.lg-chip-active:hover,
+.lg-segmented > [role="tab"][data-state="active"] {
+  color: var(--foreground);
+  background: linear-gradient(180deg, oklch(1 0 0 / 0.17), oklch(1 0 0 / 0.08));
+  box-shadow:
+    inset 0 0 0 1px oklch(1 0 0 / 0.14),
+    inset 0 1px 0 oklch(1 0 0 / 0.24),
+    0 4px 14px -4px oklch(0 0 0 / 0.55);
+}
+
+.lg-ghost {
+  transition: background-color 180ms ease, color 180ms ease, box-shadow 180ms ease;
+}
+.lg-ghost:hover {
+  background: oklch(1 0 0 / 0.07);
+}
+
+.lg-segmented {
+  border-radius: 9999px;
+  padding: 3px;
+  background: oklch(0 0 0 / 0.28);
+  box-shadow:
+    inset 0 1px 2px oklch(0 0 0 / 0.45),
+    inset 0 0 0 1px oklch(1 0 0 / 0.05);
+}
+
+.lg-primary {
+  color: #fff;
+  background: linear-gradient(180deg, oklch(0.68 0.16 158), oklch(0.46 0.12 158));
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.45),
+    inset 0 -1px 0 oklch(0 0 0 / 0.18),
+    inset 0 0 0 1px oklch(1 0 0 / 0.16),
+    0 6px 18px -6px oklch(0.62 0.16 158 / 0.7);
+  transition: filter 180ms ease, box-shadow 180ms ease, transform 120ms ease;
+}
+.lg-primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+.lg-primary:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.lg-primary:disabled {
+  opacity: 0.5;
+  filter: saturate(0.6);
+  cursor: not-allowed;
+}
+
+.lg-sticky {
+  background: oklch(0.2 0.018 162 / 0.72);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .lg-glass,
+  .lg-sticky {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: oklch(0.2 0.02 162);
+  }
+  .lg-wallpaper {
+    background-image: none;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .lg-glass,
+  .lg-sticky {
+    background: oklch(0.2 0.02 162 / 0.97);
+  }
+}
+
+@media (prefers-contrast: more) {
+  .lg-glass {
+    box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.35);
+  }
+  .lg-chip,
+  .lg-card,
+  .lg-well {
+    box-shadow: inset 0 0 0 1px oklch(1 0 0 / 0.3);
+  }
+}
+
+/* Apple system colours for the small glyphs inside buttons, tabs and rows. */
+:root {
+  --apple-red: #ff453a;
+  --apple-orange: #ff9f0a;
+  --apple-yellow: #ffd60a;
+  --apple-green: #30d158;
+  --apple-mint: #63e6be;
+  --apple-teal: #64d2ff;
+  --apple-blue: #0a84ff;
+  --apple-indigo: #5e5ce6;
+  --apple-purple: #bf5af2;
+  --apple-pink: #ff375f;
+}
+
+.lg-white { color: oklch(0.97 0.004 155); }
+.lg-red { color: var(--apple-red); }
+.lg-orange { color: var(--apple-orange); }
+.lg-yellow { color: var(--apple-yellow); }
+.lg-green { color: var(--apple-green); }
+.lg-mint { color: var(--apple-mint); }
+.lg-teal { color: var(--apple-teal); }
+.lg-blue { color: var(--apple-blue); }
+.lg-indigo { color: var(--apple-indigo); }
+.lg-purple { color: var(--apple-purple); }
+.lg-pink { color: var(--apple-pink); }
+
+/* Tinted well that takes its colour from the glyph it wraps. */
+.lg-tile {
+  display: inline-flex;
+  height: 1.75rem;
+  width: 1.75rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, currentColor 16%, transparent);
+  box-shadow:
+    inset 0 1px 0 oklch(1 0 0 / 0.28),
+    inset 0 0 0 1px color-mix(in srgb, currentColor 34%, transparent);
+}
+
+.lg-tile-lg {
+  height: 2.5rem;
+  width: 2.5rem;
+  border-radius: 0.85rem;
+}
+
+/*
+ * Post-login welcome (total 3500ms = WELCOME_TOTAL_MS in welcome-boot.ts):
+ * logo 0–800ms, brand 600–1250ms, status 1100–1500ms, hold, exit 3000–3500ms.
+ * --welcome-elapsed resumes the timeline after a full-page post-auth redirect.
+ */
+.welcome-overlay {
+  display: none;
+}
+
+html[data-welcome="play"] .welcome-overlay {
+  display: flex;
+  animation: welcome-exit 500ms cubic-bezier(0.4, 0, 0.2, 1) calc(3000ms - var(--welcome-elapsed, 0ms)) forwards;
+}
+
+html[data-welcome="play"] .welcome-stage {
+  animation: welcome-stage-exit 500ms cubic-bezier(0.4, 0, 0.2, 1) calc(3000ms - var(--welcome-elapsed, 0ms)) forwards;
+}
+
+html[data-welcome="play"] .welcome-logo {
+  animation: welcome-logo-in 800ms cubic-bezier(0.16, 1, 0.3, 1) calc(0ms - var(--welcome-elapsed, 0ms)) both;
+}
+
+html[data-welcome="play"] .welcome-glow {
+  animation: welcome-fade-in 1000ms ease-out calc(0ms - var(--welcome-elapsed, 0ms)) both;
+}
+
+html[data-welcome="play"] .welcome-title {
+  animation: welcome-rise-in 500ms cubic-bezier(0.16, 1, 0.3, 1) calc(600ms - var(--welcome-elapsed, 0ms)) both;
+}
+
+html[data-welcome="play"] .welcome-subtitle {
+  animation: welcome-rise-in 500ms cubic-bezier(0.16, 1, 0.3, 1) calc(750ms - var(--welcome-elapsed, 0ms)) both;
+}
+
+html[data-welcome="play"] .welcome-status {
+  animation: welcome-fade-in 400ms ease-out calc(1100ms - var(--welcome-elapsed, 0ms)) both;
+}
+
+@keyframes welcome-logo-in {
+  from {
+    opacity: 0.15;
+    transform: scale(0.84);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes welcome-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes welcome-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes welcome-stage-exit {
+  to {
+    transform: scale(1.04);
+  }
+}
+
+@keyframes welcome-exit {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
 }
 
 /* Phase 7.7 — Global Accessibility: Respect prefers-reduced-motion */

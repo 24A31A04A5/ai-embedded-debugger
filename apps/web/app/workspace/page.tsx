@@ -12,7 +12,6 @@ import {
   X,
 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -25,8 +24,10 @@ import {
   type DebugSessionSummary,
   type FeedbackResponse,
 } from "@/lib/api-client";
+import { LiquidBackdrop } from "@/components/ui/liquid-backdrop";
 import {
   WorkspaceHeader,
+  ActivityRail,
   ProjectFilesPanel,
   CodeWorkspace,
   DiagnosticTabs,
@@ -65,7 +66,7 @@ function Toast({
   return (
     <div
       role="status"
-      className="fixed bottom-8 left-4 right-4 z-50 flex items-center gap-2 rounded border border-ide-border bg-[oklch(0.21_0.004_270)] px-3 py-2.5 text-sm shadow-xl sm:left-auto sm:right-4 sm:max-w-md animate-in slide-in-from-bottom-4"
+      className="lg-glass lg-glass-strong fixed bottom-4 left-4 right-4 z-50 flex items-center gap-2.5 rounded-full py-1.5 pl-4 pr-1.5 text-sm sm:bottom-14 sm:left-auto sm:right-4 sm:max-w-md animate-in slide-in-from-bottom-4 motion-reduce:animate-none"
     >
       {type === "success" ? (
         <CheckCircle2 className="h-4 w-4 shrink-0 text-[var(--color-emerald)]" />
@@ -75,7 +76,7 @@ function Toast({
       <span className="min-w-0 flex-1 truncate text-xs font-medium text-foreground">{message}</span>
       <button
         onClick={onClose}
-        className="ml-1 flex h-9 w-9 lg:h-6 lg:w-6 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-ide-hover hover:text-foreground"
+        className="lg-ghost ml-1 flex h-11 w-11 lg:h-8 lg:w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/60"
         aria-label="Close notification"
       >
         <X className="h-3.5 w-3.5" />
@@ -134,6 +135,7 @@ const isDesktopViewport = () =>
 
 export default function WorkspacePage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [aiPanelOpen, setAiPanelOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isDiagnosticsCollapsed, setIsDiagnosticsCollapsed] = useState(false);
   const [bottomTab, setBottomTab] = useState<BottomPanelTab>("output");
@@ -588,6 +590,15 @@ export default function WorkspacePage() {
     if (!isDesktopViewport()) setActiveMobileView("diagnostics");
   };
 
+  const toggleBottomTab = (tab: BottomPanelTab) => {
+    if (bottomTab === tab && !isDiagnosticsCollapsed) {
+      setIsDiagnosticsCollapsed(true);
+      return;
+    }
+    setBottomTab(tab);
+    setIsDiagnosticsCollapsed(false);
+  };
+
   const canAnalyze = Boolean(
     firmwareCode.trim() || compilerOutput.trim() || serialLogs.trim()
   );
@@ -664,36 +675,36 @@ export default function WorkspacePage() {
     {
       id: "code" as const,
       label: "Editor",
-      icon: <Code2 className="h-3.5 w-3.5" />,
+      icon: <Code2 className="lg-green h-3.5 w-3.5" />,
       indicator: firmwareCode.trim() ? "bg-foreground/60" : null,
     },
     {
       id: "diagnostics" as const,
       label: "Logs & Output",
-      icon: <Terminal className="h-3.5 w-3.5" />,
+      icon: <Terminal className="lg-green h-3.5 w-3.5" />,
       indicator: compilerOutput.trim() || serialLogs.trim() ? "bg-[var(--color-warning-amber)]" : null,
     },
     {
       id: "ai" as const,
       label: "AI Debug",
-      icon: <Sparkles className="h-3.5 w-3.5 text-[var(--accent-purple)]" />,
+      icon: <Sparkles className="lg-green h-3.5 w-3.5" />,
       indicator: diagnosis ? "bg-[var(--color-success-green)]" : null,
     },
     {
       id: "files" as const,
       label: "Files",
-      icon: <FolderOpen className="h-3.5 w-3.5" />,
+      icon: <FolderOpen className="lg-white h-3.5 w-3.5" />,
       indicator: null,
     },
   ];
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-ide-bg">
+    <div className="relative isolate flex h-dvh flex-col overflow-hidden lg:gap-2 lg:p-2">
+      <LiquidBackdrop />
+
       {/* 1. Toolbar */}
       <WorkspaceHeader
-        sidebarOpen={sidebarOpen}
         mobileSidebarOpen={mobileSidebarOpen}
-        onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
         onToggleMobileSidebar={() => setMobileSidebarOpen(!mobileSidebarOpen)}
         activeProject={activeProject}
         projects={projects}
@@ -710,7 +721,7 @@ export default function WorkspacePage() {
 
       {/* 2. Mobile / tablet Explorer drawer */}
       <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
-        <SheetContent side="left" className="w-72 border-ide-border bg-ide-sidebar p-0">
+        <SheetContent side="left" className="lg-glass lg-glass-strong w-72 rounded-r-[22px] p-0">
           <SheetHeader className="sr-only">
             <SheetTitle>Explorer</SheetTitle>
           </SheetHeader>
@@ -736,28 +747,31 @@ export default function WorkspacePage() {
       {/* 3. Workbench */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {!activeProject && !loading ? (
-          <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
-            <FolderOpen className="mb-3 h-8 w-8 text-muted-foreground/60" />
-            <h2 className="text-sm font-semibold text-foreground">No project selected</h2>
-            <p className="mt-1 max-w-xs text-xs text-muted-foreground">
-              Select an embedded firmware project from the toolbar, or create a new one.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              className="mt-4 min-h-11 lg:min-h-8 gap-1.5 rounded border-ide-border bg-transparent text-xs"
-              onClick={handleCreateProject}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Create Project
-            </Button>
+          <div className="flex flex-1 items-center justify-center p-4">
+            <div className="lg-glass lg-panel flex max-w-sm flex-col items-center px-8 py-9 text-center">
+              <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/[0.07] shadow-[inset_0_1px_0_oklch(1_0_0/0.16),inset_0_0_0_1px_oklch(1_0_0/0.08)]">
+                <FolderOpen className="h-5 w-5 text-foreground/80" />
+              </span>
+              <h2 className="text-[15px] font-semibold text-foreground">No project selected</h2>
+              <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+                Select an embedded firmware project from the toolbar, or create a new one.
+              </p>
+              <button
+                type="button"
+                className="lg-primary mt-5 inline-flex min-h-11 lg:min-h-9 items-center gap-1.5 rounded-full px-5 text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+                onClick={handleCreateProject}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Create Project
+              </button>
+            </div>
           </div>
         ) : (
           <>
             {/* Tablet & mobile (< lg): one primary view at a time */}
-            <div className="flex min-w-0 flex-1 flex-col overflow-hidden lg:hidden">
+            <div className="flex min-w-0 flex-1 flex-col gap-2 overflow-hidden p-2 lg:hidden">
               <div
-                className="flex shrink-0 items-stretch overflow-x-auto border-b border-ide-border bg-ide-tabbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                className="lg-segmented flex shrink-0 items-stretch gap-0.5 overflow-x-auto p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 role="tablist"
                 aria-label="Workspace views"
               >
@@ -771,14 +785,12 @@ export default function WorkspacePage() {
                       role="tab"
                       aria-selected={selected}
                       aria-controls={`tabpanel-${tab.id}`}
+                      data-state={selected ? "active" : "inactive"}
                       onClick={() => setActiveMobileView(tab.id)}
-                      className={`relative flex min-h-11 min-w-[80px] flex-1 items-center justify-center gap-1.5 px-2 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[var(--accent-purple)]/60 ${
-                        selected ? "bg-ide-editor text-foreground" : "text-muted-foreground hover:text-foreground"
+                      className={`flex min-h-11 min-w-[76px] flex-1 items-center justify-center gap-1.5 rounded-full px-2.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent-purple)]/60 ${
+                        selected ? "text-foreground" : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      {selected && (
-                        <span aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-[var(--accent-purple)]" />
-                      )}
                       {tab.icon}
                       <span className="whitespace-nowrap">{tab.label}</span>
                       {tab.id === "files" && files.length + sessions.length > 0 ? (
@@ -798,7 +810,7 @@ export default function WorkspacePage() {
                 })}
               </div>
 
-              <div className="flex min-h-0 flex-1 overflow-hidden">
+              <div className="lg-glass lg-panel flex min-h-0 flex-1 overflow-hidden">
                 {activeMobileView === "code" && (
                   <div id="tabpanel-code" role="tabpanel" aria-labelledby="tab-code" className="flex min-w-0 flex-1 flex-col">
                     {renderCodeWorkspace(mobileEditorRef)}
@@ -836,39 +848,53 @@ export default function WorkspacePage() {
               </div>
             </div>
 
-            {/* Desktop (>= lg): Explorer | Editor | AI, with the panel spanning below */}
-            <div className="hidden min-w-0 flex-1 flex-col overflow-hidden lg:flex">
-              <div className="flex min-h-0 flex-1 overflow-hidden">
-                {sidebarOpen && (
-                  <aside aria-label="Explorer" className="flex w-60 xl:w-64 shrink-0 flex-col overflow-hidden border-r border-ide-border">
-                    <ProjectFilesPanel
-                      {...explorerProps}
-                      onSelectFile={handleSelectFile}
-                      onSelectTab={activateTab}
-                      onSelectSession={handleSelectSession}
-                    />
-                  </aside>
-                )}
+            {/* Desktop (>= lg): Rail | Explorer | (Editor over Panel) | AI — floating glass panels */}
+            <div className="hidden min-h-0 min-w-0 flex-1 gap-2 overflow-hidden lg:flex">
+              <ActivityRail
+                explorerOpen={sidebarOpen}
+                onToggleExplorer={() => setSidebarOpen(!sidebarOpen)}
+                aiOpen={aiPanelOpen}
+                onToggleAI={() => setAiPanelOpen(!aiPanelOpen)}
+                bottomTab={bottomTab}
+                bottomPanelOpen={!isDiagnosticsCollapsed}
+                onShowBottomTab={toggleBottomTab}
+                problemCount={problems.length}
+                hasErrors={errorCount > 0}
+              />
 
-                <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
+              {sidebarOpen && (
+                <aside aria-label="Explorer" className="lg-glass lg-panel flex w-60 xl:w-64 shrink-0 flex-col">
+                  <ProjectFilesPanel
+                    {...explorerProps}
+                    onSelectFile={handleSelectFile}
+                    onSelectTab={activateTab}
+                    onSelectSession={handleSelectSession}
+                  />
+                </aside>
+              )}
+
+              <div className="flex min-w-0 flex-1 flex-col gap-2 overflow-hidden">
+                <main className="lg-glass lg-panel flex min-h-0 flex-1 flex-col">
                   {renderCodeWorkspace(desktopEditorRef)}
                 </main>
 
+                <div
+                  className={`lg-glass lg-panel shrink-0 transition-[height] duration-300 ease-out motion-reduce:transition-none ${
+                    isDiagnosticsCollapsed ? "h-12" : "h-56 xl:h-64"
+                  }`}
+                >
+                  {renderDiagnostics(true)}
+                </div>
+              </div>
+
+              {aiPanelOpen && (
                 <aside
                   aria-label="AI debug"
-                  className="flex w-[340px] xl:w-[380px] 2xl:w-[420px] shrink-0 flex-col overflow-hidden border-l border-ide-border"
+                  className="lg-glass lg-panel flex w-[340px] xl:w-[380px] 2xl:w-[420px] shrink-0 flex-col"
                 >
                   {renderAIPanel()}
                 </aside>
-              </div>
-
-              <div
-                className={`shrink-0 overflow-hidden border-t border-ide-border transition-[height] duration-200 motion-reduce:transition-none ${
-                  isDiagnosticsCollapsed ? "h-9" : "h-52 xl:h-60"
-                }`}
-              >
-                {renderDiagnostics(true)}
-              </div>
+              )}
             </div>
           </>
         )}

@@ -11,7 +11,7 @@ const alertVariants = cva(
         default: "bg-card text-foreground border-border",
         destructive:
           "border-[oklch(0.65_0.2_25/0.4)] bg-[oklch(0.65_0.2_25/0.12)] text-[var(--color-error-red)] [&>svg]:text-[var(--color-error-red)]",
-        ai: "border-[oklch(0.60_0.22_290/0.4)] bg-[oklch(0.60_0.22_290/0.10)] text-purple-200 [&>svg]:text-[var(--accent-purple)] shadow-[0_0_12px_oklch(0.60_0.22_290/0.10)]",
+        ai: "border-[oklch(0.72_0.17_158/0.4)] bg-[oklch(0.72_0.17_158/0.10)] text-white [&>svg]:text-[var(--accent-purple)] shadow-[0_0_12px_oklch(0.72_0.17_158/0.12)]",
         success:
           "border-[oklch(0.65_0.19_145/0.4)] bg-[oklch(0.65_0.19_145/0.10)] text-[var(--color-success-green)] [&>svg]:text-[var(--color-success-green)]",
         warning:

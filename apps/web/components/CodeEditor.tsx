@@ -310,7 +310,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
 
             <textarea
               ref={textareaRef}
-              className="code-editor-layer absolute inset-0 z-[2] h-full w-full resize-none overflow-hidden bg-transparent text-transparent caret-[#e6e6e6] outline-none placeholder:text-muted-foreground/40 selection:bg-[oklch(0.55_0.12_285/0.35)] selection:text-transparent"
+              className="code-editor-layer absolute inset-0 z-[2] h-full w-full resize-none overflow-hidden bg-transparent text-transparent caret-[#e6e6e6] outline-none placeholder:text-muted-foreground/40 selection:bg-[oklch(0.62_0.14_158/0.4)] selection:text-transparent"
               style={{ WebkitTextFillColor: "transparent" }}
               value={text}
               onChange={(e) => onChange(e.target.value)}
@@ -355,7 +355,7 @@ export const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function
       <div
         aria-hidden="true"
         className={`pointer-events-none absolute inset-0 z-30 transition-shadow duration-150 ${
-          focused ? "shadow-[inset_0_0_0_1px_oklch(0.6_0.14_285/0.45)]" : ""
+          focused ? "shadow-[inset_0_0_0_1px_oklch(0.72_0.16_158/0.5)]" : ""
         }`}
       />
 

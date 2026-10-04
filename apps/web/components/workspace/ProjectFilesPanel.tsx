@@ -32,24 +32,24 @@ const LOG_EXTENSIONS = ".log,.txt";
 const ALL_EXTENSIONS = `${CODE_EXTENSIONS},${LOG_EXTENSIONS}`;
 
 const ROW =
-  "group flex w-full items-center gap-1.5 pr-1.5 text-left text-[13px] lg:text-xs min-h-11 lg:min-h-[22px] cursor-pointer select-none outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[var(--accent-purple)]/70";
-const ROW_IDLE = "text-foreground/80 hover:bg-ide-hover";
-const ROW_SELECTED = "bg-ide-selected text-foreground";
+  "group flex w-full items-center gap-1.5 rounded-lg pr-1.5 text-left text-[13px] lg:text-xs min-h-11 lg:min-h-[26px] cursor-pointer select-none outline-none transition-colors focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent-purple)]/60";
+const ROW_IDLE = "text-foreground/80 hover:bg-white/[0.06] hover:text-foreground";
+const ROW_SELECTED = "lg-chip-active text-foreground";
 const ROW_ACTION =
-  "flex h-9 w-9 lg:h-5 lg:w-5 shrink-0 items-center justify-center rounded text-muted-foreground hover:bg-white/10 hover:text-foreground lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-purple)]/60";
+  "flex h-9 w-9 lg:h-5 lg:w-5 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-white/15 hover:text-foreground lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/60";
 
 function fileIcon(fileType: string, filename: string) {
   if (fileType === "log") {
-    return <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />;
+    return <FileText className="lg-green h-3.5 w-3.5 shrink-0" />;
   }
   const ext = filename.split(".").pop()?.toLowerCase();
   if (ext === "h" || ext === "hpp") {
-    return <FileCode className="h-3.5 w-3.5 shrink-0 text-[oklch(0.72_0.12_300)]" />;
+    return <FileCode className="lg-white h-3.5 w-3.5 shrink-0" />;
   }
   if (ext === "ino") {
-    return <FileCode className="h-3.5 w-3.5 shrink-0 text-[oklch(0.72_0.12_190)]" />;
+    return <FileCode className="lg-white h-3.5 w-3.5 shrink-0" />;
   }
-  return <FileCode className="h-3.5 w-3.5 shrink-0 text-[oklch(0.70_0.12_250)]" />;
+  return <FileCode className="lg-green h-3.5 w-3.5 shrink-0" />;
 }
 
 function formatSize(bytes: number): string {
@@ -109,12 +109,12 @@ function SectionHeader({
   actions?: React.ReactNode;
 }) {
   return (
-    <div className="group sticky top-0 z-10 flex items-center border-t border-ide-border-subtle bg-ide-sidebar first:border-t-0">
+    <div className="lg-sticky group sticky top-0 z-10 mt-1 flex items-center rounded-lg first:mt-0">
       <button
         type="button"
         onClick={onToggle}
         aria-expanded={open}
-        className="flex min-h-11 lg:min-h-[22px] min-w-0 flex-1 items-center gap-0.5 pl-1 text-left text-[11px] font-bold uppercase tracking-wide text-foreground/80 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-[var(--accent-purple)]/70"
+        className="flex min-h-11 lg:min-h-[28px] min-w-0 flex-1 items-center gap-1 rounded-lg pl-1.5 text-left text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[var(--accent-purple)]/60"
       >
         {open ? <ChevronDown className="h-3.5 w-3.5 shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0" />}
         <span className="truncate">{label}</span>
@@ -200,12 +200,12 @@ export function ProjectFilesPanel({
       <TooltipTrigger asChild>
         <button
           type="button"
-          className="flex h-9 w-9 lg:h-5 lg:w-5 items-center justify-center rounded text-muted-foreground hover:bg-white/10 hover:text-foreground disabled:opacity-50 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-purple)]/60"
+          className="lg-chip flex h-10 w-10 lg:h-7 lg:w-7 items-center justify-center rounded-full text-muted-foreground hover:text-foreground disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/60"
           aria-label="Upload source file or log"
           disabled={isUploading}
           onClick={() => inputRef.current?.click()}
         >
-          {isUploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+          {isUploading ? <Loader2 className="lg-green h-3.5 w-3.5 animate-spin" /> : <Upload className="lg-green h-3.5 w-3.5" />}
         </button>
       </TooltipTrigger>
       <TooltipContent side="bottom">{isUploading ? "Uploading…" : "Upload source file or log"}</TooltipContent>
@@ -213,9 +213,9 @@ export function ProjectFilesPanel({
   );
 
   return (
-    <div className={`flex h-full flex-col overflow-hidden bg-ide-sidebar ${className}`}>
-      <div className="flex h-11 lg:h-9 shrink-0 items-center justify-between pl-4 pr-2">
-        <h2 className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">Explorer</h2>
+    <div className={`flex h-full flex-col overflow-hidden ${className}`}>
+      <div className="flex h-14 lg:h-12 shrink-0 items-center justify-between pl-4 pr-2.5">
+        <h2 className="text-[13px] font-semibold tracking-tight text-foreground">Explorer</h2>
         {uploadButton}
         <input
           ref={inputRef}
@@ -230,7 +230,7 @@ export function ProjectFilesPanel({
         />
       </div>
 
-      <div className="ide-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden pb-2">
+      <div className="ide-scroll min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-1.5 pb-2">
         {/* Open editors */}
         <SectionHeader
           label="Open Editors"
@@ -255,7 +255,7 @@ export function ProjectFilesPanel({
                         className="flex min-w-0 flex-1 items-center gap-1.5 self-stretch text-left focus-visible:outline-none"
                       >
                         {tab.kind === "session" ? (
-                          <History className="h-3.5 w-3.5 shrink-0 text-[var(--accent-purple)]/80" />
+                          <History className="lg-white h-3.5 w-3.5 shrink-0" />
                         ) : (
                           fileIcon("code", tab.name)
                         )}
@@ -284,7 +284,7 @@ export function ProjectFilesPanel({
 
         {/* Project tree */}
         <div
-          className={isDraggingOver ? "bg-[var(--accent-purple)]/5 ring-1 ring-inset ring-[var(--accent-purple)]/40" : ""}
+          className={`rounded-xl ${isDraggingOver ? "bg-[var(--accent-purple)]/10 ring-1 ring-inset ring-[var(--accent-purple)]/50" : ""}`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
@@ -298,8 +298,8 @@ export function ProjectFilesPanel({
           {openSections.project && (
             <nav aria-label="Project files" className="py-0.5">
               {isDraggingOver && (
-                <div className="mx-2 my-1 flex items-center justify-center gap-1.5 rounded border border-dashed border-[var(--accent-purple)]/50 py-1.5 text-[11px] text-[oklch(0.80_0.10_290)] pointer-events-none">
-                  <Upload className="h-3 w-3" />
+                <div className="mx-2 my-1 flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-[var(--accent-purple)]/50 py-1.5 text-[11px] text-[oklch(0.86_0.12_158)] pointer-events-none">
+                  <Upload className="lg-green h-3 w-3" />
                   Drop to upload
                 </div>
               )}
@@ -317,9 +317,9 @@ export function ProjectFilesPanel({
                   <button
                     type="button"
                     onClick={() => inputRef.current?.click()}
-                    className="mt-2 flex w-full min-h-11 lg:min-h-8 items-center justify-center gap-1.5 rounded border border-ide-border bg-white/[0.03] text-foreground/85 hover:bg-ide-hover focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--accent-purple)]/60"
+                    className="lg-chip mt-2 flex w-full min-h-11 lg:min-h-9 items-center justify-center gap-1.5 rounded-full text-foreground/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-purple)]/60"
                   >
-                    <Upload className="h-3.5 w-3.5" />
+                    <Upload className="lg-green h-3.5 w-3.5" />
                     Upload file
                   </button>
                   <p className="mt-1.5 text-center font-mono text-[10px] text-muted-foreground/60">
@@ -344,9 +344,9 @@ export function ProjectFilesPanel({
                         <ChevronDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                       )}
                       {collapsed ? (
-                        <Folder className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <Folder className="lg-green h-3.5 w-3.5 shrink-0" />
                       ) : (
-                        <FolderOpen className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        <FolderOpen className="lg-green h-3.5 w-3.5 shrink-0" />
                       )}
                       <span className="truncate">{group.label}</span>
                       <span className="ml-auto pr-1 text-[10px] text-muted-foreground/60">{group.files.length}</span>
@@ -437,9 +437,7 @@ export function ProjectFilesPanel({
                       }}
                       className={`${ROW} pl-4 ${isActive ? ROW_SELECTED : ROW_IDLE}`}
                     >
-                      <Clock
-                        className={`h-3.5 w-3.5 shrink-0 ${isActive ? "text-[var(--accent-purple)]" : "text-muted-foreground"}`}
-                      />
+                      <Clock className="lg-white h-3.5 w-3.5 shrink-0" />
                       <span className="min-w-0 flex-1 truncate">{s.title}</span>
                       <span className="shrink-0 font-mono text-[10px] text-muted-foreground/60 lg:group-hover:hidden lg:group-focus-within:hidden">
                         {new Date(s.created_at).toLocaleDateString()}

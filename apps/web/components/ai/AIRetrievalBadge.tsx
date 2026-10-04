@@ -27,7 +27,7 @@ export function AIRetrievalBadge({
       <TooltipTrigger asChild>
         <Badge
           variant="ai"
-          className={`cursor-help inline-flex items-center gap-1.5 py-0.5 px-2 text-[11px] font-medium border-[var(--accent-purple)]/40 bg-[var(--accent-purple)]/10 text-purple-200 shadow-sm ${className}`}
+          className={`cursor-help inline-flex items-center gap-1.5 py-0.5 px-2 text-[11px] font-medium border-[var(--accent-purple)]/40 bg-[var(--accent-purple)]/10 text-white shadow-sm ${className}`}
         >
           <Sparkles className="h-3 w-3 text-[var(--accent-purple)]" />
           <span>Grounded in Evidence</span>
