@@ -16,6 +16,7 @@ dependencies = [
     "python-multipart>=0.0.9",
     "pypdf>=6.0.0",
     "pgvector>=0.3.0",
+    "clerk-backend-api>=1.0.0",
 ]
 
 [project.optional-dependencies]
