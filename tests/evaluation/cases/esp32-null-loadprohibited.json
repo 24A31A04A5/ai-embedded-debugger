@@ -1,0 +1,51 @@
+{
+  "id": "esp32-null-loadprohibited",
+  "title": "LoadProhibited with EXCVADDR 0x00000008",
+  "category": "memory",
+  "target": "ESP32 / ESP-IDF",
+  "difficulty": "medium",
+  "split": "dev",
+  "firmware_code": "typedef struct { float temp; float hum; uint32_t ts; } reading_t;\n\nstatic reading_t *last;\n\nreading_t *sensor_get_latest(void) {\n    return last;   // set in sensor_poll() once the first sample arrives\n}\n\nvoid report_task(void *arg) {\n    while (1) {\n        reading_t *r = sensor_get_latest();\n        printf(\"ts=%lu\\n\", r->ts);\n        vTaskDelay(pdMS_TO_TICKS(1000));\n    }\n}",
+  "compiler_output": "",
+  "serial_logs": "Guru Meditation Error: Core  1 panic'ed (LoadProhibited). Exception was unhandled.\nCore  1 register dump:\nPC      : 0x400d2b6e  PS      : 0x00060830  A0      : 0x800d2c10\nEXCVADDR: 0x00000008\nBacktrace: 0x400d2b6b:0x3ffb8f50 0x400d2c0d:0x3ffb8f70\n  #0  report_task at main/report.c:12",
+  "user_question": null,
+  "reference_context": [
+    {
+      "title": "ESP-IDF Programming Guide (Espressif)",
+      "section": "Fatal Errors / LoadProhibited, StoreProhibited",
+      "snippet": "These CPU exceptions happen when an application attempts to read from or write to an invalid memory location. If the EXCVADDR value is zero or close to zero, it typically means the application tried to dereference a NULL pointer.",
+      "content_type": "text",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "report_task dereferences r->ts while last is still NULL (before the first sample); offset 8 of a NULL struct pointer gives EXCVADDR 0x8.",
+    "root_cause_keywords": [
+      [
+        "null"
+      ],
+      [
+        "last",
+        "r->ts",
+        "sensor_get_latest",
+        "\\br\\b"
+      ]
+    ],
+    "fix": "Check for NULL before dereferencing (or wait until the first sample is available).",
+    "fix_keywords": [
+      [
+        "null"
+      ],
+      [
+        "check",
+        "if\\s*\\(\\s*!?\\s*r",
+        "guard",
+        "wait"
+      ]
+    ],
+    "expected_citation": [
+      "ESP-IDF Programming Guide (Espressif)"
+    ],
+    "line": 12
+  }
+}

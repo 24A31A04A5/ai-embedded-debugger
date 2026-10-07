@@ -1,0 +1,45 @@
+{
+  "id": "esp32-i2c-no-pullups",
+  "title": "I2C timeouts with internal pull-ups disabled",
+  "category": "i2c",
+  "target": "ESP32 / ESP-IDF",
+  "difficulty": "medium",
+  "split": "holdout",
+  "firmware_code": "i2c_config_t conf = {\n    .mode = I2C_MODE_MASTER,\n    .sda_io_num = GPIO_NUM_21,\n    .scl_io_num = GPIO_NUM_22,\n    .sda_pullup_en = GPIO_PULLUP_DISABLE,\n    .scl_pullup_en = GPIO_PULLUP_DISABLE,\n    .master.clk_speed = 100000,\n};\ni2c_param_config(I2C_NUM_0, &conf);\ni2c_driver_install(I2C_NUM_0, conf.mode, 0, 0, 0);",
+  "compiler_output": "",
+  "serial_logs": "E (1210) bme280: read chip id failed: ESP_ERR_TIMEOUT\nE (2210) bme280: read chip id failed: ESP_ERR_TIMEOUT\nE (3210) bme280: read chip id failed: ESP_ERR_TIMEOUT",
+  "user_question": "Bare BME280 chip on a breadboard, no breakout board. SDA/SCL are wired directly.",
+  "reference_context": [
+    {
+      "title": "I2C-bus Specification UM10204 (NXP)",
+      "section": "SDA and SCL signals",
+      "snippet": "Both SDA and SCL are bidirectional lines, connected to a positive supply voltage via a current-source or pull-up resistor. When the bus is free, both lines are HIGH. The output stages of devices connected to the bus must have an open-drain or open-collector to perform the wired-AND function.",
+      "content_type": "text",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "The I2C lines have no pull-up resistors (internal pull-ups disabled and none on the bare chip), so the open-drain bus never returns high and transactions time out.",
+    "root_cause_keywords": [
+      [
+        "pull[- ]?ups?"
+      ]
+    ],
+    "fix": "Add external pull-ups (about 4.7 kΩ to 3.3 V) on SDA and SCL; enabling the weak internal pull-ups is only a stopgap.",
+    "fix_keywords": [
+      [
+        "pull[- ]?up"
+      ],
+      [
+        "4\\.?7\\s?k",
+        "external",
+        "resistor",
+        "gpio_pullup_enable"
+      ]
+    ],
+    "expected_citation": [
+      "I2C-bus Specification UM10204 (NXP)"
+    ],
+    "line": 5
+  }
+}

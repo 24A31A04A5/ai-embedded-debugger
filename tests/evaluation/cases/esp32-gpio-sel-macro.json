@@ -1,0 +1,46 @@
+{
+  "id": "esp32-gpio-sel-macro",
+  "title": "GPIO_SEL_2 undeclared after IDF upgrade",
+  "category": "compiler",
+  "target": "ESP32-S3 / ESP-IDF v5",
+  "difficulty": "easy",
+  "split": "dev",
+  "firmware_code": "#include \"driver/gpio.h\"\n\nvoid app_main(void) {\n    gpio_config_t io_conf = {\n        .intr_type = GPIO_INTR_DISABLE,\n        .mode = GPIO_MODE_OUTPUT,\n        .pin_bit_mask = GPIO_SEL_2,\n        .pull_down_en = 0,\n        .pull_up_en = 0,\n    };\n    gpio_config(&io_conf);\n}",
+  "compiler_output": "/project/main/main.c: In function 'app_main':\n/project/main/main.c:7:25: error: 'GPIO_SEL_2' undeclared (first use in this function)\n    7 |         .pin_bit_mask = GPIO_SEL_2,\n      |                         ^~~~~~~~~~\n/project/main/main.c:7:25: note: each undeclared identifier is reported only once for each function it appears in\nninja: build stopped: subcommand failed.",
+  "serial_logs": "",
+  "user_question": null,
+  "reference_context": [
+    {
+      "title": "ESP-IDF Programming Guide (Espressif)",
+      "section": "GPIO driver / gpio_config_t",
+      "snippet": "pin_bit_mask: GPIO pin: set with bit mask, each bit maps to a GPIO, e.g. (1ULL << GPIO_NUM_2). BIT64(n) may also be used.",
+      "content_type": "text",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "The GPIO_SEL_x macros are not available in this ESP-IDF version, so GPIO_SEL_2 is an undeclared identifier.",
+    "root_cause_keywords": [
+      [
+        "gpio_sel_2"
+      ],
+      [
+        "undeclared",
+        "not (defined|declared|available)",
+        "removed",
+        "deprecated"
+      ]
+    ],
+    "fix": "Use a 64-bit bit mask: .pin_bit_mask = (1ULL << GPIO_NUM_2) (or BIT64(GPIO_NUM_2)).",
+    "fix_keywords": [
+      [
+        "1ull\\s*<<\\s*(gpio_num_)?2",
+        "bit64\\(\\s*(gpio_num_)?2\\s*\\)"
+      ]
+    ],
+    "expected_citation": [
+      "ESP-IDF Programming Guide (Espressif)"
+    ],
+    "line": 7
+  }
+}

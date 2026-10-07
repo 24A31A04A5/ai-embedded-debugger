@@ -1,0 +1,51 @@
+{
+  "id": "arduino-strcpy-overflow",
+  "title": "Variables corrupted after setting device name",
+  "category": "memory",
+  "target": "Arduino Uno (ATmega328P)",
+  "difficulty": "medium",
+  "split": "dev",
+  "firmware_code": "char deviceName[8];\nint threshold = 512;\n\nvoid setup() {\n  Serial.begin(115200);\n  strcpy(deviceName, \"greenhouse-node-01\");\n  Serial.print(\"threshold=\");\n  Serial.println(threshold);\n}\n\nvoid loop() {}",
+  "compiler_output": "",
+  "serial_logs": "threshold=12333",
+  "user_question": "threshold should be 512 but prints a random number.",
+  "reference_context": [
+    {
+      "title": "Arduino Language Reference (arduino.cc)",
+      "section": "char arrays / strings",
+      "snippet": "Arrays are not bounds-checked. Writing past the end of an array corrupts adjacent memory. A string needs one extra byte for the null terminator.",
+      "content_type": "text",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "strcpy writes an 18-character string (19 bytes with terminator) into an 8-byte buffer, overflowing into adjacent globals such as threshold.",
+    "root_cause_keywords": [
+      [
+        "overflow",
+        "out of bounds",
+        "overrun"
+      ],
+      [
+        "devicename",
+        "strcpy",
+        "\\b8\\b"
+      ]
+    ],
+    "fix": "Enlarge deviceName (at least 19 bytes) or use strncpy/strlcpy with sizeof(deviceName).",
+    "fix_keywords": [
+      [
+        "strlcpy",
+        "strncpy",
+        "snprintf",
+        "devicename\\[\\s*(19|2\\d|3[0-2])\\s*\\]",
+        "larger",
+        "increase"
+      ]
+    ],
+    "expected_citation": [
+      "Arduino Language Reference (arduino.cc)"
+    ],
+    "line": 6
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "id": "esp32-brownout-wifi",
+  "title": "Brownout detector triggered when Wi-Fi starts",
+  "category": "runtime",
+  "target": "ESP32 DevKit / Arduino core",
+  "difficulty": "medium",
+  "split": "holdout",
+  "firmware_code": "void setup() {\n  Serial.begin(115200);\n  servo.attach(13);\n  WiFi.begin(SSID, PASS);\n  while (WiFi.status() != WL_CONNECTED) delay(100);\n}",
+  "compiler_output": "",
+  "serial_logs": "ets Jun  8 2016 00:22:57\nrst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)\nBrownout detector was triggered\n\nets Jun  8 2016 00:22:57\nrst:0xc (SW_CPU_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)\nBrownout detector was triggered",
+  "user_question": "Powered from laptop USB through a long thin cable; SG90 servo on the same 5V rail.",
+  "reference_context": [
+    {
+      "title": "ESP32 Series Datasheet (Espressif)",
+      "section": "RF Power-Consumption Specifications",
+      "snippet": "Wi-Fi transmit current can reach about 240 mA peak (802.11b at maximum output power). The power supply must be able to deliver these current peaks without the supply voltage dropping.",
+      "content_type": "table_or_specification",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "Supply voltage sags when the Wi-Fi radio transmits (plus servo load on a weak USB/long cable), tripping the brownout detector.",
+    "root_cause_keywords": [
+      [
+        "brownout",
+        "voltage (drop|sag|dip)",
+        "power supply",
+        "supply"
+      ],
+      [
+        "wi-?fi",
+        "servo",
+        "current"
+      ]
+    ],
+    "fix": "Use a stronger supply/short cable, power the servo separately, add bulk capacitance near the ESP32; do not just disable the brownout detector.",
+    "fix_keywords": [
+      [
+        "capacitor",
+        "separate",
+        "supply",
+        "cable",
+        "\\d+\\s?(µ|u)f"
+      ]
+    ],
+    "expected_citation": [
+      "ESP32 Series Datasheet (Espressif)"
+    ],
+    "line": 4
+  }
+}

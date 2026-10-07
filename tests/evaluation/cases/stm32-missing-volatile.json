@@ -1,0 +1,40 @@
+{
+  "id": "stm32-missing-volatile",
+  "title": "Main loop never sees flag set in ISR at -O2",
+  "category": "interrupts",
+  "target": "STM32F4 / GCC -O2",
+  "difficulty": "medium",
+  "split": "holdout",
+  "firmware_code": "static uint8_t data_ready = 0;\n\nvoid TIM2_IRQHandler(void) {\n    if (TIM2->SR & TIM_SR_UIF) {\n        TIM2->SR &= ~TIM_SR_UIF;\n        data_ready = 1;\n    }\n}\n\nint main(void) {\n    init_timer();\n    while (1) {\n        while (!data_ready) { }\n        data_ready = 0;\n        sample_and_send();\n    }\n}",
+  "compiler_output": "",
+  "serial_logs": "",
+  "user_question": "Works with -O0 in debug, hangs forever with -O2 in release. Breakpoint in the ISR does hit.",
+  "reference_context": [
+    {
+      "title": "GNU C / ld Documentation",
+      "section": "Volatile objects",
+      "snippet": "Accesses to volatile objects are evaluated strictly according to the rules of the abstract machine. Without volatile, the compiler may keep a variable in a register and assume it does not change unless the current code modifies it.",
+      "content_type": "text",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "data_ready is shared with an ISR but not declared volatile, so at -O2 the compiler hoists the load out of the busy-wait loop and spins forever.",
+    "root_cause_keywords": [
+      [
+        "volatile"
+      ]
+    ],
+    "fix": "Declare it as static volatile uint8_t data_ready.",
+    "fix_keywords": [
+      [
+        "volatile\\s+(uint8_t|bool|sig_atomic_t)",
+        "static volatile"
+      ]
+    ],
+    "expected_citation": [
+      "GNU C / ld Documentation"
+    ],
+    "line": 1
+  }
+}

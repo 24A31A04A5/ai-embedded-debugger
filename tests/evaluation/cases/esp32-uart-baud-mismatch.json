@@ -1,0 +1,47 @@
+{
+  "id": "esp32-uart-baud-mismatch",
+  "title": "Serial monitor shows garbage characters",
+  "category": "uart",
+  "target": "ESP32 / Arduino core",
+  "difficulty": "easy",
+  "split": "dev",
+  "firmware_code": "void setup() {\n  Serial.begin(9600);\n}\n\nvoid loop() {\n  Serial.println(\"Temperature: 24.5 C\");\n  delay(1000);\n}",
+  "compiler_output": "",
+  "serial_logs": "--- Miniterm on /dev/ttyUSB0  115200,8,N,1 ---\n\u0000ø\u0000àx\u0000ø\u0000\u0000øxø\nà\u0000ø\u0000ø\u0000à\u0000x",
+  "user_question": "Monitor prints random symbols instead of my text.",
+  "reference_context": [
+    {
+      "title": "Arduino Language Reference (arduino.cc)",
+      "section": "Serial.begin()",
+      "snippet": "Sets the data rate in bits per second (baud) for serial data transmission. For communicating with Serial Monitor, make sure to use one of the baud rates listed in the menu at the bottom right corner of its screen.",
+      "content_type": "text",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "Baud-rate mismatch: the sketch transmits at 9600 baud while the monitor listens at 115200.",
+    "root_cause_keywords": [
+      [
+        "baud"
+      ],
+      [
+        "9600|115200"
+      ]
+    ],
+    "fix": "Set the monitor to 9600 or change Serial.begin to 115200 so both sides match.",
+    "fix_keywords": [
+      [
+        "9600|115200"
+      ],
+      [
+        "match",
+        "serial\\.begin",
+        "monitor"
+      ]
+    ],
+    "expected_citation": [
+      "Arduino Language Reference (arduino.cc)"
+    ],
+    "line": 2
+  }
+}

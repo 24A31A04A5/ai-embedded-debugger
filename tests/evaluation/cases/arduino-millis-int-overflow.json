@@ -1,0 +1,47 @@
+{
+  "id": "arduino-millis-int-overflow",
+  "title": "Timer stops after about 32 seconds",
+  "category": "logic",
+  "target": "Arduino Uno (ATmega328P)",
+  "difficulty": "medium",
+  "split": "holdout",
+  "firmware_code": "int lastBlink = 0;\n\nvoid loop() {\n  int now = millis();\n  if (now - lastBlink >= 1000) {\n    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));\n    lastBlink = now;\n  }\n}",
+  "compiler_output": "",
+  "serial_logs": "t=31000 blink\nt=32000 blink\nt=-32536 ...\n(no further blinks)",
+  "user_question": "LED blinks for ~32 s then stops.",
+  "reference_context": [
+    {
+      "title": "Arduino Language Reference (arduino.cc)",
+      "section": "int / millis()",
+      "snippet": "On the Arduino Uno (ATmega-based boards) an int stores a 16-bit value, range -32,768 to 32,767. millis() returns an unsigned long; store it in an unsigned long.",
+      "content_type": "text",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "millis() is stored in a 16-bit int, which overflows at 32,767 ms and goes negative, breaking the comparison.",
+    "root_cause_keywords": [
+      [
+        "overflow",
+        "wrap",
+        "16[- ]bit",
+        "32,?767"
+      ],
+      [
+        "int",
+        "millis"
+      ]
+    ],
+    "fix": "Use unsigned long for now and lastBlink.",
+    "fix_keywords": [
+      [
+        "unsigned long",
+        "uint32_t"
+      ]
+    ],
+    "expected_citation": [
+      "Arduino Language Reference (arduino.cc)"
+    ],
+    "line": 4
+  }
+}

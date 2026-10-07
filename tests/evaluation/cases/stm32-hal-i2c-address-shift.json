@@ -1,0 +1,51 @@
+{
+  "id": "stm32-hal-i2c-address-shift",
+  "title": "HAL_I2C_Master_Transmit returns HAL_ERROR",
+  "category": "i2c",
+  "target": "STM32F4 / HAL",
+  "difficulty": "medium",
+  "split": "dev",
+  "firmware_code": "#define SSD1306_ADDR 0x3C\n\nvoid oled_cmd(uint8_t cmd) {\n    uint8_t buf[2] = {0x00, cmd};\n    HAL_StatusTypeDef st = HAL_I2C_Master_Transmit(&hi2c1, SSD1306_ADDR, buf, 2, 100);\n    if (st != HAL_OK) {\n        printf(\"I2C err %d, code 0x%lx\\r\\n\", st, HAL_I2C_GetError(&hi2c1));\n    }\n}",
+  "compiler_output": "",
+  "serial_logs": "I2C err 1, code 0x4\nI2C err 1, code 0x4\nI2C err 1, code 0x4",
+  "user_question": "The same OLED works on Arduino with address 0x3C.",
+  "reference_context": [
+    {
+      "title": "STM32F4 HAL and LL Drivers User Manual UM1725 (ST)",
+      "section": "HAL I2C Generic Driver / HAL_I2C_Master_Transmit",
+      "snippet": "DevAddress: Target device address. The device 7 bits address value in datasheet must be shifted to the left before calling the interface.",
+      "content_type": "text",
+      "page_number": null
+    },
+    {
+      "title": "STM32F4 HAL and LL Drivers User Manual UM1725 (ST)",
+      "section": "HAL I2C error codes",
+      "snippet": "HAL_I2C_ERROR_AF (0x00000004U): Acknowledge failure.",
+      "content_type": "table_or_specification",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "HAL expects the 7-bit address shifted left by one; passing 0x3C addresses 0x1E, so the device NACKs (HAL_I2C_ERROR_AF).",
+    "root_cause_keywords": [
+      [
+        "shift",
+        "<<\\s*1",
+        "8[- ]bit",
+        "0x78"
+      ]
+    ],
+    "fix": "Pass (0x3C << 1), i.e. 0x78, as DevAddress.",
+    "fix_keywords": [
+      [
+        "0x3c\\s*<<\\s*1",
+        "0x78",
+        "ssd1306_addr\\s*<<\\s*1"
+      ]
+    ],
+    "expected_citation": [
+      "STM32F4 HAL and LL Drivers User Manual UM1725 (ST)"
+    ],
+    "line": 5
+  }
+}

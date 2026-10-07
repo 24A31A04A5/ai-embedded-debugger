@@ -1,0 +1,44 @@
+{
+  "id": "arduino-multiple-definition",
+  "title": "multiple definition of `counter'",
+  "category": "linker",
+  "target": "Arduino / PlatformIO",
+  "difficulty": "medium",
+  "split": "dev",
+  "firmware_code": "// globals.h\n#pragma once\nint counter = 0;\n\n// main.cpp\n#include \"globals.h\"\nvoid loop() { counter++; }\n\n// display.cpp\n#include \"globals.h\"\nvoid showCount() { lcd.print(counter); }",
+  "compiler_output": ".pio/build/uno/src/main.cpp.o (symbol from plugin): In function `counter':\n(.text+0x0): multiple definition of `counter'\n.pio/build/uno/src/display.cpp.o (symbol from plugin):(.text+0x0): first defined here\ncollect2: error: ld returned 1 exit status",
+  "serial_logs": "",
+  "user_question": null,
+  "reference_context": [
+    {
+      "title": "GNU C / ld Documentation",
+      "section": "Linker: multiple definitions",
+      "snippet": "A variable defined (not just declared) in a header is defined in every translation unit that includes it, producing multiple definition errors at link time. Declare it extern in the header and define it in exactly one source file.",
+      "content_type": "text",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "counter is defined (with an initializer) in globals.h, which is included by two .cpp files, so it is defined twice at link time.",
+    "root_cause_keywords": [
+      [
+        "header",
+        "globals\\.h"
+      ],
+      [
+        "defin",
+        "include"
+      ]
+    ],
+    "fix": "Use `extern int counter;` in globals.h and `int counter = 0;` in one .cpp file.",
+    "fix_keywords": [
+      [
+        "extern"
+      ]
+    ],
+    "expected_citation": [
+      "GNU C / ld Documentation"
+    ],
+    "line": 3
+  }
+}

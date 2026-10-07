@@ -1,0 +1,49 @@
+{
+  "id": "esp32-task-stack-overflow",
+  "title": "Stack overflow in sensor_task",
+  "category": "memory",
+  "target": "ESP32 / ESP-IDF",
+  "difficulty": "easy",
+  "split": "dev",
+  "firmware_code": "void sensor_task(void *arg) {\n    char json[2048];\n    while (1) {\n        build_payload(json, sizeof(json));\n        mqtt_publish(\"sensors/room1\", json);\n        vTaskDelay(pdMS_TO_TICKS(5000));\n    }\n}\n\nvoid app_main(void) {\n    xTaskCreate(sensor_task, \"sensor_task\", 1024, NULL, 5, NULL);\n}",
+  "compiler_output": "",
+  "serial_logs": "***ERROR*** A stack overflow in task sensor_task has been detected.\nBacktrace: 0x40081e7a:0x3ffb5b60 0x40089c45:0x3ffb5b80 0x4008a9b2:0x3ffb5ba0\nRebooting...",
+  "user_question": null,
+  "reference_context": [
+    {
+      "title": "ESP-IDF Programming Guide (Espressif)",
+      "section": "FreeRTOS (IDF) / xTaskCreate",
+      "snippet": "On ESP-IDF, usStackDepth is specified in bytes (not words). Local arrays are allocated on the task stack.",
+      "content_type": "text",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "sensor_task has a 1024-byte stack but allocates a 2048-byte local buffer, overflowing the stack.",
+    "root_cause_keywords": [
+      [
+        "stack"
+      ],
+      [
+        "1024",
+        "2048",
+        "json",
+        "local (array|buffer)"
+      ]
+    ],
+    "fix": "Increase the stack (e.g. 4096) and/or make the buffer static or heap-allocated.",
+    "fix_keywords": [
+      [
+        "[3-9]\\d{3}",
+        "increase",
+        "static",
+        "malloc",
+        "heap"
+      ]
+    ],
+    "expected_citation": [
+      "ESP-IDF Programming Guide (Espressif)"
+    ],
+    "line": 11
+  }
+}

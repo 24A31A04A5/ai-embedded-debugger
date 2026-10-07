@@ -1,0 +1,49 @@
+{
+  "id": "esp32-gpio34-output",
+  "title": "LED on GPIO34 never turns on",
+  "category": "gpio",
+  "target": "ESP32 / ESP-IDF",
+  "difficulty": "medium",
+  "split": "dev",
+  "firmware_code": "#include \"driver/gpio.h\"\n#include \"freertos/FreeRTOS.h\"\n#include \"freertos/task.h\"\n\n#define LED_PIN GPIO_NUM_34\n\nvoid app_main(void) {\n    gpio_reset_pin(LED_PIN);\n    gpio_set_direction(LED_PIN, GPIO_MODE_OUTPUT);\n    while (1) {\n        gpio_set_level(LED_PIN, 1);\n        vTaskDelay(pdMS_TO_TICKS(500));\n        gpio_set_level(LED_PIN, 0);\n        vTaskDelay(pdMS_TO_TICKS(500));\n    }\n}",
+  "compiler_output": "",
+  "serial_logs": "I (312) cpu_start: Starting scheduler on PRO CPU.\nI (0) cpu_start: Starting scheduler on APP CPU.\nI (322) gpio: GPIO[34]| InputEn: 0| OutputEn: 1| OpenDrain: 0| Pullup: 0| Pulldown: 0| Intr:0",
+  "user_question": "Code builds and runs without errors but the LED on GPIO34 never lights. Wiring checked.",
+  "reference_context": [
+    {
+      "title": "ESP32 Series Datasheet (Espressif)",
+      "section": "Pin Description / GPIO",
+      "snippet": "GPIO34, GPIO35, GPIO36 (SENSOR_VP) and GPIO39 (SENSOR_VN) are input-only pins. They have no output drivers and no internal pull-up or pull-down resistors.",
+      "content_type": "pin_configuration",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "GPIO34 is an input-only pin on the ESP32 and has no output driver, so it can never drive the LED.",
+    "root_cause_keywords": [
+      [
+        "gpio\\s?_?(num_)?34",
+        "\\b34\\b"
+      ],
+      [
+        "input[- ]only",
+        "only (be used as )?input",
+        "no output driver",
+        "cannot (be used as|drive|act as)( an)? output"
+      ]
+    ],
+    "fix": "Move the LED to an output-capable GPIO such as GPIO2, GPIO4 or GPIO25 and update LED_PIN.",
+    "fix_keywords": [
+      [
+        "gpio\\s?_?(num_)?(2|4|5|1[2-9]|2[1-7]|3[23])\\b",
+        "output[- ]capable",
+        "different (gpio|pin)",
+        "another (gpio|pin)"
+      ]
+    ],
+    "expected_citation": [
+      "ESP32 Series Datasheet (Espressif)"
+    ],
+    "line": 5
+  }
+}

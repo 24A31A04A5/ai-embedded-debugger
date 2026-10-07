@@ -1,0 +1,51 @@
+{
+  "id": "esp32-task-wdt-busy-loop",
+  "title": "Task watchdog got triggered (IDLE0)",
+  "category": "runtime",
+  "target": "ESP32 / ESP-IDF",
+  "difficulty": "easy",
+  "split": "dev",
+  "firmware_code": "void wait_for_button(void) {\n    while (gpio_get_level(GPIO_NUM_0) == 1) {\n        // spin until pressed\n    }\n}\n\nvoid app_main(void) {\n    wait_for_button();\n    start_measurement();\n}",
+  "compiler_output": "",
+  "serial_logs": "E (5310) task_wdt: Task watchdog got triggered. The following tasks did not reset the watchdog in time:\nE (5310) task_wdt:  - IDLE0 (CPU 0)\nE (5310) task_wdt: Tasks currently running:\nE (5310) task_wdt: CPU 0: main\nE (5310) task_wdt: CPU 1: IDLE1",
+  "user_question": null,
+  "reference_context": [
+    {
+      "title": "ESP-IDF Programming Guide (Espressif)",
+      "section": "Watchdogs / Task Watchdog Timer",
+      "snippet": "By default the TWDT watches the idle task of each CPU. If a task busy-loops without blocking, the idle task cannot run and the TWDT is triggered.",
+      "content_type": "text",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "wait_for_button busy-waits without yielding, starving IDLE0 so the task watchdog fires.",
+    "root_cause_keywords": [
+      [
+        "busy[- ]?(wait|loop)",
+        "spin",
+        "not yield",
+        "without (yielding|blocking|delay)",
+        "starv",
+        "while"
+      ],
+      [
+        "idle",
+        "watchdog"
+      ]
+    ],
+    "fix": "Add vTaskDelay(pdMS_TO_TICKS(10)) inside the loop or use a GPIO interrupt.",
+    "fix_keywords": [
+      [
+        "vtaskdelay",
+        "interrupt",
+        "semaphore",
+        "taskyield"
+      ]
+    ],
+    "expected_citation": [
+      "ESP-IDF Programming Guide (Espressif)"
+    ],
+    "line": 2
+  }
+}

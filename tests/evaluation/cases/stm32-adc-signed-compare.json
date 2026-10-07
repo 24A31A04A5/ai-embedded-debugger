@@ -1,0 +1,45 @@
+{
+  "id": "stm32-adc-signed-compare",
+  "title": "Over-temperature check never triggers",
+  "category": "adc",
+  "target": "STM32F4 / HAL",
+  "difficulty": "hard",
+  "split": "dev",
+  "firmware_code": "#define TEMP_LIMIT_MV  1500\n\nint8_t read_temp_mv(void) {\n    HAL_ADC_Start(&hadc1);\n    HAL_ADC_PollForConversion(&hadc1, 10);\n    uint32_t raw = HAL_ADC_GetValue(&hadc1);\n    return (raw * 3300) / 4095;\n}\n\nvoid check(void) {\n    if (read_temp_mv() > TEMP_LIMIT_MV) fan_on();\n}",
+  "compiler_output": "main.c: In function 'read_temp_mv':\nmain.c:7:12: warning: conversion from 'uint32_t' {aka 'long unsigned int'} to 'int8_t' {aka 'signed char'} may change value [-Wconversion]",
+  "serial_logs": "raw=2482 mv_func=-48\nraw=2490 mv_func=-42",
+  "user_question": "ADC raw values look right (~2 V) but the fan never turns on.",
+  "reference_context": [
+    {
+      "title": "STM32F4 Reference Manual RM0090 (ST)",
+      "section": "ADC data register",
+      "snippet": "In 12-bit resolution the conversion result ranges from 0 to 4095.",
+      "content_type": "register_description",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "read_temp_mv returns int8_t, truncating millivolt values (up to 3300) to -128..127, so the comparison with 1500 is never true.",
+    "root_cause_keywords": [
+      [
+        "int8_t",
+        "truncat",
+        "signed char",
+        "8[- ]bit"
+      ]
+    ],
+    "fix": "Return uint16_t/uint32_t (or int32_t) from read_temp_mv.",
+    "fix_keywords": [
+      [
+        "uint16_t",
+        "uint32_t",
+        "int32_t",
+        "int16_t"
+      ]
+    ],
+    "expected_citation": [
+      "STM32F4 Reference Manual RM0090 (ST)"
+    ],
+    "line": 3
+  }
+}
