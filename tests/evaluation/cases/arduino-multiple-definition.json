@@ -12,10 +12,15 @@
   "reference_context": [
     {
       "title": "GNU C / ld Documentation",
-      "section": "Linker: multiple definitions",
-      "snippet": "A variable defined (not just declared) in a header is defined in every translation unit that includes it, producing multiple definition errors at link time. Declare it extern in the header and define it in exactly one source file.",
+      "document": "Using the GNU Compiler Collection (GCC): Options for Code Generation Conventions",
+      "revision": "GCC 16.2 manual (gcc.gnu.org/onlinedocs, current at retrieval 2026-11-05)",
+      "section": "3.17 Options for Code Generation Conventions: -fno-common",
+      "snippet": "The default is -fno-common, which specifies that the compiler places uninitialized global variables in the BSS section of the object file. This inhibits the merging of tentative definitions by the linker so you get a multiple-definition error if the same variable is accidentally defined in more than one compilation unit.",
       "content_type": "text",
-      "page_number": null
+      "page_number": null,
+      "page_kind": null,
+      "url": "https://gcc.gnu.org/onlinedocs/gcc/Code-Gen-Options.html#index-fno-common",
+      "verification": "differs"
     }
   ],
   "expected": {

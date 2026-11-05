@@ -12,10 +12,15 @@
   "reference_context": [
     {
       "title": "STM32F4 Reference Manual RM0090 (ST)",
-      "section": "RCC AHB1 peripheral clock enable register (RCC_AHB1ENR)",
-      "snippet": "GPIOAEN: IO port A clock enable. 0: IO port A clock disabled, 1: IO port A clock enabled. A peripheral's registers cannot be written while its clock is disabled.",
+      "document": "RM0090 Reference manual: STM32F405/415, STM32F407/417, STM32F427/437 and STM32F429/439 advanced Arm-based 32-bit MCUs",
+      "revision": "Rev 22 (May 2026)",
+      "section": "7.3.10 RCC AHB1 peripheral clock enable register (RCC_AHB1ENR) [STM32F405xx/07xx and STM32F415xx/17xx]",
+      "snippet": "Bit 0 GPIOAEN: IO port A clock enable Set and cleared by software. 0: IO port A clock disabled 1: IO port A clock enabled",
       "content_type": "register_description",
-      "page_number": null
+      "page_number": 245,
+      "page_kind": "printed",
+      "url": "https://www.st.com/resource/en/reference_manual/rm0090-stm32f405415-stm32f407417-stm32f427437-and-stm32f429439-advanced-armbased-32bit-mcus-stmicroelectronics.pdf",
+      "verification": "verified"
     }
   ],
   "expected": {

@@ -1,0 +1,51 @@
+{
+  "id": "abstain-esp32-stops-responding",
+  "title": "ESP32 stops responding after a few hours, no log captured",
+  "category": "insufficient-evidence",
+  "target": "ESP32 / ESP-IDF v5.0",
+  "difficulty": "hard",
+  "split": "dev",
+  "firmware_code": "void app_main(void) {\n    sensor_init();\n    wifi_start();\n    while (1) {\n        float t = sensor_read();\n        publish(t);\n        vTaskDelay(pdMS_TO_TICKS(5000));\n    }\n}",
+  "compiler_output": "",
+  "serial_logs": "",
+  "user_question": "My board stops sending data after 3-6 hours. No serial monitor was attached. What is wrong?",
+  "reference_context": [],
+  "expected": {
+    "abstain": true,
+    "root_cause": "Insufficient evidence: no log, reset reason or implementation of sensor_read/publish/wifi_start is given, so no single root cause can be identified.",
+    "root_cause_keywords": [
+      [
+        "insufficient",
+        "not enough",
+        "cannot (?:be )?determin",
+        "need more",
+        "more information"
+      ]
+    ],
+    "needed_info_keywords": [
+      [
+        "serial log",
+        "monitor",
+        "reset reason",
+        "panic",
+        "backtrace",
+        "heap",
+        "implementation",
+        "publish\\(",
+        "sensor_read"
+      ]
+    ],
+    "fix": "Capture the serial log (reset reason, panic/backtrace), log free heap over time, and share the sensor_read/publish/wifi_start code.",
+    "fix_keywords": [
+      [
+        "serial log",
+        "monitor",
+        "reset reason",
+        "backtrace",
+        "heap"
+      ]
+    ],
+    "expected_citation": [],
+    "line": null
+  }
+}

@@ -12,17 +12,27 @@
   "reference_context": [
     {
       "title": "ADXL345 Datasheet (Analog Devices)",
-      "section": "SPI",
-      "snippet": "For SPI, either 3- or 4-wire configuration is possible. The maximum SPI clock speed is 5 MHz. The timing scheme follows clock polarity (CPOL) = 1 and clock phase (CPHA) = 1.",
+      "document": "ADXL345 Data Sheet: 3-Axis, ±2 g/±4 g/±8 g/±16 g Digital Accelerometer",
+      "revision": "Rev. G (5/2022)",
+      "section": "Serial Communications > SPI",
+      "snippet": "For SPI, either 3- or 4-wire configuration is possible, as shown in the connection diagrams in Figure 34 and Figure 35. [...] The maximum SPI clock speed is 5 MHz with 100 pF maximum loading, and the timing scheme follows clock polarity (CPOL) = 1 and clock phase (CPHA) = 1.",
       "content_type": "table_or_specification",
-      "page_number": null
+      "page_number": 14,
+      "page_kind": "printed",
+      "url": "https://www.analog.com/media/en/technical-documentation/data-sheets/ADXL345.pdf",
+      "verification": "verified"
     },
     {
       "title": "ADXL345 Datasheet (Analog Devices)",
-      "section": "Register 0x00 - DEVID",
-      "snippet": "The DEVID register holds a fixed device ID code of 0xE5.",
+      "document": "ADXL345 Data Sheet: 3-Axis, ±2 g/±4 g/±8 g/±16 g Digital Accelerometer",
+      "revision": "Rev. G (5/2022)",
+      "section": "Register Definitions > Register 0x00—DEVID (Read Only)",
+      "snippet": "The DEVID register holds a fixed device ID code of 0xE5 (345 octal).",
       "content_type": "register_description",
-      "page_number": null
+      "page_number": 24,
+      "page_kind": "printed",
+      "url": "https://www.analog.com/media/en/technical-documentation/data-sheets/ADXL345.pdf",
+      "verification": "verified"
     }
   ],
   "expected": {

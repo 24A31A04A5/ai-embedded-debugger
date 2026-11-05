@@ -12,10 +12,15 @@
   "reference_context": [
     {
       "title": "GNU C / ld Documentation",
-      "section": "Diagnostics",
-      "snippet": "After a syntax error the parser recovers and may report further errors that are consequences of the first one; fix the first error and rebuild.",
+      "document": "Using the GNU Compiler Collection (GCC): Options to Request or Suppress Warnings",
+      "revision": "GCC 16.2 manual (gcc.gnu.org/onlinedocs, current at retrieval 2026-11-05)",
+      "section": "3.8 Options to Request or Suppress Warnings: -Wfatal-errors",
+      "snippet": "This option causes the compiler to abort compilation on the first error occurred rather than trying to keep going and printing further error messages.",
       "content_type": "text",
-      "page_number": null
+      "page_number": null,
+      "page_kind": null,
+      "url": "https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wfatal-errors",
+      "verification": "differs"
     }
   ],
   "expected": {

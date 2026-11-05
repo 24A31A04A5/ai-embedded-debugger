@@ -1,0 +1,47 @@
+{
+  "id": "esp32-flash-pins",
+  "title": "Reset loop after using GPIO7 for a relay",
+  "category": "gpio",
+  "target": "ESP32-WROOM-32 / ESP-IDF",
+  "difficulty": "hard",
+  "split": "holdout",
+  "firmware_code": "#include \"driver/gpio.h\"\n#define RELAY_PIN GPIO_NUM_7\n\nvoid app_main(void) {\n    gpio_config_t io = {\n        .pin_bit_mask = (1ULL << RELAY_PIN),\n        .mode = GPIO_MODE_OUTPUT,\n    };\n    gpio_config(&io);\n    gpio_set_level(RELAY_PIN, 1);\n}",
+  "compiler_output": "",
+  "serial_logs": "I (298) cpu_start: Starting scheduler on PRO CPU.\nI (305) gpio: GPIO[7]| InputEn: 0| OutputEn: 1| OpenDrain: 0| Pullup: 0| Pulldown: 0| Intr:0\nGuru Meditation Error: Core  0 panic'ed (IllegalInstruction). Exception was unhandled.\nMemory dump at 0x400d1a3c: ffffffff ffffffff ffffffff\nRebooting...\nets Jun  8 2016 00:22:57\nrst:0xc (SW_CPU_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)\nI (305) gpio: GPIO[7]| InputEn: 0| OutputEn: 1| OpenDrain: 0| Pullup: 0| Pulldown: 0| Intr:0\nGuru Meditation Error: Core  0 panic'ed (IllegalInstruction). Exception was unhandled.\nRebooting...",
+  "user_question": "Board keeps rebooting right after I configure the relay pin.",
+  "reference_context": [
+    {
+      "title": "ESP32 Series Datasheet (Espressif)",
+      "section": "Pin Description / Strapping and Flash Pins",
+      "snippet": "On modules with integrated SPI flash (for example ESP32-WROOM-32), GPIO6 to GPIO11 are connected to the SPI flash and are not recommended for other uses.",
+      "content_type": "pin_configuration",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "GPIO7 is one of GPIO6-11, which are wired to the module's SPI flash; reconfiguring it breaks flash access so the CPU fetches garbage (0xffffffff) and panics.",
+    "root_cause_keywords": [
+      [
+        "gpio\\s?_?(num_)?7",
+        "gpio ?6\\s*(-|to|–)\\s*(gpio ?)?11"
+      ],
+      [
+        "flash"
+      ]
+    ],
+    "fix": "Use a free GPIO (e.g. GPIO4, GPIO16-33) for the relay and never touch GPIO6-11.",
+    "fix_keywords": [
+      [
+        "different (gpio|pin)",
+        "another (gpio|pin)",
+        "gpio\\s?_?(num_)?(4|5|1[2-9]|2[1-7]|3[23])\\b",
+        "avoid gpio ?6",
+        "free (gpio|pin)"
+      ]
+    ],
+    "expected_citation": [
+      "ESP32 Series Datasheet (Espressif)"
+    ],
+    "line": 2
+  }
+}

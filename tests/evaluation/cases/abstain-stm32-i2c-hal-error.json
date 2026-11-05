@@ -1,0 +1,52 @@
+{
+  "id": "abstain-stm32-i2c-hal-error",
+  "title": "HAL_I2C_Master_Transmit returns HAL_ERROR, nothing else known",
+  "category": "insufficient-evidence",
+  "target": "STM32F4 / HAL",
+  "difficulty": "medium",
+  "split": "dev",
+  "firmware_code": "HAL_StatusTypeDef st = HAL_I2C_Master_Transmit(&hi2c1, dev_addr, buf, 2, 100);\nif (st != HAL_OK) {\n    printf(\"i2c failed: %d\\r\\n\", st);\n}",
+  "compiler_output": "",
+  "serial_logs": "i2c failed: 1\ni2c failed: 1",
+  "user_question": "I2C write fails every time. Why?",
+  "reference_context": [],
+  "expected": {
+    "abstain": true,
+    "root_cause": "Insufficient evidence: status 1 (HAL_ERROR) covers NACK, bus error and arbitration loss; the device, its address value, wiring/pull-ups and HAL_I2C_GetError() are unknown.",
+    "root_cause_keywords": [
+      [
+        "insufficient",
+        "not enough",
+        "cannot (?:be )?determin",
+        "need more",
+        "more information",
+        "several (?:possible )?causes",
+        "could be"
+      ]
+    ],
+    "needed_info_keywords": [
+      [
+        "hal_i2c_geterror",
+        "error ?code",
+        "dev_addr",
+        "address",
+        "pull-?up",
+        "schematic",
+        "logic analy[sz]er",
+        "oscilloscope"
+      ]
+    ],
+    "fix": "Print HAL_I2C_GetError(&hi2c1), share the device part number and dev_addr value, and check SDA/SCL pull-ups with a scope or logic analyzer.",
+    "fix_keywords": [
+      [
+        "hal_i2c_geterror",
+        "dev_addr",
+        "pull-?up",
+        "logic analy[sz]er",
+        "scope"
+      ]
+    ],
+    "expected_citation": [],
+    "line": null
+  }
+}

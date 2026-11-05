@@ -12,17 +12,27 @@
   "reference_context": [
     {
       "title": "STM32F4 HAL and LL Drivers User Manual UM1725 (ST)",
-      "section": "HAL I2C Generic Driver / HAL_I2C_Master_Transmit",
-      "snippet": "DevAddress: Target device address. The device 7 bits address value in datasheet must be shifted to the left before calling the interface.",
+      "document": "UM1725 User manual: Description of STM32F4 HAL and low-layer drivers",
+      "revision": "UM1725 - Rev 8",
+      "section": "HAL I2C Generic Driver > I2C Firmware driver API description > HAL_I2C_Master_Transmit",
+      "snippet": "DevAddress: Target device address: The device 7 bits address value in datasheet must be shifted to the left before calling the interface",
       "content_type": "text",
-      "page_number": null
+      "page_number": 532,
+      "page_kind": "printed",
+      "url": "https://www.st.com/resource/en/user_manual/um1725-description-of-stm32f4-hal-and-lowlayer-drivers-stmicroelectronics.pdf",
+      "verification": "verified"
     },
     {
       "title": "STM32F4 HAL and LL Drivers User Manual UM1725 (ST)",
-      "section": "HAL I2C error codes",
-      "snippet": "HAL_I2C_ERROR_AF (0x00000004U): Acknowledge failure.",
+      "document": "UM1725 User manual: Description of STM32F4 HAL and low-layer drivers",
+      "revision": "UM1725 - Rev 8",
+      "section": "HAL I2C Generic Driver > I2C Firmware driver defines > I2C Error Code definition",
+      "snippet": "HAL_I2C_ERROR_AF AF error",
       "content_type": "table_or_specification",
-      "page_number": null
+      "page_number": 547,
+      "page_kind": "printed",
+      "url": "https://www.st.com/resource/en/user_manual/um1725-description-of-stm32f4-hal-and-lowlayer-drivers-stmicroelectronics.pdf",
+      "verification": "differs"
     }
   ],
   "expected": {

@@ -12,10 +12,15 @@
   "reference_context": [
     {
       "title": "ESP-IDF Programming Guide (Espressif)",
-      "section": "GPIO API reference / gpio_config_t (hal/gpio_types.h, v5.0)",
-      "snippet": "uint64_t pin_bit_mask; GPIO pin: set with bit mask, each bit maps to a GPIO",
+      "document": "ESP-IDF source: components/driver/include/driver/gpio.h (gpio_config_t), rendered in ESP-IDF Programming Guide GPIO API reference",
+      "revision": "ESP-IDF v5.0",
+      "section": "GPIO API Reference > Structures > gpio_config_t",
+      "snippet": "uint64_t pin_bit_mask;          /*!< GPIO pin: set with bit mask, each bit maps to a GPIO */",
       "content_type": "text",
-      "page_number": null
+      "page_number": null,
+      "page_kind": null,
+      "url": "https://docs.espressif.com/projects/esp-idf/en/v5.0/esp32/api-reference/peripherals/gpio.html#_CPPv413gpio_config_t",
+      "verification": "verified"
     }
   ],
   "expected": {

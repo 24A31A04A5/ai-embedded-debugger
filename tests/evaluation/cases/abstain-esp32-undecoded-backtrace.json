@@ -1,0 +1,49 @@
+{
+  "id": "abstain-esp32-undecoded-backtrace",
+  "title": "StoreProhibited panic, faulting code not provided",
+  "category": "insufficient-evidence",
+  "target": "ESP32 / ESP-IDF v5.0",
+  "difficulty": "hard",
+  "split": "holdout",
+  "firmware_code": "void app_main(void) {\n    app_init();      /* defined in another file, not provided */\n    app_run();\n}",
+  "compiler_output": "",
+  "serial_logs": "Guru Meditation Error: Core  1 panic'ed (StoreProhibited). Exception was unhandled.\nPC      : 0x400d2a1c  PS      : 0x00060730  A0      : 0x800d2b44  A1      : 0x3ffb5f70\nEXCVADDR: 0x00000010\nBacktrace: 0x400d2a19:0x3ffb5f70 0x400d2b41:0x3ffb5f90 0x400d1f2e:0x3ffb5fb0",
+  "user_question": "What line is crashing and how do I fix it?",
+  "reference_context": [],
+  "expected": {
+    "abstain": true,
+    "root_cause": "Insufficient evidence: a store to address 0x10 (likely a NULL struct pointer plus offset) happened, but the backtrace is not decoded and the faulting code is not provided, so the line and variable cannot be identified.",
+    "root_cause_keywords": [
+      [
+        "insufficient",
+        "not enough",
+        "cannot (?:be )?(?:determin|identif)",
+        "need",
+        "not provided",
+        "decod"
+      ]
+    ],
+    "needed_info_keywords": [
+      [
+        "addr2line",
+        "idf\\.py monitor",
+        "decod",
+        "elf",
+        "source",
+        "app_init",
+        "app_run"
+      ]
+    ],
+    "fix": "Decode the backtrace with idf.py monitor or xtensa-esp32-elf-addr2line against the ELF, and share the source of the reported functions.",
+    "fix_keywords": [
+      [
+        "addr2line",
+        "idf\\.py monitor",
+        "decod",
+        "elf"
+      ]
+    ],
+    "expected_citation": [],
+    "line": null
+  }
+}

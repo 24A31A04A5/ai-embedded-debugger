@@ -12,10 +12,15 @@
   "reference_context": [
     {
       "title": "ESP-IDF Programming Guide (Espressif)",
-      "section": "Logging library / ISR usage",
-      "snippet": "ESP_LOGx macros must not be called from an interrupt handler because they may block on a lock. Use ESP_DRAM_LOGx or ESP_EARLY_LOGx in ISRs, or defer work to a task.",
+      "document": "ESP-IDF Programming Guide: Logging library (API reference for ESP_LOGE; README overview)",
+      "revision": "ESP-IDF v5.0",
+      "section": "Logging library > API Reference > ESP_LOGE; Overview",
+      "snippet": "This macro cannot be used when interrupts are disabled or inside an ISR. @see ``ESP_DRAM_LOGE``. [Overview:] There are also ``ESP_DRAM_LOGx`` versions for each of these macros, e.g. :c:macro:`ESP_DRAM_LOGE`. These versions are used in some places where logging may occur with interrupts disabled or with flash cache inaccessible.",
       "content_type": "text",
-      "page_number": null
+      "page_number": null,
+      "page_kind": null,
+      "url": "https://docs.espressif.com/projects/esp-idf/en/v5.0/esp32/api-reference/system/log.html#c.ESP_LOGE",
+      "verification": "verified"
     }
   ],
   "expected": {

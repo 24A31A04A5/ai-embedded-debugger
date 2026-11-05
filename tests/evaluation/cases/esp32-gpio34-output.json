@@ -12,10 +12,15 @@
   "reference_context": [
     {
       "title": "ESP32 Series Datasheet (Espressif)",
-      "section": "Pin Description / GPIO",
-      "snippet": "GPIO34, GPIO35, GPIO36 (SENSOR_VP) and GPIO39 (SENSOR_VN) are input-only pins. They have no output drivers and no internal pull-up or pull-down resistors.",
+      "document": "ESP32 Series Datasheet",
+      "revision": "Version 5.3 (2026.07)",
+      "section": "Appendix A.1 Notes on ESP32 Pin Lists, Table 6-1",
+      "snippet": "GPIO pins 34-39 are input-only. These pins do not feature an output driver or internal pull-up/pull-down circuitry. The pin names are: SENSOR_VP (GPIO36), SENSOR_CAPP (GPIO37), SENSOR_CAPN (GPIO38), SENSOR_VN (GPIO39), VDET_1 (GPIO34), VDET_2 (GPIO35).",
       "content_type": "pin_configuration",
-      "page_number": null
+      "page_number": 61,
+      "page_kind": "printed",
+      "url": "https://www.espressif.com/sites/default/files/documentation/esp32_datasheet_en.pdf",
+      "verification": "verified"
     }
   ],
   "expected": {

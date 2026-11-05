@@ -12,10 +12,15 @@
   "reference_context": [
     {
       "title": "STM32F4 Reference Manual RM0090 (ST)",
-      "section": "ADC data register",
-      "snippet": "In 12-bit resolution the conversion result ranges from 0 to 4095.",
+      "document": "RM0090 Reference manual: STM32F405/415, STM32F407/417, STM32F427/437 and STM32F429/439 advanced Arm-based 32-bit MCUs",
+      "revision": "Rev 22 (May 2026)",
+      "section": "13.4 Data alignment",
+      "snippet": "The converted data value from the injected group of channels is decreased by the user-defined offset written in the ADC_JOFRx registers so the result can be a negative value. The SEXT bit represents the extended sign value. For channels in a regular group, no offset is subtracted so only twelve bits are significant.",
       "content_type": "register_description",
-      "page_number": null
+      "page_number": 398,
+      "page_kind": "printed",
+      "url": "https://www.st.com/resource/en/reference_manual/rm0090-stm32f405415-stm32f407417-stm32f427437-and-stm32f429439-advanced-armbased-32bit-mcus-stmicroelectronics.pdf",
+      "verification": "verified"
     }
   ],
   "expected": {

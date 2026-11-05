@@ -1,0 +1,50 @@
+{
+  "id": "stm32f103-ram-overflow",
+  "title": "region RAM overflowed",
+  "category": "linker",
+  "target": "STM32F103C8 (Blue Pill)",
+  "difficulty": "easy",
+  "split": "dev",
+  "firmware_code": "#define LOG_BUF_SIZE 24576\nstatic uint8_t log_buf[LOG_BUF_SIZE];",
+  "compiler_output": "arm-none-eabi-ld: build/app.elf section `.bss' will not fit in region `RAM'\narm-none-eabi-ld: region `RAM' overflowed by 6312 bytes\ncollect2: error: ld returned 1 exit status",
+  "serial_logs": "",
+  "user_question": null,
+  "reference_context": [
+    {
+      "title": "STM32F103x8/xB Datasheet (ST)",
+      "section": "Device overview",
+      "snippet": "STM32F103x8: 64 Kbytes of Flash memory and 20 Kbytes of SRAM.",
+      "content_type": "table_or_specification",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "The 24 KB static log_buf in .bss alone exceeds the 20 KB of SRAM on the STM32F103C8.",
+    "root_cause_keywords": [
+      [
+        "log_buf",
+        "24576",
+        "24\\s?k"
+      ],
+      [
+        "20\\s?k",
+        "ram",
+        "sram"
+      ]
+    ],
+    "fix": "Shrink LOG_BUF_SIZE (e.g. 4096) or move constant data to flash.",
+    "fix_keywords": [
+      [
+        "reduce",
+        "shrink",
+        "smaller",
+        "log_buf_size\\s+\\d{3,4}\\b",
+        "const"
+      ]
+    ],
+    "expected_citation": [
+      "STM32F103x8/xB Datasheet (ST)"
+    ],
+    "line": 1
+  }
+}

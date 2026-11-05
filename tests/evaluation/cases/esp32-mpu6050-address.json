@@ -12,10 +12,15 @@
   "reference_context": [
     {
       "title": "MPU-6050 Product Specification (InvenSense)",
-      "section": "I2C Interface",
-      "snippet": "The slave address of the MPU-60X0 is b110100X which is 7 bits long. The LSB bit of the 7 bit address is determined by the logic level on pin AD0. This allows two MPU-60X0s to be connected to the same I2C bus: 0x68 when AD0 is low, 0x69 when AD0 is high.",
+      "document": "MPU-6000 and MPU-6050 Product Specification (PS-MPU-6000A-00)",
+      "revision": "Revision 3.1, Release Date 10/24/2011",
+      "section": "9.2 I2C Interface",
+      "snippet": "The slave address of the MPU-60X0 is b110100X which is 7 bits long. The LSB bit of the 7 bit address is determined by the logic level on pin AD0. This allows two MPU-60X0s to be connected to the same I2C bus. When used in this configuration, the address of the one of the devices should be b1101000 (pin AD0 is logic low) and the address of the other should be b1101001 (pin AD0 is logic high).",
       "content_type": "table_or_specification",
-      "page_number": null
+      "page_number": 36,
+      "page_kind": "printed",
+      "url": "https://cdn.sparkfun.com/datasheets/Components/General%20IC/PS-MPU-6000A.pdf",
+      "verification": "verified"
     }
   ],
   "expected": {

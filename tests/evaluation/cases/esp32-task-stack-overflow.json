@@ -12,10 +12,15 @@
   "reference_context": [
     {
       "title": "ESP-IDF Programming Guide (Espressif)",
-      "section": "FreeRTOS (IDF) / xTaskCreate",
-      "snippet": "On ESP-IDF, usStackDepth is specified in bytes (not words). Local arrays are allocated on the task stack.",
+      "document": "ESP-IDF Programming Guide: FreeRTOS (Overview) / ESP-IDF FreeRTOS SMP Changes",
+      "revision": "ESP-IDF v5.0 (docs/en/api-guides/freertos-smp.rst)",
+      "section": "ESP-IDF FreeRTOS SMP Changes > Tasks > Creation (note)",
+      "snippet": "ESP-IDF FreeRTOS also changes the units of ``ulStackDepth`` in the task creation functions. Task stack sizes in Vanilla FreeRTOS are specified in number of words, whereas in ESP-IDF FreeRTOS, the task stack sizes are specified in bytes.",
       "content_type": "text",
-      "page_number": null
+      "page_number": null,
+      "page_kind": null,
+      "url": "https://docs.espressif.com/projects/esp-idf/en/v5.0/esp32/api-guides/freertos-smp.html#creation",
+      "verification": "verified"
     }
   ],
   "expected": {

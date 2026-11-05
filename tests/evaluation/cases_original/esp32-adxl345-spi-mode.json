@@ -1,0 +1,50 @@
+{
+  "id": "esp32-adxl345-spi-mode",
+  "title": "ADXL345 DEVID reads 0x00 over SPI",
+  "category": "spi",
+  "target": "ESP32 / ESP-IDF",
+  "difficulty": "hard",
+  "split": "dev",
+  "firmware_code": "spi_device_interface_config_t devcfg = {\n    .clock_speed_hz = 1 * 1000 * 1000,\n    .mode = 0,\n    .spics_io_num = GPIO_NUM_5,\n    .queue_size = 1,\n};\nspi_bus_add_device(SPI2_HOST, &devcfg, &adxl);\n\nuint8_t adxl_read(uint8_t reg) {\n    spi_transaction_t t = {\n        .flags = SPI_TRANS_USE_RXDATA | SPI_TRANS_USE_TXDATA,\n        .length = 16,\n        .tx_data = {0x80 | reg, 0x00},\n    };\n    spi_device_polling_transmit(adxl, &t);\n    return t.rx_data[1];\n}",
+  "compiler_output": "",
+  "serial_logs": "I (402) adxl: DEVID = 0x00 (expected 0xE5)\nE (403) adxl: sensor not found",
+  "user_question": "Wiring double-checked, 4-wire SPI.",
+  "reference_context": [
+    {
+      "title": "ADXL345 Datasheet (Analog Devices)",
+      "section": "SPI",
+      "snippet": "For SPI, either 3- or 4-wire configuration is possible. The maximum SPI clock speed is 5 MHz. The timing scheme follows clock polarity (CPOL) = 1 and clock phase (CPHA) = 1.",
+      "content_type": "table_or_specification",
+      "page_number": null
+    },
+    {
+      "title": "ADXL345 Datasheet (Analog Devices)",
+      "section": "Register 0x00 - DEVID",
+      "snippet": "The DEVID register holds a fixed device ID code of 0xE5.",
+      "content_type": "register_description",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "The ADXL345 uses SPI mode 3 (CPOL=1, CPHA=1) but the device is configured for mode 0, so data is sampled on the wrong edge.",
+    "root_cause_keywords": [
+      [
+        "mode\\s*3",
+        "cpol\\s*=\\s*1",
+        "cpol.{0,20}cpha"
+      ]
+    ],
+    "fix": "Set .mode = 3 in spi_device_interface_config_t.",
+    "fix_keywords": [
+      [
+        "\\.?mode\\s*=\\s*3",
+        "mode 3",
+        "spi mode\\s*3"
+      ]
+    ],
+    "expected_citation": [
+      "ADXL345 Datasheet (Analog Devices)"
+    ],
+    "line": 3
+  }
+}

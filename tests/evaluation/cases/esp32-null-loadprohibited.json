@@ -12,10 +12,15 @@
   "reference_context": [
     {
       "title": "ESP-IDF Programming Guide (Espressif)",
-      "section": "Fatal Errors / LoadProhibited, StoreProhibited",
-      "snippet": "These CPU exceptions happen when an application attempts to read from or write to an invalid memory location. If the EXCVADDR value is zero or close to zero, it typically means the application tried to dereference a NULL pointer.",
+      "document": "ESP-IDF Programming Guide: Fatal Errors",
+      "revision": "ESP-IDF v5.0",
+      "section": "Guru Meditation Errors > LoadProhibited, StoreProhibited",
+      "snippet": "These CPU exceptions happen when an application attempts to read from or write to an invalid memory location. The address which has been written/read is found in the ``EXCVADDR`` register in the register dump. If this address is zero, it usually means that the application has attempted to dereference a NULL pointer.",
       "content_type": "text",
-      "page_number": null
+      "page_number": null,
+      "page_kind": null,
+      "url": "https://docs.espressif.com/projects/esp-idf/en/v5.0/esp32/api-guides/fatal-errors.html#loadprohibited-storeprohibited",
+      "verification": "verified"
     }
   ],
   "expected": {

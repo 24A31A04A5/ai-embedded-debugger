@@ -1,0 +1,9 @@
+# clang 22.1.8 (via zig 0.17.0), target thumb cortex-m4, STM32F401xE, stm32f4xx-hal-driver v1.8.6
+# HAL_UART_MODULE_ENABLED commented out in stm32f4xx_hal_conf.h (from the v1.8.6 template)
+main.c:3:1: error: unknown type name 'UART_HandleTypeDef'
+    3 | UART_HandleTypeDef huart2;
+      | ^
+main.c:8:5: error: call to undeclared function 'HAL_UART_Init'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+    8 |     HAL_UART_Init(&huart2);
+      |     ^
+2 errors generated.

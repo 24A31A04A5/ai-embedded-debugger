@@ -12,10 +12,15 @@
   "reference_context": [
     {
       "title": "ESP-IDF Programming Guide (Espressif)",
-      "section": "ADC / Hardware Limitations",
-      "snippet": "ADC2 is used by the Wi-Fi driver. Therefore the application can only use ADC2 when the Wi-Fi driver has not started. ADC1 channels (GPIO32-39) can be used while Wi-Fi is running.",
+      "document": "ESP-IDF Programming Guide: Analog to Digital Converter (ESP32)",
+      "revision": "ESP-IDF v4.2 (docs/en/api-reference/peripherals/adc.rst)",
+      "section": "Analog to Digital Converter > Overview",
+      "snippet": "The ADC driver API supports ADC1 (8 channels, attached to GPIOs 32 - 39), and ADC2 (10 channels, attached to GPIOs 0, 2, 4, 12 - 15 and 25 - 27). However, the usage of ADC2 has some restrictions for the application: 1. ADC2 is used by the Wi-Fi driver. Therefore the application can only use ADC2 when the Wi-Fi driver has not started.",
       "content_type": "text",
-      "page_number": null
+      "page_number": null,
+      "page_kind": null,
+      "url": "https://docs.espressif.com/projects/esp-idf/en/v4.2/esp32/api-reference/peripherals/adc.html#overview",
+      "verification": "verified"
     }
   ],
   "expected": {

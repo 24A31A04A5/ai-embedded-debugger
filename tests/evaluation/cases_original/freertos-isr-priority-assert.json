@@ -1,0 +1,47 @@
+{
+  "id": "freertos-isr-priority-assert",
+  "title": "configASSERT in vPortValidateInterruptPriority",
+  "category": "interrupts",
+  "target": "STM32F4 / FreeRTOS",
+  "difficulty": "hard",
+  "split": "holdout",
+  "firmware_code": "/* FreeRTOSConfig.h: configMAX_SYSCALL_INTERRUPT_PRIORITY = (5 << 4) */\n\nvoid MX_USART2_Init(void) {\n    /* ... */\n    HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);\n    HAL_NVIC_EnableIRQ(USART2_IRQn);\n}\n\nvoid USART2_IRQHandler(void) {\n    BaseType_t woken = pdFALSE;\n    uint8_t c = USART2->DR;\n    xQueueSendFromISR(rx_queue, &c, &woken);\n    portYIELD_FROM_ISR(woken);\n}",
+  "compiler_output": "",
+  "serial_logs": "[boot] scheduler started\nASSERT FAILED: port.c vPortValidateInterruptPriority\n  ucCurrentPriority=0x00 ucMaxSysCallPriority=0x50\nSystem halted.",
+  "user_question": "Crashes on the first byte received.",
+  "reference_context": [
+    {
+      "title": "FreeRTOS Kernel Documentation (freertos.org)",
+      "section": "Running the RTOS on an ARM Cortex-M Core",
+      "snippet": "Interrupt service routines that use the RTOS API (functions ending in FromISR) must have a logical priority at or below configMAX_SYSCALL_INTERRUPT_PRIORITY, i.e. a numerical priority value equal to or greater than it. Priority 0 is the highest and must not call FreeRTOS API functions. configASSERT in vPortValidateInterruptPriority traps this error.",
+      "content_type": "text",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "USART2_IRQn is set to NVIC priority 0, which is above configMAX_SYSCALL_INTERRUPT_PRIORITY (5), yet its ISR calls xQueueSendFromISR, tripping the configASSERT.",
+    "root_cause_keywords": [
+      [
+        "priority"
+      ],
+      [
+        "configmax_syscall_interrupt_priority",
+        "max_?syscall",
+        "\\b0\\b",
+        "too high"
+      ]
+    ],
+    "fix": "Set the USART2 priority to 5 or higher numerically, e.g. HAL_NVIC_SetPriority(USART2_IRQn, 5, 0).",
+    "fix_keywords": [
+      [
+        "hal_nvic_setpriority\\s*\\(\\s*usart2_irqn\\s*,\\s*([5-9]|1[0-5])",
+        "priority (of |to )?([5-9]|1[0-5])",
+        "numerically (higher|greater|lower urgency)"
+      ]
+    ],
+    "expected_citation": [
+      "FreeRTOS Kernel Documentation (freertos.org)"
+    ],
+    "line": 5
+  }
+}

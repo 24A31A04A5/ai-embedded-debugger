@@ -1,0 +1,43 @@
+{
+  "id": "esp32-adc2-wifi",
+  "title": "ADC2 read fails once Wi-Fi connects",
+  "category": "adc",
+  "target": "ESP32 / ESP-IDF",
+  "difficulty": "hard",
+  "split": "dev",
+  "firmware_code": "// Soil sensor on GPIO4 (ADC2_CHANNEL_0)\nvoid sensor_task(void *arg) {\n    int raw;\n    while (1) {\n        esp_err_t r = adc2_get_raw(ADC2_CHANNEL_0, ADC_WIDTH_BIT_12, &raw);\n        if (r != ESP_OK) {\n            ESP_LOGE(\"soil\", \"adc2_get_raw failed: %s\", esp_err_to_name(r));\n        } else {\n            ESP_LOGI(\"soil\", \"raw=%d\", raw);\n        }\n        vTaskDelay(pdMS_TO_TICKS(1000));\n    }\n}",
+  "compiler_output": "",
+  "serial_logs": "I (1203) soil: raw=2310\nI (2203) soil: raw=2298\nI (2650) wifi:connected with HomeNet, aid = 3, channel 6\nI (3203) soil: adc2_get_raw failed: ESP_ERR_TIMEOUT\nE (4203) soil: adc2_get_raw failed: ESP_ERR_TIMEOUT\nE (5203) soil: adc2_get_raw failed: ESP_ERR_TIMEOUT",
+  "user_question": "Readings work for two seconds then fail forever.",
+  "reference_context": [
+    {
+      "title": "ESP-IDF Programming Guide (Espressif)",
+      "section": "ADC / Hardware Limitations",
+      "snippet": "ADC2 is used by the Wi-Fi driver. Therefore the application can only use ADC2 when the Wi-Fi driver has not started. ADC1 channels (GPIO32-39) can be used while Wi-Fi is running.",
+      "content_type": "text",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "ADC2 is shared with the Wi-Fi driver; once Wi-Fi starts, adc2_get_raw cannot get the peripheral and returns ESP_ERR_TIMEOUT.",
+    "root_cause_keywords": [
+      [
+        "adc2"
+      ],
+      [
+        "wi-?fi"
+      ]
+    ],
+    "fix": "Move the sensor to an ADC1 pin (GPIO32-39) and read it with the ADC1 API.",
+    "fix_keywords": [
+      [
+        "adc1",
+        "gpio\\s?_?(num_)?3[2-9]"
+      ]
+    ],
+    "expected_citation": [
+      "ESP-IDF Programming Guide (Espressif)"
+    ],
+    "line": 5
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "id": "stm32-uart-hal-not-enabled",
+  "title": "undefined reference to HAL_UART_Init",
+  "category": "linker",
+  "target": "STM32F4 / HAL",
+  "difficulty": "medium",
+  "split": "holdout",
+  "firmware_code": "/* stm32f4xx_hal_conf.h (excerpt) */\n#define HAL_MODULE_ENABLED\n#define HAL_GPIO_MODULE_ENABLED\n#define HAL_RCC_MODULE_ENABLED\n/* #define HAL_UART_MODULE_ENABLED */\n#define HAL_CORTEX_MODULE_ENABLED\n\n/* main.c */\nUART_HandleTypeDef huart2;\nvoid MX_USART2_UART_Init(void) {\n    huart2.Instance = USART2;\n    huart2.Init.BaudRate = 115200;\n    HAL_UART_Init(&huart2);\n}",
+  "compiler_output": "arm-none-eabi-gcc -o build/app.elf build/main.o build/stm32f4xx_hal.o ... -Wl,--gc-sections\nbuild/main.o: In function `MX_USART2_UART_Init':\nmain.c:(.text.MX_USART2_UART_Init+0x24): undefined reference to `HAL_UART_Init'\nbuild/main.o: In function `log_write':\nmain.c:(.text.log_write+0x12): undefined reference to `HAL_UART_Transmit'\ncollect2: error: ld returned 1 exit status",
+  "serial_logs": "",
+  "user_question": null,
+  "reference_context": [
+    {
+      "title": "STM32F4 HAL and LL Drivers User Manual UM1725 (ST)",
+      "section": "HAL configuration file (stm32f4xx_hal_conf.h)",
+      "snippet": "The HAL_PPP_MODULE_ENABLED defines select which HAL peripheral drivers are compiled. A module whose define is commented out is excluded from the build.",
+      "content_type": "text",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "HAL_UART_MODULE_ENABLED is commented out in stm32f4xx_hal_conf.h, so the UART HAL driver (and stm32f4xx_hal_uart.c) is not compiled, leaving HAL_UART_* unresolved at link time.",
+    "root_cause_keywords": [
+      [
+        "hal_uart_module_enabled",
+        "hal_conf",
+        "stm32f4xx_hal_uart\\.c"
+      ]
+    ],
+    "fix": "Uncomment #define HAL_UART_MODULE_ENABLED and make sure stm32f4xx_hal_uart.c is in the build.",
+    "fix_keywords": [
+      [
+        "hal_uart_module_enabled",
+        "stm32f4xx_hal_uart\\.c"
+      ]
+    ],
+    "expected_citation": [
+      "STM32F4 HAL and LL Drivers User Manual UM1725 (ST)"
+    ],
+    "line": 5
+  }
+}

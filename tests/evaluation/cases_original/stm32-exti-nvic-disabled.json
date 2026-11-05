@@ -1,0 +1,45 @@
+{
+  "id": "stm32-exti-nvic-disabled",
+  "title": "Button EXTI callback never fires",
+  "category": "interrupts",
+  "target": "STM32F4 / HAL",
+  "difficulty": "medium",
+  "split": "dev",
+  "firmware_code": "void MX_GPIO_Init(void) {\n    __HAL_RCC_GPIOA_CLK_ENABLE();\n    GPIO_InitTypeDef g = {0};\n    g.Pin = GPIO_PIN_0;\n    g.Mode = GPIO_MODE_IT_FALLING;\n    g.Pull = GPIO_PULLUP;\n    HAL_GPIO_Init(GPIOA, &g);\n}\n\nvoid EXTI0_IRQHandler(void) {\n    HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);\n}\n\nvoid HAL_GPIO_EXTI_Callback(uint16_t pin) {\n    if (pin == GPIO_PIN_0) presses++;\n}",
+  "compiler_output": "",
+  "serial_logs": "presses=0\npresses=0\npresses=0",
+  "user_question": "Scope shows PA0 going low when pressed but the counter never changes.",
+  "reference_context": [
+    {
+      "title": "STM32F4 HAL and LL Drivers User Manual UM1725 (ST)",
+      "section": "HAL CORTEX Generic Driver",
+      "snippet": "HAL_NVIC_SetPriority() and HAL_NVIC_EnableIRQ() must be called to configure and enable the interrupt line in the NVIC; configuring the EXTI line alone does not route the interrupt to the CPU.",
+      "content_type": "text",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "The EXTI0 interrupt is never enabled in the NVIC, so the IRQ handler is never invoked.",
+    "root_cause_keywords": [
+      [
+        "nvic"
+      ],
+      [
+        "exti0",
+        "enable",
+        "irq"
+      ]
+    ],
+    "fix": "Add HAL_NVIC_SetPriority(EXTI0_IRQn, 5, 0); HAL_NVIC_EnableIRQ(EXTI0_IRQn); after HAL_GPIO_Init.",
+    "fix_keywords": [
+      [
+        "hal_nvic_enableirq\\s*\\(\\s*exti0_irqn",
+        "nvic_enableirq"
+      ]
+    ],
+    "expected_citation": [
+      "STM32F4 HAL and LL Drivers User Manual UM1725 (ST)"
+    ],
+    "line": 7
+  }
+}

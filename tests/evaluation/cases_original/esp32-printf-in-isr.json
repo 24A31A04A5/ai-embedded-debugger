@@ -1,0 +1,50 @@
+{
+  "id": "esp32-printf-in-isr",
+  "title": "Interrupt WDT timeout when logging from ISR",
+  "category": "interrupts",
+  "target": "ESP32 / ESP-IDF",
+  "difficulty": "medium",
+  "split": "dev",
+  "firmware_code": "static void IRAM_ATTR button_isr(void *arg) {\n    press_count++;\n    ESP_LOGI(\"btn\", \"pressed %d times\", press_count);\n}\n\nvoid app_main(void) {\n    gpio_install_isr_service(0);\n    gpio_isr_handler_add(GPIO_NUM_0, button_isr, NULL);\n}",
+  "compiler_output": "",
+  "serial_logs": "Guru Meditation Error: Core  0 panic'ed (Interrupt wdt timeout on CPU0).\nCore  0 register dump:\nPC      : 0x4008c3a2  PS      : 0x00060a34  A0      : 0x8008b0c1\nBacktrace: 0x4008c39f:0x3ffb0b70 0x4008b0be:0x3ffb0b90 0x400d6f8a:0x3ffb0bb0 0x400d2e44:0x3ffb0bd0\n  #0  vPortEnterCritical\n  #1  xQueueSemaphoreTake\n  #2  esp_log_write\n  #3  button_isr at main/main.c:3\nRebooting...",
+  "user_question": null,
+  "reference_context": [
+    {
+      "title": "ESP-IDF Programming Guide (Espressif)",
+      "section": "Logging library / ISR usage",
+      "snippet": "ESP_LOGx macros must not be called from an interrupt handler because they may block on a lock. Use ESP_DRAM_LOGx or ESP_EARLY_LOGx in ISRs, or defer work to a task.",
+      "content_type": "text",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "ESP_LOGI is called inside the ISR; the logging path takes a lock and blocks, so the interrupt watchdog fires.",
+    "root_cause_keywords": [
+      [
+        "esp_logi?",
+        "log(ging)?",
+        "printf"
+      ],
+      [
+        "isr",
+        "interrupt"
+      ]
+    ],
+    "fix": "Remove logging from the ISR: set a flag or send to a queue with xQueueSendFromISR and log in a task (or use ESP_DRAM_LOGI).",
+    "fix_keywords": [
+      [
+        "fromisr",
+        "queue",
+        "flag",
+        "esp_dram_log",
+        "esp_early_log",
+        "defer"
+      ]
+    ],
+    "expected_citation": [
+      "ESP-IDF Programming Guide (Espressif)"
+    ],
+    "line": 3
+  }
+}

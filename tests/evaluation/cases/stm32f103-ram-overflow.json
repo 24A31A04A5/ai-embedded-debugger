@@ -12,10 +12,15 @@
   "reference_context": [
     {
       "title": "STM32F103x8/xB Datasheet (ST)",
-      "section": "Device overview",
-      "snippet": "STM32F103x8: 64 Kbytes of Flash memory and 20 Kbytes of SRAM.",
+      "document": "STM32F103x8 STM32F103xB Datasheet (production data)",
+      "revision": "DS5319 Rev 20 (July 2025)",
+      "section": "Features > Memories (cover page); 2.1 Device overview Table 2",
+      "snippet": "Memories – 64 or 128 Kbytes of Flash memory – 20 Kbytes of SRAM",
       "content_type": "table_or_specification",
-      "page_number": null
+      "page_number": 1,
+      "page_kind": "printed",
+      "url": "https://www.st.com/resource/en/datasheet/stm32f103c8.pdf",
+      "verification": "verified"
     }
   ],
   "expected": {

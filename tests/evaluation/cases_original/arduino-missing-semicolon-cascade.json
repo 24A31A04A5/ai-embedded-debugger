@@ -1,0 +1,46 @@
+{
+  "id": "arduino-missing-semicolon-cascade",
+  "title": "Error cascade from one missing semicolon",
+  "category": "compiler",
+  "target": "Arduino Uno",
+  "difficulty": "easy",
+  "split": "dev",
+  "firmware_code": "int sensorPin = A0\nint ledPin = 9;\n\nvoid setup() {\n  pinMode(ledPin, OUTPUT);\n}\n\nvoid loop() {\n  int v = analogRead(sensorPin);\n  analogWrite(ledPin, v / 4);\n}",
+  "compiler_output": "sketch.ino:2:1: error: expected ',' or ';' before 'int'\n int ledPin = 9;\n ^~~\nsketch.ino: In function 'void setup()':\nsketch.ino:5:11: error: 'ledPin' was not declared in this scope\n   pinMode(ledPin, OUTPUT);\n           ^~~~~~\nsketch.ino: In function 'void loop()':\nsketch.ino:10:15: error: 'ledPin' was not declared in this scope\nexit status 1",
+  "serial_logs": "",
+  "user_question": null,
+  "reference_context": [
+    {
+      "title": "GNU C / ld Documentation",
+      "section": "Diagnostics",
+      "snippet": "After a syntax error the parser recovers and may report further errors that are consequences of the first one; fix the first error and rebuild.",
+      "content_type": "text",
+      "page_number": null
+    }
+  ],
+  "expected": {
+    "root_cause": "Line 1 is missing a semicolon after `int sensorPin = A0`, so ledPin is never declared and the later errors cascade from it.",
+    "root_cause_keywords": [
+      [
+        "semicolon",
+        "';'"
+      ],
+      [
+        "line 1",
+        "sensorpin",
+        "a0"
+      ]
+    ],
+    "fix": "Add the semicolon: int sensorPin = A0;",
+    "fix_keywords": [
+      [
+        "sensorpin\\s*=\\s*a0\\s*;",
+        "add (a |the )?semicolon"
+      ]
+    ],
+    "expected_citation": [
+      "GNU C / ld Documentation"
+    ],
+    "line": 1
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "id": "abstain-arduino-analog-wrong",
+  "title": "analogRead value is 'wrong', sensor and wiring unknown",
+  "category": "insufficient-evidence",
+  "target": "Arduino Uno",
+  "difficulty": "medium",
+  "split": "holdout",
+  "firmware_code": "void loop() {\n  int v = analogRead(A0);\n  Serial.println(v);\n  delay(500);\n}",
+  "compiler_output": "",
+  "serial_logs": "612\n598\n640\n603",
+  "user_question": "The readings are wrong. How do I fix it?",
+  "reference_context": [],
+  "expected": {
+    "abstain": true,
+    "root_cause": "Insufficient evidence: the sensor, its expected value, wiring and analog reference are not given, so it cannot be determined whether ~600 counts is wrong or why.",
+    "root_cause_keywords": [
+      [
+        "insufficient",
+        "not enough",
+        "cannot (?:be )?determin",
+        "need more",
+        "more information",
+        "unclear",
+        "what (?:value|reading) (?:do )?you expect"
+      ]
+    ],
+    "needed_info_keywords": [
+      [
+        "sensor",
+        "part number",
+        "expected",
+        "wiring",
+        "schematic",
+        "aref",
+        "reference voltage"
+      ]
+    ],
+    "fix": "Share the sensor model, the expected reading, the wiring and the analog reference used.",
+    "fix_keywords": [
+      [
+        "sensor",
+        "expected",
+        "wiring",
+        "aref",
+        "reference"
+      ]
+    ],
+    "expected_citation": [],
+    "line": null
+  }
+}

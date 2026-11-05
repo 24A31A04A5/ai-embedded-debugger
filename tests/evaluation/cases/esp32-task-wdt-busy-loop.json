@@ -12,10 +12,15 @@
   "reference_context": [
     {
       "title": "ESP-IDF Programming Guide (Espressif)",
-      "section": "Watchdogs / Task Watchdog Timer",
-      "snippet": "By default the TWDT watches the idle task of each CPU. If a task busy-loops without blocking, the idle task cannot run and the TWDT is triggered.",
+      "document": "ESP-IDF Programming Guide: Watchdogs",
+      "revision": "ESP-IDF v5.0 (ESP32 build)",
+      "section": "Watchdogs > Task Watchdog Timer (TWDT)",
+      "snippet": "The Task Watchdog Timer (TWDT) is used to monitor particular tasks, ensuring that they are able to execute within a given timeout period. The TWDT primarily watches the Idle Tasks of each CPU, however any task can subscribe to be watched by the TWDT. By watching the Idle Tasks of each CPU, the TWDT can detect instances of tasks running for a prolonged period of time wihtout yielding.",
       "content_type": "text",
-      "page_number": null
+      "page_number": null,
+      "page_kind": null,
+      "url": "https://docs.espressif.com/projects/esp-idf/en/v5.0/esp32/api-reference/system/wdts.html#task-watchdog-timer-twdt",
+      "verification": "verified"
     }
   ],
   "expected": {

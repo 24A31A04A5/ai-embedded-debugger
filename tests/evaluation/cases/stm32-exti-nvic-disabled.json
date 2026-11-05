@@ -12,10 +12,15 @@
   "reference_context": [
     {
       "title": "STM32F4 HAL and LL Drivers User Manual UM1725 (ST)",
-      "section": "HAL CORTEX Generic Driver",
-      "snippet": "HAL_NVIC_SetPriority() and HAL_NVIC_EnableIRQ() must be called to configure and enable the interrupt line in the NVIC; configuring the EXTI line alone does not route the interrupt to the CPU.",
+      "document": "UM1725 User manual: Description of STM32F4 HAL and low-layer drivers",
+      "revision": "UM1725 - Rev 8",
+      "section": "11.2.1 HAL CORTEX: How to use this driver",
+      "snippet": "This section provides functions allowing to configure the NVIC interrupts (IRQ). The Cortex-M4 exceptions are managed by CMSIS functions. 1. Configure the NVIC Priority Grouping using HAL_NVIC_SetPriorityGrouping() function according to the following table. 2. Configure the priority of the selected IRQ Channels using HAL_NVIC_SetPriority(). 3. Enable the selected IRQ Channels using HAL_NVIC_EnableIRQ().",
       "content_type": "text",
-      "page_number": null
+      "page_number": 132,
+      "page_kind": "printed",
+      "url": "https://www.st.com/resource/en/user_manual/um1725-description-of-stm32f4-hal-and-lowlayer-drivers-stmicroelectronics.pdf",
+      "verification": "verified"
     }
   ],
   "expected": {

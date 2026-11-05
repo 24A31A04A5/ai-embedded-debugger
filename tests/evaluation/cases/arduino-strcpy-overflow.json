@@ -12,10 +12,15 @@
   "reference_context": [
     {
       "title": "Arduino Language Reference (arduino.cc)",
-      "section": "char arrays / strings",
-      "snippet": "Arrays are not bounds-checked. Writing past the end of an array corrupts adjacent memory. A string needs one extra byte for the null terminator.",
+      "document": "Arduino Language Reference: array / string (char array)",
+      "revision": "arduino/reference-en master, last commit b367b025a1 (2025-04-11); rendered at docs.arduino.cc/language-reference",
+      "section": "Variables > Data Types > array (Accessing an Array); string (Null termination)",
+      "snippet": "Writing to random memory locations is definitely a bad idea and can often lead to unhappy results such as crashes or program malfunction. [...] Unlike BASIC or JAVA, the C++ compiler does no checking to see if array access is within legal bounds of the array size that you have declared. [string:] This means that your string needs to have space for one more character than the text you want it to contain.",
       "content_type": "text",
-      "page_number": null
+      "page_number": null,
+      "page_kind": null,
+      "url": "https://docs.arduino.cc/language-reference/en/variables/data-types/array/ ; https://docs.arduino.cc/language-reference/en/variables/data-types/string/",
+      "verification": "verified"
     }
   ],
   "expected": {
