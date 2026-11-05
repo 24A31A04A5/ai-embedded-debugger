@@ -35,6 +35,10 @@ def _configure_test_environment(
         monkeypatch.setenv("DATABASE_URL", UNIT_TEST_DATABASE_URL)
 
     monkeypatch.setenv("DATABASE_CONNECT_TIMEOUT", "1")
+    # Placeholder so the Clerk client can be constructed in tests. Not a real key: requests
+    # without a session token are still rejected with 401 by Clerk's own verification.
+    monkeypatch.setenv("CLERK_SECRET_KEY", os.getenv("CLERK_SECRET_KEY") or "sk_test_placeholder")
+    monkeypatch.delenv("HEALTH_DIAGNOSTICS", raising=False)
     get_settings.cache_clear()
     reset_database_state()
     yield

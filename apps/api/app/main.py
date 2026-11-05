@@ -101,6 +101,7 @@ cors_allow_credentials = not has_wildcard
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_allow_origins,
+    allow_origin_regex=settings.cors_origin_regex or None,
     allow_credentials=cors_allow_credentials,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"],
     allow_headers=["*"],

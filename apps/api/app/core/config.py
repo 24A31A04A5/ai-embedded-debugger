@@ -27,6 +27,10 @@ class Settings(BaseSettings):
     clerk_secret_key: str = ""
     gemini_api_key: str = ""
     cors_origins: list[str] | str = ["http://localhost:3000"]
+    # Optional regex for per-deployment preview origins (Vercel preview URLs). Unset in prod.
+    cors_origin_regex: str | None = None
+    # Preview/dev only: include non-secret environment diagnostics in /health. Off by default.
+    health_diagnostics: bool = False
 
     # Object Storage Settings
 

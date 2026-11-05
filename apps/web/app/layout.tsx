@@ -48,6 +48,7 @@ export const metadata: Metadata = {
 import { ClerkProvider } from "@clerk/nextjs";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { WelcomeGate } from "@/components/brand/WelcomeGate";
+import { PreviewBanner } from "@/components/brand/PreviewBanner";
 import { welcomeBootScript } from "@/components/brand/welcome-boot";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 
@@ -79,6 +80,7 @@ export default function RootLayout({
               {children}
             </div>
           </TooltipProvider>
+          <PreviewBanner />
         </body>
       </html>
     </ClerkProvider>
