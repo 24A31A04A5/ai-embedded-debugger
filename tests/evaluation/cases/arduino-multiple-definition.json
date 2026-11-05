@@ -5,7 +5,7 @@
   "target": "Arduino / PlatformIO",
   "difficulty": "medium",
   "split": "dev",
-  "firmware_code": "// globals.h\n#pragma once\nint counter = 0;\n\n// main.cpp\n#include \"globals.h\"\nvoid loop() { counter++; }\n\n// display.cpp\n#include \"globals.h\"\nvoid showCount() { lcd.print(counter); }",
+  "firmware_code": "// globals.h\n#pragma once\nint counter = 0;\n\n// main.cpp\n#include \"globals.h\"\nvoid loop() { counter++; }\n\n// display.cpp\n#include \"globals.h\"\nvoid showCount() { Serial.println(counter); }",
   "compiler_output": ".pio/build/uno/src/main.cpp.o (symbol from plugin): In function `counter':\n(.text+0x0): multiple definition of `counter'\n.pio/build/uno/src/display.cpp.o (symbol from plugin):(.text+0x0): first defined here\ncollect2: error: ld returned 1 exit status",
   "serial_logs": "",
   "user_question": null,

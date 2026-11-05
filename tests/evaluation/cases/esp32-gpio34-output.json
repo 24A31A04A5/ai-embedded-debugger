@@ -2,13 +2,13 @@
   "id": "esp32-gpio34-output",
   "title": "LED on GPIO34 never turns on",
   "category": "gpio",
-  "target": "ESP32 / ESP-IDF",
+  "target": "ESP32 / ESP-IDF v4.4",
   "difficulty": "medium",
   "split": "dev",
   "firmware_code": "#include \"driver/gpio.h\"\n#include \"freertos/FreeRTOS.h\"\n#include \"freertos/task.h\"\n\n#define LED_PIN GPIO_NUM_34\n\nvoid app_main(void) {\n    gpio_reset_pin(LED_PIN);\n    gpio_set_direction(LED_PIN, GPIO_MODE_OUTPUT);\n    while (1) {\n        gpio_set_level(LED_PIN, 1);\n        vTaskDelay(pdMS_TO_TICKS(500));\n        gpio_set_level(LED_PIN, 0);\n        vTaskDelay(pdMS_TO_TICKS(500));\n    }\n}",
   "compiler_output": "",
-  "serial_logs": "I (312) cpu_start: Starting scheduler on PRO CPU.\nI (0) cpu_start: Starting scheduler on APP CPU.\nI (322) gpio: GPIO[34]| InputEn: 0| OutputEn: 1| OpenDrain: 0| Pullup: 0| Pulldown: 0| Intr:0",
-  "user_question": "Code builds and runs without errors but the LED on GPIO34 never lights. Wiring checked.",
+  "serial_logs": "I (312) cpu_start: Starting scheduler on PRO CPU.\nI (0) cpu_start: Starting scheduler on APP CPU.\nE (322) gpio: gpio_set_direction(277): io_num=34 can only be input",
+  "user_question": "Code builds and flashes fine but the LED on GPIO34 never lights. Wiring checked.",
   "reference_context": [
     {
       "title": "ESP32 Series Datasheet (Espressif)",

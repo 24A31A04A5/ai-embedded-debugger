@@ -53,7 +53,7 @@ CASES: list[dict[str, Any]] = [
         "id": "esp32-gpio34-output",
         "title": "LED on GPIO34 never turns on",
         "category": "gpio",
-        "target": "ESP32 / ESP-IDF",
+        "target": "ESP32 / ESP-IDF v4.4",
         "difficulty": "medium",
         "split": "dev",
         "firmware_code": """#include "driver/gpio.h"
@@ -75,8 +75,8 @@ void app_main(void) {
         "compiler_output": "",
         "serial_logs": """I (312) cpu_start: Starting scheduler on PRO CPU.
 I (0) cpu_start: Starting scheduler on APP CPU.
-I (322) gpio: GPIO[34]| InputEn: 0| OutputEn: 1| OpenDrain: 0| Pullup: 0| Pulldown: 0| Intr:0""",
-        "user_question": "Code builds and runs without errors but the LED on GPIO34 never lights. Wiring checked.",
+E (322) gpio: gpio_set_direction(277): io_num=34 can only be input""",
+        "user_question": "Code builds and flashes fine but the LED on GPIO34 never lights. Wiring checked.",
         "reference_context": [
             ref(ESP32_DS, "Pin Description / GPIO", "GPIO34, GPIO35, GPIO36 (SENSOR_VP) and GPIO39 (SENSOR_VN) are input-only pins. They have no output drivers and no internal pull-up or pull-down resistors.", "pin_configuration"),
         ],
@@ -173,7 +173,7 @@ int main(void) {
         "id": "esp32-gpio-sel-macro",
         "title": "GPIO_SEL_2 undeclared after IDF upgrade",
         "category": "compiler",
-        "target": "ESP32-S3 / ESP-IDF v5",
+        "target": "ESP32-S3 / ESP-IDF v5.0 (code written for v4.4)",
         "difficulty": "easy",
         "split": "dev",
         "firmware_code": """#include "driver/gpio.h"
@@ -197,10 +197,10 @@ ninja: build stopped: subcommand failed.""",
         "serial_logs": "",
         "user_question": None,
         "reference_context": [
-            ref(ESP_IDF, "GPIO driver / gpio_config_t", "pin_bit_mask: GPIO pin: set with bit mask, each bit maps to a GPIO, e.g. (1ULL << GPIO_NUM_2). BIT64(n) may also be used.", "text"),
+            ref(ESP_IDF, "GPIO API reference / gpio_config_t (hal/gpio_types.h, v5.0)", "uint64_t pin_bit_mask; GPIO pin: set with bit mask, each bit maps to a GPIO", "text"),
         ],
         "expected": {
-            "root_cause": "The GPIO_SEL_x macros are not available in this ESP-IDF version, so GPIO_SEL_2 is an undeclared identifier.",
+            "root_cause": "The GPIO_SEL_x macros existed in ESP-IDF v4.4 (hal/gpio_types.h) but are not in v5.0, so GPIO_SEL_2 is an undeclared identifier.",
             "root_cause_keywords": [[r"gpio_sel_2"], [r"undeclared", r"not (defined|declared|available)", r"removed", r"deprecated"]],
             "fix": "Use a 64-bit bit mask: .pin_bit_mask = (1ULL << GPIO_NUM_2) (or BIT64(GPIO_NUM_2)).",
             "fix_keywords": [[r"1ull\s*<<\s*(gpio_num_)?2", r"bit64\(\s*(gpio_num_)?2\s*\)"]],
@@ -431,7 +431,7 @@ E (403) adxl: sensor not found""",
         "id": "esp32-adc2-wifi",
         "title": "ADC2 read fails once Wi-Fi connects",
         "category": "adc",
-        "target": "ESP32 / ESP-IDF",
+        "target": "ESP32 / ESP-IDF v4.4 (legacy ADC driver)",
         "difficulty": "hard",
         "split": "dev",
         "firmware_code": """// Soil sensor on GPIO4 (ADC2_CHANNEL_0)
@@ -451,7 +451,7 @@ void sensor_task(void *arg) {
         "serial_logs": """I (1203) soil: raw=2310
 I (2203) soil: raw=2298
 I (2650) wifi:connected with HomeNet, aid = 3, channel 6
-I (3203) soil: adc2_get_raw failed: ESP_ERR_TIMEOUT
+E (3203) soil: adc2_get_raw failed: ESP_ERR_TIMEOUT
 E (4203) soil: adc2_get_raw failed: ESP_ERR_TIMEOUT
 E (5203) soil: adc2_get_raw failed: ESP_ERR_TIMEOUT""",
         "user_question": "Readings work for two seconds then fail forever.",
@@ -746,30 +746,33 @@ MMFAR= 0xE000EDF4  BFAR = 0xE000EDF8""",
         "target": "Arduino Uno (ATmega328P)",
         "difficulty": "medium",
         "split": "dev",
-        "firmware_code": """char deviceName[8];
-int threshold = 512;
+        "firmware_code": """struct Config {
+  char deviceName[8];
+  int threshold;
+};
+Config cfg = {"", 512};
 
 void setup() {
   Serial.begin(115200);
-  strcpy(deviceName, "greenhouse-node-01");
+  strcpy(cfg.deviceName, "greenhouse-node-01");
   Serial.print("threshold=");
-  Serial.println(threshold);
+  Serial.println(cfg.threshold);
 }
 
 void loop() {}""",
         "compiler_output": "",
-        "serial_logs": """threshold=12333""",
+        "serial_logs": """threshold=25971""",
         "user_question": "threshold should be 512 but prints a random number.",
         "reference_context": [
             ref(ARDUINO_REF, "char arrays / strings", "Arrays are not bounds-checked. Writing past the end of an array corrupts adjacent memory. A string needs one extra byte for the null terminator.", "text"),
         ],
         "expected": {
-            "root_cause": "strcpy writes an 18-character string (19 bytes with terminator) into an 8-byte buffer, overflowing into adjacent globals such as threshold.",
+            "root_cause": "strcpy writes an 18-character string (19 bytes with terminator) into an 8-byte buffer, overflowing into the next struct member, threshold (bytes 's','e' = 0x6573 = 25971).",
             "root_cause_keywords": [[r"overflow", r"out of bounds", r"overrun"], [r"devicename", r"strcpy", r"\b8\b"]],
             "fix": "Enlarge deviceName (at least 19 bytes) or use strncpy/strlcpy with sizeof(deviceName).",
             "fix_keywords": [[r"strlcpy", r"strncpy", r"snprintf", r"devicename\[\s*(19|2\d|3[0-2])\s*\]", r"larger", r"increase"]],
             "expected_citation": [ARDUINO_REF],
-            "line": 6,
+            "line": 9,
         },
     },
     {
@@ -929,7 +932,7 @@ void loop() { counter++; }
 
 // display.cpp
 #include "globals.h"
-void showCount() { lcd.print(counter); }""",
+void showCount() { Serial.println(counter); }""",
         "compiler_output": """.pio/build/uno/src/main.cpp.o (symbol from plugin): In function `counter':
 (.text+0x0): multiple definition of `counter'
 .pio/build/uno/src/display.cpp.o (symbol from plugin):(.text+0x0): first defined here

@@ -5,9 +5,9 @@
   "target": "Arduino Uno (ATmega328P)",
   "difficulty": "medium",
   "split": "dev",
-  "firmware_code": "char deviceName[8];\nint threshold = 512;\n\nvoid setup() {\n  Serial.begin(115200);\n  strcpy(deviceName, \"greenhouse-node-01\");\n  Serial.print(\"threshold=\");\n  Serial.println(threshold);\n}\n\nvoid loop() {}",
+  "firmware_code": "struct Config {\n  char deviceName[8];\n  int threshold;\n};\nConfig cfg = {\"\", 512};\n\nvoid setup() {\n  Serial.begin(115200);\n  strcpy(cfg.deviceName, \"greenhouse-node-01\");\n  Serial.print(\"threshold=\");\n  Serial.println(cfg.threshold);\n}\n\nvoid loop() {}",
   "compiler_output": "",
-  "serial_logs": "threshold=12333",
+  "serial_logs": "threshold=25971",
   "user_question": "threshold should be 512 but prints a random number.",
   "reference_context": [
     {
@@ -19,7 +19,7 @@
     }
   ],
   "expected": {
-    "root_cause": "strcpy writes an 18-character string (19 bytes with terminator) into an 8-byte buffer, overflowing into adjacent globals such as threshold.",
+    "root_cause": "strcpy writes an 18-character string (19 bytes with terminator) into an 8-byte buffer, overflowing into the next struct member, threshold (bytes 's','e' = 0x6573 = 25971).",
     "root_cause_keywords": [
       [
         "overflow",
@@ -46,6 +46,6 @@
     "expected_citation": [
       "Arduino Language Reference (arduino.cc)"
     ],
-    "line": 6
+    "line": 9
   }
 }
