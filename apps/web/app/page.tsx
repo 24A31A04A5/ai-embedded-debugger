@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   ChevronDown,
@@ -16,6 +17,7 @@ import {
   Layers,
   Menu,
   Plus,
+  RefreshCw,
   ShieldCheck,
   Sparkles,
   Terminal,
@@ -61,11 +63,15 @@ import {
 import { Show, SignInButton, UserButton, useAuth, useUser } from "@clerk/nextjs";
 import {
   useApiClient,
-  getApiBaseUrl,
   type ProjectFileMetadata,
   type DebugSessionSummary,
   type DocumentMetadata,
 } from "@/lib/api-client";
+import { SampleProjectDemo } from "@/components/home/SampleProjectDemo";
+import { formatLatency } from "@/lib/health-status";
+import { isShortcutEvent, shortcutLabel } from "@/lib/platform";
+import { useApiHealth } from "@/lib/use-api-health";
+import { useShortcutPlatform } from "@/lib/use-platform";
 
 type Project = {
   id: string;
@@ -104,6 +110,16 @@ function formatBytes(bytes?: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function ListSkeleton({ rows = 3, label }: { rows?: number; label: string }) {
+  return (
+    <div className="space-y-2" role="status" aria-label={label}>
+      {Array.from({ length: rows }).map((_, i) => (
+        <Skeleton key={i} className="h-10 w-full" />
+      ))}
+    </div>
+  );
 }
 
 /* ────────────────────────────────────────────────────────────
@@ -364,7 +380,7 @@ function CreateProjectDialog({
    ──────────────────────────────────────────────────────────── */
 
 function BentoDashboard() {
-  const { isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn } = useAuth();
   const { user } = useUser();
   const api = useApiClient();
 
@@ -374,33 +390,33 @@ function BentoDashboard() {
   const [documents, setDocuments] = useState<DocumentMetadata[]>([]);
   const [files, setFiles] = useState<ProjectFileMetadata[]>([]);
   const [loading, setLoading] = useState(true);
-  const [apiHealth, setApiHealth] = useState<"checking" | "healthy" | "offline">("checking");
+  const [detailsLoading, setDetailsLoading] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const health = useApiHealth();
+  const apiHealth = health.status;
+  const latencyText = health.status === "online" ? formatLatency(health.latencyMs) : null;
+  const platform = useShortcutPlatform();
+  const router = useRouter();
+  const showSignedOut = isLoaded && !isSignedIn;
 
-  // 1. Live Health Check
+  // Keyboard shortcut: Ctrl+B (Windows/Linux) or ⌘B (macOS) opens the workspace.
   useEffect(() => {
-    let isMounted = true;
-    async function checkHealth() {
-      try {
-        const baseUrl = getApiBaseUrl().replace(/\/v1\/?$/, "");
-        const res = await fetch(`${baseUrl}/health`, {
-          signal: AbortSignal.timeout(3000),
-        });
-        if (!isMounted) return;
-        if (res.ok) {
-          setApiHealth("healthy");
-        } else {
-          setApiHealth("offline");
-        }
-      } catch {
-        if (isMounted) setApiHealth("offline");
+    const onKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
+      ) {
+        return;
       }
-    }
-    checkHealth();
-    return () => {
-      isMounted = false;
+      if (isShortcutEvent(e, "b", platform)) {
+        e.preventDefault();
+        router.push("/workspace");
+      }
     };
-  }, []);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [platform, router]);
 
   // 2. Fetch Projects when signed in
   useEffect(() => {
@@ -436,11 +452,13 @@ function BentoDashboard() {
       setSessions([]);
       setDocuments([]);
       setFiles([]);
+      setDetailsLoading(false);
       return;
     }
     const projectId = activeProjectId;
     let isMounted = true;
     async function loadDetails() {
+      setDetailsLoading(true);
       try {
         const [sessList, docList, fileList] = await Promise.allSettled([
           api.listSessions(projectId),
@@ -453,6 +471,8 @@ function BentoDashboard() {
         if (fileList.status === "fulfilled") setFiles(fileList.value);
       } catch (e) {
         console.error("Failed to load project details", e);
+      } finally {
+        if (isMounted) setDetailsLoading(false);
       }
     }
     loadDetails();
@@ -483,9 +503,6 @@ function BentoDashboard() {
               <Sparkles className="h-3 w-3 mr-1" />
               Control Center
             </Badge>
-            <span className="text-xs text-muted-foreground font-mono">
-              v1.0.0-prod
-            </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-display">
             {isSignedIn && user?.firstName ? (
@@ -631,7 +648,7 @@ function BentoDashboard() {
             <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
               <span className="flex items-center gap-1">
                 <ShieldCheck className="lg-green h-3.5 w-3.5" />
-                Zero Hallucinations Guarantee
+                Every fix cites a datasheet page, or says it&apos;s unsure.
               </span>
             </div>
           </CardFooter>
@@ -645,47 +662,68 @@ function BentoDashboard() {
                 <span className="lg-tile lg-white"><Cpu className="h-4 w-4" /></span>
                 System & AI Engine Status
               </CardTitle>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5" role="status" aria-live="polite">
                 <span className={`h-2 w-2 rounded-full ${
-                  apiHealth === "healthy" ? "bg-[var(--color-success-green)] shadow-[0_0_8px_var(--color-success-green)]" :
-                  apiHealth === "checking" ? "bg-[var(--color-warning-amber)]" : "bg-[var(--color-error-red)]"
+                  apiHealth === "online" ? "bg-[var(--color-success-green)] shadow-[0_0_8px_var(--color-success-green)]" :
+                  apiHealth === "checking" ? "bg-[var(--color-warning-amber)] animate-pulse motion-reduce:animate-none" : "bg-[var(--color-error-red)]"
                 }`} aria-hidden="true" />
                 <span className="text-[10px] text-muted-foreground font-mono uppercase">
-                  {apiHealth}
+                  {apiHealth === "online" ? "Online" : apiHealth === "checking" ? "Checking" : "Offline"}
                 </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                  onClick={health.retry}
+                  disabled={apiHealth === "checking"}
+                  aria-label="Re-check API health"
+                  title="Re-check API health"
+                >
+                  <RefreshCw className={`h-3 w-3 ${apiHealth === "checking" ? "animate-spin motion-reduce:animate-none" : ""}`} />
+                </Button>
               </div>
             </div>
             <CardDescription className="text-xs">
-              Live service status and embedded reasoning telemetry.
+              {apiHealth === "checking" && health.waking
+                ? "Waking server… free-tier API can take up to a minute after idling."
+                : "API status from a real /health request; re-checked every 60 s while this tab is open."}
             </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-3 text-xs">
             <div className="lg-card flex items-center justify-between p-2.5">
               <span className="text-muted-foreground">API Gateway</span>
-              <Badge variant={apiHealth === "healthy" ? "success" : "outline"} className="text-[10px]">
-                {apiHealth === "healthy" ? "Online (v1)" : apiHealth === "checking" ? "Verifying" : "Unreachable"}
+              <Badge variant={apiHealth === "online" && !health.degraded ? "success" : apiHealth === "online" ? "warning" : "outline"} className="text-[10px]">
+                {apiHealth === "online"
+                  ? `${health.degraded ? "Online · DB degraded" : "Online"}${latencyText ? ` · ${latencyText}` : ""}`
+                  : apiHealth === "checking"
+                    ? health.waking ? "Waking server…" : "Checking…"
+                    : "Offline"}
               </Badge>
             </div>
 
             <div className="lg-card flex items-center justify-between p-2.5">
               <span className="text-muted-foreground">AI Diagnostic Model</span>
-              <Badge variant="ai" className="text-[10px]">
-                Gemini 2.5 Flash
+              <Badge
+                variant="ai"
+                className="text-[10px]"
+                title="The API requests gemini-3.5-flash; Google currently serves that request as gemini-3.6-flash."
+              >
+                Google Gemini Flash
               </Badge>
             </div>
 
             <div className="lg-card flex items-center justify-between p-2.5">
               <span className="text-muted-foreground">RAG Vector Index</span>
               <Badge variant="outline" className="text-[10px] border-[var(--accent-purple)]/40 text-white">
-                ChromaDB Active
+                pgvector (Postgres)
               </Badge>
             </div>
 
             <div className="lg-card flex items-center justify-between p-2.5">
-              <span className="text-muted-foreground">Code Sanitizer</span>
+              <span className="text-muted-foreground">Secret redaction &amp; safe filenames</span>
               <Badge variant="outline" className="text-[10px] text-[var(--color-success-green)] border-[var(--color-success-green)]/30">
-                Enforced
+                On
               </Badge>
             </div>
           </CardContent>
@@ -716,12 +754,18 @@ function BentoDashboard() {
               )}
             </div>
             <CardDescription className="text-xs">
-              {isSignedIn ? `${projects.length} project${projects.length === 1 ? "" : "s"} configured` : "Sign in to manage projects"}
+              {!isLoaded || (isSignedIn && loading)
+                ? "Loading projects…"
+                : isSignedIn
+                  ? `${projects.length} project${projects.length === 1 ? "" : "s"} configured`
+                  : "Sign in to manage projects"}
             </CardDescription>
           </CardHeader>
 
           <CardContent className="flex-1 space-y-2 text-xs overflow-y-auto max-h-56">
-            {!isSignedIn ? (
+            {!isLoaded ? (
+              <ListSkeleton rows={2} label="Loading projects" />
+            ) : !isSignedIn ? (
               <div className="p-4 text-center rounded-lg border border-dashed border-border/60 bg-muted/20">
                 <FolderOpen className="h-6 w-6 mx-auto mb-2 text-muted-foreground/60" />
                 <p className="text-muted-foreground font-medium">Sign in to access projects</p>
@@ -731,10 +775,7 @@ function BentoDashboard() {
                 </SignInButton>
               </div>
             ) : loading ? (
-              <div className="space-y-2">
-                <Skeleton className="h-9 w-full" />
-                <Skeleton className="h-9 w-full" />
-              </div>
+              <ListSkeleton rows={2} label="Loading projects" />
             ) : projects.length === 0 ? (
               <div className="p-4 text-center rounded-lg border border-dashed border-border/60 bg-muted/20">
                 <p className="text-muted-foreground">No projects yet.</p>
@@ -787,9 +828,11 @@ function BentoDashboard() {
                 <span className="lg-tile lg-green"><Terminal className="h-4 w-4" /></span>
                 Recent Debug Sessions
               </CardTitle>
-              <Badge variant="outline" className="text-[10px]">
-                {sessions.length} recorded
-              </Badge>
+              {isSignedIn && !loading && !detailsLoading && (
+                <Badge variant="outline" className="text-[10px]">
+                  {sessions.length} recorded
+                </Badge>
+              )}
             </div>
             <CardDescription className="text-xs">
               Previous compiler & serial log analyses.
@@ -797,7 +840,9 @@ function BentoDashboard() {
           </CardHeader>
 
           <CardContent className="flex-1 space-y-2 text-xs overflow-y-auto max-h-56">
-            {!isSignedIn ? (
+            {!isLoaded || (isSignedIn && (loading || detailsLoading)) ? (
+              <ListSkeleton rows={3} label="Loading sessions" />
+            ) : !isSignedIn ? (
               <div className="p-4 text-center rounded-lg border border-dashed border-border/60 bg-muted/20">
                 <Terminal className="h-6 w-6 mx-auto mb-2 text-muted-foreground/60" />
                 <p className="text-muted-foreground font-medium">Session history protected</p>
@@ -910,7 +955,7 @@ function BentoDashboard() {
           </CardContent>
 
           <CardFooter className="pt-2 border-t border-border/30 text-[10px] text-muted-foreground">
-            Fast keyboard shortcut: <kbd className="px-1 py-0.5 bg-muted rounded text-[9px] font-mono ml-1">⌘B</kbd>
+            Open workspace: <kbd className="px-1 py-0.5 bg-muted rounded text-[9px] font-mono ml-1">{shortcutLabel("b", platform)}</kbd>
           </CardFooter>
         </Card>
 
@@ -922,9 +967,11 @@ function BentoDashboard() {
                 <span className="lg-tile lg-green"><Layers className="h-4 w-4" /></span>
                 Project Activity & Evidence Telemetry
               </CardTitle>
-              <Badge variant="outline" className="text-[10px]">
-                {activeProject ? activeProject.name : "All Projects"}
-              </Badge>
+              {isSignedIn && (
+                <Badge variant="outline" className="text-[10px]">
+                  {activeProject ? activeProject.name : "All Projects"}
+                </Badge>
+              )}
             </div>
             <CardDescription className="text-xs">
               Real repository metrics and evidence documents loaded in current scope.
@@ -932,6 +979,28 @@ function BentoDashboard() {
           </CardHeader>
 
           <CardContent className="space-y-4 text-xs">
+            {!isLoaded || (isSignedIn && (loading || detailsLoading)) ? (
+              <div className="space-y-3" role="status" aria-label="Loading project stats">
+                <div className="grid grid-cols-3 gap-3">
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                  <Skeleton className="h-20 w-full" />
+                </div>
+                <Skeleton className="h-14 w-full" />
+              </div>
+            ) : showSignedOut ? (
+              <div className="p-4 text-center rounded-lg border border-dashed border-border/60 bg-muted/20">
+                <Layers className="h-6 w-6 mx-auto mb-2 text-muted-foreground/60" />
+                <p className="text-muted-foreground font-medium">Your project stats appear here</p>
+                <p className="text-[11px] text-muted-foreground/70 mt-1 mb-3">
+                  Sign in to see session, firmware file and datasheet counts for your own projects.
+                </p>
+                <SignInButton mode="modal">
+                  <Button variant="outline" size="sm" className="text-xs">Sign In</Button>
+                </SignInButton>
+              </div>
+            ) : (
+            <>
             {/* Real Stats Grid */}
             <div className="grid grid-cols-3 gap-3">
               <div className="lg-card p-3 text-center">
@@ -983,10 +1052,12 @@ function BentoDashboard() {
                 </div>
               )}
             </div>
+            </>
+            )}
           </CardContent>
 
           <CardFooter className="pt-2 border-t border-border/30 text-[11px] text-muted-foreground flex items-center justify-between">
-            <span>Grounded on ChromaDB + Neon PostgreSQL</span>
+            <span>Datasheet chunks stored in Postgres (pgvector)</span>
             <Link href="/workspace" className="text-[var(--accent-purple)] hover:underline flex items-center gap-1">
               <span>Manage Repository</span>
               <ChevronRight className="h-3 w-3" />
@@ -1002,9 +1073,11 @@ function BentoDashboard() {
                 <span className="lg-tile lg-white"><FileText className="h-4 w-4" /></span>
                 Hardware Datasheets (RAG)
               </CardTitle>
-              <Badge variant="outline" className="text-[10px]">
-                {documents.length} attached
-              </Badge>
+              {isSignedIn && !loading && !detailsLoading && (
+                <Badge variant="outline" className="text-[10px]">
+                  {documents.length} attached
+                </Badge>
+              )}
             </div>
             <CardDescription className="text-xs">
               Hardware reference manuals indexed to verify pinouts and peripheral registers.
@@ -1012,7 +1085,9 @@ function BentoDashboard() {
           </CardHeader>
 
           <CardContent className="flex-1 space-y-2 text-xs overflow-y-auto max-h-56">
-            {!isSignedIn ? (
+            {!isLoaded || (isSignedIn && (loading || detailsLoading)) ? (
+              <ListSkeleton rows={2} label="Loading datasheets" />
+            ) : !isSignedIn ? (
               <div className="p-4 text-center rounded-lg border border-dashed border-border/60 bg-muted/20">
                 <p className="text-muted-foreground font-medium">Datasheet repository</p>
                 <p className="text-[11px] text-muted-foreground/70 mt-1 mb-2">Sign in to connect ESP32, STM32, and custom MCU datasheets</p>
@@ -1116,58 +1191,9 @@ function CapabilitiesOverview() {
           </div>
           <h3 className="font-semibold text-base mb-1.5 text-foreground">Datasheet RAG Grounding</h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            ChromaDB vector embeddings index your hardware datasheets. Proposed code fixes cite confirmed register bitmasks, peripheral clocks, and pinout specs.
+            Uploaded datasheets are chunked and indexed with pgvector in Postgres. Proposed fixes cite the datasheet page they rely on, or say when the evidence is not there.
           </p>
         </Card>
-      </div>
-    </section>
-  );
-}
-
-/* ────────────────────────────────────────────────────────────
-   Diagnostic Demo Reference (#demo)
-   ──────────────────────────────────────────────────────────── */
-
-function InteractiveDemoReference() {
-  return (
-    <section id="demo" className="py-16 px-4 sm:px-6 max-w-7xl mx-auto border-t border-border/40">
-      <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
-        <div className="max-w-xl">
-          <Badge variant="outline" className="mb-3 text-[10px] border-[var(--color-emerald)]/40 text-[var(--color-emerald)]">
-            Live Diagnostic Example
-          </Badge>
-          <h2 className="text-2xl sm:text-3xl font-bold font-display tracking-tight text-foreground">
-            From Build Failure to Verified Patch
-          </h2>
-          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-            Watch how the platform parses an idf.py build failure, matches against FreeRTOS GPIO driver documentation, and generates a ready-to-commit code diff.
-          </p>
-          <div className="mt-6 flex items-center gap-3">
-            <Button variant="ai" size="sm" asChild>
-              <Link href="/workspace">
-                <span>Try in Workspace</span>
-                <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-
-        <div className="lg-well w-full max-w-lg overflow-hidden">
-          <div className="flex items-center justify-between border-b border-[var(--color-code-border)] px-4 py-2.5 text-xs text-muted-foreground">
-            <span className="font-mono">idf.py build — ESP32-S3</span>
-            <Badge variant="error" className="text-[10px]">Error 1</Badge>
-          </div>
-          <div className="p-4 font-mono text-[12px] leading-6 space-y-1 overflow-x-auto text-muted-foreground">
-            <p className="text-foreground/80">$ idf.py build</p>
-            <p className="text-[var(--color-error-red)]">main.c:6:21: error: use of undeclared identifier &apos;GPIO_SEL_2&apos;</p>
-            <p className="text-[var(--color-warning-amber)]">main.c:7:13: note: did you mean &apos;GPIO_MODE_OUTPUT&apos;?</p>
-            <div className="mt-3 pt-2 border-t border-border/40">
-              <p className="text-[var(--color-success-green)] font-semibold">AI Recommended Fix:</p>
-              <p className="text-[var(--color-success-green)]">+ .pin_bit_mask = (1ULL &lt;&lt; 2);</p>
-              <p className="text-[var(--color-success-green)]">+ .mode = GPIO_MODE_OUTPUT;</p>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );
@@ -1217,7 +1243,7 @@ export default function HomePage() {
       <main className="flex-1">
         <BentoDashboard />
         <CapabilitiesOverview />
-        <InteractiveDemoReference />
+        <SampleProjectDemo />
       </main>
       <Footer />
     </div>
