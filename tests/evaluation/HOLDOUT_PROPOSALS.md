@@ -1,6 +1,7 @@
-# Proposed holdout corrections — NOT applied, awaiting user review
+# Holdout corrections H1–H4
 
-Nothing in this file has been applied to `cases/`. Approve per item (H1–H4).
+Status (2026-11-05 18:05 IST): H1, H2, H3 approved and applied. H4 applied only for excerpts verified
+verbatim; esp32-brownout-wifi and stm32-missing-volatile remain flagged. See `CORRECTIONS.md`.
 
 ## H1. arduino-millis-int-overflow — evidence contradicts the code
 

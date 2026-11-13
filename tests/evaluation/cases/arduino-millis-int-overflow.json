@@ -1,38 +1,45 @@
 {
   "id": "arduino-millis-int-overflow",
-  "title": "Timer stops after about 32 seconds",
+  "title": "LED blinks for ~33 s, then looks constantly on",
   "category": "logic",
   "target": "Arduino Uno (ATmega328P)",
   "difficulty": "medium",
   "split": "holdout",
-  "firmware_code": "int lastBlink = 0;\n\nvoid loop() {\n  int now = millis();\n  if (now - lastBlink >= 1000) {\n    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));\n    lastBlink = now;\n  }\n}",
+  "firmware_code": "int lastBlink = 0;\n\nvoid loop() {\n  if (millis() - lastBlink >= 1000) {\n    digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));\n    lastBlink = millis();\n  }\n}",
   "compiler_output": "",
-  "serial_logs": "t=31000 blink\nt=32000 blink\nt=-32536 ...\n(no further blinks)",
-  "user_question": "LED blinks for ~32 s then stops.",
+  "serial_logs": "",
+  "user_question": "The LED blinks every second for about 33 seconds, then looks constantly on (dimmer).",
   "reference_context": [
     {
       "title": "Arduino Language Reference (arduino.cc)",
-      "section": "int / millis()",
-      "snippet": "On the Arduino Uno (ATmega-based boards) an int stores a 16-bit value, range -32,768 to 32,767. millis() returns an unsigned long; store it in an unsigned long.",
+      "document": "Arduino Language Reference: int / millis()",
+      "revision": "arduino/reference-en master, last commit b367b025a1 (2025-04-11); rendered at docs.arduino.cc/language-reference",
+      "section": "Variables > Data Types > int; Functions > Time > millis() (Notes and Warnings)",
+      "snippet": "On the Arduino Uno (and other ATmega based boards) an int stores a 16-bit (2-byte) value. This yields a range of -32,768 to 32,767 (minimum value of -2^15 and a maximum value of (2^15) - 1). [millis():] The return value for millis() is of type `unsigned long`, logic errors may occur if a programmer tries to do arithmetic with smaller data types such as `int`.",
       "content_type": "text",
-      "page_number": null
+      "page_number": null,
+      "page_kind": null,
+      "url": "https://docs.arduino.cc/language-reference/en/variables/data-types/int/ ; https://docs.arduino.cc/language-reference/en/functions/time/millis/",
+      "verification": "verified"
     }
   ],
   "expected": {
-    "root_cause": "millis() is stored in a 16-bit int, which overflows at 32,767 ms and goes negative, breaking the comparison.",
+    "root_cause": "lastBlink is a 16-bit int; after 32,767 ms the stored millis() value goes negative and is sign-extended in the unsigned long subtraction, so millis() - lastBlink is always >= 1000 and the LED toggles on every loop.",
     "root_cause_keywords": [
       [
         "overflow",
         "wrap",
         "16[- ]bit",
-        "32,?767"
+        "32,?767",
+        "negative",
+        "sign"
       ],
       [
-        "int",
-        "millis"
+        "\\bint\\b",
+        "lastBlink"
       ]
     ],
-    "fix": "Use unsigned long for now and lastBlink.",
+    "fix": "Declare unsigned long lastBlink and keep the rollover-safe form millis() - lastBlink >= interval; do not use millis() > lastBlink + interval.",
     "fix_keywords": [
       [
         "unsigned long",
@@ -42,6 +49,6 @@
     "expected_citation": [
       "Arduino Language Reference (arduino.cc)"
     ],
-    "line": 4
+    "line": 1
   }
 }

@@ -12,10 +12,15 @@
   "reference_context": [
     {
       "title": "I2C-bus Specification UM10204 (NXP)",
-      "section": "SDA and SCL signals",
-      "snippet": "Both SDA and SCL are bidirectional lines, connected to a positive supply voltage via a current-source or pull-up resistor. When the bus is free, both lines are HIGH. The output stages of devices connected to the bus must have an open-drain or open-collector to perform the wired-AND function.",
+      "document": "UM10204 I2C-bus specification and user manual",
+      "revision": "Rev. 7.0 — 1 October 2021",
+      "section": "3.1.1 SDA and SCL signals",
+      "snippet": "Both SDA and SCL are bidirectional lines, connected to a positive supply voltage via a current-source or pull-up resistor (see Figure 3). When the bus is free, both lines are HIGH. The output stages of devices connected to the bus must have an open-drain or open-collector to perform the wired-AND function.",
       "content_type": "text",
-      "page_number": null
+      "page_number": 8,
+      "page_kind": "printed",
+      "url": "https://www.nxp.com/docs/en/user-guide/UM10204.pdf",
+      "verification": "verified"
     }
   ],
   "expected": {

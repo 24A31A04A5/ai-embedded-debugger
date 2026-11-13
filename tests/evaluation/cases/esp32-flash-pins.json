@@ -12,10 +12,15 @@
   "reference_context": [
     {
       "title": "ESP32 Series Datasheet (Espressif)",
-      "section": "Pin Description / Strapping and Flash Pins",
-      "snippet": "On modules with integrated SPI flash (for example ESP32-WROOM-32), GPIO6 to GPIO11 are connected to the SPI flash and are not recommended for other uses.",
+      "document": "ESP32-WROOM-32E & ESP32-WROOM-32UE Datasheet",
+      "revision": "Version 2.1",
+      "section": "Pin Definitions > Pin Description (Table notes)",
+      "snippet": "Pins GPIO6 to GPIO11 on the ESP32-D0WD-V3/ESP32-D0WDR2-V3 chip are connected to the SPI flash integrated on the module and are not led out.",
       "content_type": "pin_configuration",
-      "page_number": null
+      "page_number": 12,
+      "page_kind": "printed",
+      "url": "https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32e_esp32-wroom-32ue_datasheet_en.pdf",
+      "verification": "verified"
     }
   ],
   "expected": {

@@ -431,8 +431,8 @@ void loop() {
     },
     {
         "id": "stm32-uart-hal-not-enabled",
-        "title": "undefined reference to HAL_UART_Init",
-        "category": "linker",
+        "title": "unknown type name UART_HandleTypeDef",
+        "category": "compiler",
         "target": "STM32F4 / HAL",
         "difficulty": "medium",
         "split": "holdout",
@@ -444,18 +444,22 @@ void loop() {
 #define HAL_CORTEX_MODULE_ENABLED
 
 /* main.c */
+#include "stm32f4xx_hal.h"
+
 UART_HandleTypeDef huart2;
 void MX_USART2_UART_Init(void) {
     huart2.Instance = USART2;
     huart2.Init.BaudRate = 115200;
     HAL_UART_Init(&huart2);
 }""",
-        "compiler_output": """arm-none-eabi-gcc -o build/app.elf build/main.o build/stm32f4xx_hal.o ... -Wl,--gc-sections
-build/main.o: In function `MX_USART2_UART_Init':
-main.c:(.text.MX_USART2_UART_Init+0x24): undefined reference to `HAL_UART_Init'
-build/main.o: In function `log_write':
-main.c:(.text.log_write+0x12): undefined reference to `HAL_UART_Transmit'
-collect2: error: ld returned 1 exit status""",
+        "failure_stage": "compile",
+        "compiler_output": """main.c:3:1: error: unknown type name 'UART_HandleTypeDef'
+    3 | UART_HandleTypeDef huart2;
+      | ^
+main.c:8:5: error: call to undeclared function 'HAL_UART_Init'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+    8 |     HAL_UART_Init(&huart2);
+      |     ^
+2 errors generated.""",
         "serial_logs": "",
         "user_question": None,
         "reference_context": [
@@ -467,7 +471,7 @@ collect2: error: ld returned 1 exit status""",
             ),
         ],
         "expected": {
-            "root_cause": "HAL_UART_MODULE_ENABLED is commented out in stm32f4xx_hal_conf.h, so the UART HAL driver (and stm32f4xx_hal_uart.c) is not compiled, leaving HAL_UART_* unresolved at link time.",
+            "root_cause": "HAL_UART_MODULE_ENABLED is commented out in stm32f4xx_hal_conf.h, so stm32f4xx_hal.h never includes stm32f4xx_hal_uart.h; UART_HandleTypeDef and HAL_UART_Init are undeclared and main.c fails to compile.",
             "root_cause_keywords": [
                 [r"hal_uart_module_enabled", r"hal_conf", r"stm32f4xx_hal_uart\.c"]
             ],
@@ -877,9 +881,9 @@ void uart_poll(void) {
 }""",
         "compiler_output": "",
         "serial_logs": """HardFault!
-CFSR = 0x00020000  HFSR = 0x40000000
+CFSR = 0x00020000 (UFSR.INVSTATE)  HFSR = 0x40000000 (FORCED)
 PC   = 0x00000000  LR = 0x08000a3b
-MMFAR= 0xE000EDF4  BFAR = 0xE000EDF8""",
+MMFAR: not valid (CFSR.MMARVALID=0)  BFAR: not valid (CFSR.BFARVALID=0)""",
         "user_question": "Happens on first received byte. uart_register_cb() is only called in some build configs.",
         "reference_context": [
             ref(
@@ -1184,7 +1188,7 @@ collect2: error: ld returned 1 exit status""",
     },
     {
         "id": "arduino-millis-int-overflow",
-        "title": "Timer stops after about 32 seconds",
+        "title": "LED blinks for ~33 s, then looks constantly on",
         "category": "logic",
         "target": "Arduino Uno (ATmega328P)",
         "difficulty": "medium",
@@ -1192,18 +1196,14 @@ collect2: error: ld returned 1 exit status""",
         "firmware_code": """int lastBlink = 0;
 
 void loop() {
-  int now = millis();
-  if (now - lastBlink >= 1000) {
+  if (millis() - lastBlink >= 1000) {
     digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-    lastBlink = now;
+    lastBlink = millis();
   }
 }""",
         "compiler_output": "",
-        "serial_logs": """t=31000 blink
-t=32000 blink
-t=-32536 ...
-(no further blinks)""",
-        "user_question": "LED blinks for ~32 s then stops.",
+        "serial_logs": "",
+        "user_question": "The LED blinks every second for about 33 seconds, then looks constantly on (dimmer).",
         "reference_context": [
             ref(
                 ARDUINO_REF,
@@ -1213,15 +1213,15 @@ t=-32536 ...
             ),
         ],
         "expected": {
-            "root_cause": "millis() is stored in a 16-bit int, which overflows at 32,767 ms and goes negative, breaking the comparison.",
+            "root_cause": "lastBlink is a 16-bit int; after 32,767 ms the stored millis() value goes negative and is sign-extended in the unsigned long subtraction, so millis() - lastBlink is always >= 1000 and the LED toggles on every loop.",
             "root_cause_keywords": [
-                [r"overflow", r"wrap", r"16[- ]bit", r"32,?767"],
-                [r"int", r"millis"],
+                [r"overflow", r"wrap", r"16[- ]bit", r"32,?767", r"negative", r"sign"],
+                [r"\bint\b", r"lastBlink"],
             ],
-            "fix": "Use unsigned long for now and lastBlink.",
+            "fix": "Declare unsigned long lastBlink and keep the rollover-safe form millis() - lastBlink >= interval; do not use millis() > lastBlink + interval.",
             "fix_keywords": [[r"unsigned long", r"uint32_t"]],
             "expected_citation": [ARDUINO_REF],
-            "line": 4,
+            "line": 1,
         },
     },
     {
@@ -1473,9 +1473,9 @@ REFERENCE_SOURCES = Path(__file__).parent / "reference_sources.json"
 
 
 def apply_verified_sources(cases: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Replace DEV case excerpts with verbatim, page-referenced excerpts.
+    """Replace case excerpts with verbatim, page-referenced excerpts.
 
-    Holdout cases are left untouched until the user approves their corrections.
+    Dev cases: every found entry. Holdout cases: only entries with status 'verified' (H4).
     The case's canonical `title` is kept so `expected_citation` still matches.
     """
     sources = json.loads(REFERENCE_SOURCES.read_text(encoding="utf-8"))
@@ -1483,23 +1483,26 @@ def apply_verified_sources(cases: list[dict[str, Any]]) -> list[dict[str, Any]]:
     out = []
     for case in cases:
         case = json.loads(json.dumps(case))
-        if case["split"] == "dev":
-            for i, r in enumerate(case["reference_context"]):
-                s = by_key.get((case["id"], i))
-                if not s or s["status"] == "not_found":
-                    continue
-                case["reference_context"][i] = {
-                    "title": r["title"],
-                    "document": s["document"],
-                    "revision": s["revision"],
-                    "section": s["section"],
-                    "snippet": s["verbatim_snippet"],
-                    "content_type": r.get("content_type", "text"),
-                    "page_number": s["page"],
-                    "page_kind": s["page_kind"],
-                    "url": s["url"],
-                    "verification": s["status"],
-                }
+        for i, r in enumerate(case["reference_context"]):
+            s = by_key.get((case["id"], i))
+            if not s or s["status"] == "not_found":
+                continue
+            # H4 (approved 2026-11-05 18:05): holdout cases take only excerpts verified verbatim;
+            # 'differs' holdout entries keep their original excerpt and are flagged in CORRECTIONS.md.
+            if case["split"] == "holdout" and s["status"] != "verified":
+                continue
+            case["reference_context"][i] = {
+                "title": r["title"],
+                "document": s["document"],
+                "revision": s["revision"],
+                "section": s["section"],
+                "snippet": s["verbatim_snippet"],
+                "content_type": r.get("content_type", "text"),
+                "page_number": s["page"],
+                "page_kind": s["page_kind"],
+                "url": s["url"],
+                "verification": s["status"],
+            }
         out.append(case)
     return out
 

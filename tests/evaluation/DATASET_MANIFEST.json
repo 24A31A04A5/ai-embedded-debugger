@@ -1,0 +1,49 @@
+{
+  "frozen_at_utc": "2026-11-05T12:42:55Z",
+  "note": "Frozen 2026-11-05 after C1-C7, H1-H3 and verified-only H4 (approved 18:05 IST). No benchmark run yet.",
+  "hashing": "sha256 of file bytes with CRLF normalised to LF; split hash = sha256 of sorted '<name>  <sha256>\\n' lines",
+  "splits": {
+    "dev": {
+      "files": {
+        "abstain-esp32-stops-responding.json": "5c274053b837db36bc20633d264b8cd0959bea4c0543c2b124dd8c5226a48be9",
+        "abstain-stm32-i2c-hal-error.json": "e725db15dd3f1e6e8bcf9e113ffebff568420ba48fc3709380a7be8f169e40ad",
+        "arduino-missing-semicolon-cascade.json": "ce9f5fe12e6f9ff413800720ad33387e4bed549f22e6974fe7ff201b66a7dc1b",
+        "arduino-multiple-definition.json": "b38b0a079b4c351f91620c550bd1e1dcd6853ea17319dd4a7ef1b8ba5fa58ae0",
+        "arduino-strcpy-overflow.json": "29a2a6ecd4bebdf94401f40258162ec37c9752e7d3ccbcffdd312951238282c8",
+        "esp32-adc2-wifi.json": "700746f4262cab52b15146dd016d830227014e707390074c92aaec37ed1451a7",
+        "esp32-adxl345-spi-mode.json": "d410abf1ddb567d0068f757218d1257fd9d45a056f5fd75eacd09101653072b7",
+        "esp32-gpio-sel-macro.json": "4e2ce10c898c65afafb8457efd50537d664304b50b641a17ad14ad8432e79a9e",
+        "esp32-gpio34-output.json": "50f9e47ed3fe3e7a1b52c892ffcc3b352b606f74da705a5a7af7482223d69944",
+        "esp32-mpu6050-address.json": "b0a08bf80f4204c452b3aad9ab1185ac92590421e358bba87357373567d3ced4",
+        "esp32-null-loadprohibited.json": "1df6f3afb83e2798eba5ebbf45377c3f79d64d9972602cacd13973da2fd4f98b",
+        "esp32-printf-in-isr.json": "0802bd7992b6e9c3738f2c0021482d8fab2f7cabf9f6e49b530f0704e41ea6f9",
+        "esp32-task-stack-overflow.json": "709aec5499cd28eeea4b4dd18d9e0dd3b5ebad447609cef229e93203d94c2738",
+        "esp32-task-wdt-busy-loop.json": "5e762359fd69df9ba691c48471e41e40886ddf2cd5821ff67bfb6a4d7563d862",
+        "esp32-uart-baud-mismatch.json": "7ea9deb13bd08201c3377a29fdbf9bc9a32c663113a8fd4500d054476b021673",
+        "stm32-adc-signed-compare.json": "9b8506cafbdfa20df4834d249e689bdb44e0a7f5c239d3ff6cd42226cf4a6515",
+        "stm32-exti-nvic-disabled.json": "ae215e531192260deef0ebc07c189425eef55b69aa950de29251640dcf6ac4d1",
+        "stm32-gpio-clock.json": "5eb9da5a1414be5bfcd9d44211cb803b5db7efacf65e70ac45be7ebf669aefb0",
+        "stm32-hal-i2c-address-shift.json": "1a96bdbafc37916bdbafab40d9de42af46420ea941bde9819e2b25690c2e7389",
+        "stm32f103-ram-overflow.json": "f3ce4dc733c9ecfd0a864104376ef66edec1c458243247ce518c74372716a222"
+      },
+      "count": 20,
+      "manifest_sha256": "d0f58743afc80e9ee88a9e0be977dd9876c9bf919fec975cf97bec39a0cab29a"
+    },
+    "holdout": {
+      "files": {
+        "abstain-arduino-analog-wrong.json": "a183b5c5e399d93ca85a1e1b4ce8d48d100fcda4d96393df42a1bb5530362621",
+        "abstain-esp32-undecoded-backtrace.json": "2fce8f1d430f05b36b606dd85990ea98d2a2c1b7d93ba2403f29d0dc395cf1e0",
+        "arduino-millis-int-overflow.json": "d0a0c1a3eef322235d0f4c1827df7fa3155ad1933eeff757fea0e4515f3eb92b",
+        "esp32-brownout-wifi.json": "4545358553c4d233127fba882f7dfc537a29ace413ba10b519b156d1d8ddf995",
+        "esp32-flash-pins.json": "4a7d549de09a8c081b1d553a9b3c39174feb19c974a342c1dfcc9892edc6650a",
+        "esp32-i2c-no-pullups.json": "4bb73801e945ac0e76e8ac0807a3243f0c3c9e4e714af30eb9773485dc39ed02",
+        "freertos-isr-priority-assert.json": "6776885a7aa7f7eef5f6c73d3d1f44051a22788d93aa320681f71b424126a26c",
+        "stm32-hardfault-null-fnptr.json": "3491c3d20ea3a68a2a1a76bf5eb124d00809a736af79fa8a2e0f9d53d753e219",
+        "stm32-missing-volatile.json": "63a1cfb8c478af49f51e6cf2180df3ef427836b5df3ad58233985e50edac0dd3",
+        "stm32-uart-hal-not-enabled.json": "b5d8eed1d7493b1da2b7db6a622e19e5dc2dda5028442856ee851363f28da0ea"
+      },
+      "count": 10,
+      "manifest_sha256": "16bfb4cfbe428909bd030c01b5f3d81eec1dcbfdc29ac5146b44e2fd1e90af26"
+    }
+  }
+}

@@ -1,25 +1,31 @@
 {
   "id": "stm32-uart-hal-not-enabled",
-  "title": "undefined reference to HAL_UART_Init",
-  "category": "linker",
+  "title": "unknown type name UART_HandleTypeDef",
+  "category": "compiler",
   "target": "STM32F4 / HAL",
   "difficulty": "medium",
   "split": "holdout",
-  "firmware_code": "/* stm32f4xx_hal_conf.h (excerpt) */\n#define HAL_MODULE_ENABLED\n#define HAL_GPIO_MODULE_ENABLED\n#define HAL_RCC_MODULE_ENABLED\n/* #define HAL_UART_MODULE_ENABLED */\n#define HAL_CORTEX_MODULE_ENABLED\n\n/* main.c */\nUART_HandleTypeDef huart2;\nvoid MX_USART2_UART_Init(void) {\n    huart2.Instance = USART2;\n    huart2.Init.BaudRate = 115200;\n    HAL_UART_Init(&huart2);\n}",
-  "compiler_output": "arm-none-eabi-gcc -o build/app.elf build/main.o build/stm32f4xx_hal.o ... -Wl,--gc-sections\nbuild/main.o: In function `MX_USART2_UART_Init':\nmain.c:(.text.MX_USART2_UART_Init+0x24): undefined reference to `HAL_UART_Init'\nbuild/main.o: In function `log_write':\nmain.c:(.text.log_write+0x12): undefined reference to `HAL_UART_Transmit'\ncollect2: error: ld returned 1 exit status",
+  "firmware_code": "/* stm32f4xx_hal_conf.h (excerpt) */\n#define HAL_MODULE_ENABLED\n#define HAL_GPIO_MODULE_ENABLED\n#define HAL_RCC_MODULE_ENABLED\n/* #define HAL_UART_MODULE_ENABLED */\n#define HAL_CORTEX_MODULE_ENABLED\n\n/* main.c */\n#include \"stm32f4xx_hal.h\"\n\nUART_HandleTypeDef huart2;\nvoid MX_USART2_UART_Init(void) {\n    huart2.Instance = USART2;\n    huart2.Init.BaudRate = 115200;\n    HAL_UART_Init(&huart2);\n}",
+  "failure_stage": "compile",
+  "compiler_output": "main.c:3:1: error: unknown type name 'UART_HandleTypeDef'\n    3 | UART_HandleTypeDef huart2;\n      | ^\nmain.c:8:5: error: call to undeclared function 'HAL_UART_Init'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]\n    8 |     HAL_UART_Init(&huart2);\n      |     ^\n2 errors generated.",
   "serial_logs": "",
   "user_question": null,
   "reference_context": [
     {
       "title": "STM32F4 HAL and LL Drivers User Manual UM1725 (ST)",
-      "section": "HAL configuration file (stm32f4xx_hal_conf.h)",
-      "snippet": "The HAL_PPP_MODULE_ENABLED defines select which HAL peripheral drivers are compiled. A module whose define is commented out is excluded from the build.",
+      "document": "UM1725 User manual: Description of STM32F4 HAL and low-layer drivers",
+      "revision": "UM1725 - Rev 8",
+      "section": "3.9 File inclusion model; 3.10 HAL configuration",
+      "snippet": "A PPP driver is a standalone module which is used in a project. The user must enable the corresponding USE_HAL_PPP_MODULE define statement in the configuration file.",
       "content_type": "text",
-      "page_number": null
+      "page_number": 23,
+      "page_kind": "printed",
+      "url": "https://www.st.com/resource/en/user_manual/um1725-description-of-stm32f4-hal-and-lowlayer-drivers-stmicroelectronics.pdf",
+      "verification": "verified"
     }
   ],
   "expected": {
-    "root_cause": "HAL_UART_MODULE_ENABLED is commented out in stm32f4xx_hal_conf.h, so the UART HAL driver (and stm32f4xx_hal_uart.c) is not compiled, leaving HAL_UART_* unresolved at link time.",
+    "root_cause": "HAL_UART_MODULE_ENABLED is commented out in stm32f4xx_hal_conf.h, so stm32f4xx_hal.h never includes stm32f4xx_hal_uart.h; UART_HandleTypeDef and HAL_UART_Init are undeclared and main.c fails to compile.",
     "root_cause_keywords": [
       [
         "hal_uart_module_enabled",

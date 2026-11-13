@@ -12,10 +12,15 @@
   "reference_context": [
     {
       "title": "FreeRTOS Kernel Documentation (freertos.org)",
-      "section": "Running the RTOS on an ARM Cortex-M Core",
-      "snippet": "Interrupt service routines that use the RTOS API (functions ending in FromISR) must have a logical priority at or below configMAX_SYSCALL_INTERRUPT_PRIORITY, i.e. a numerical priority value equal to or greater than it. Priority 0 is the highest and must not call FreeRTOS API functions. configASSERT in vPortValidateInterruptPriority traps this error.",
+      "document": "FreeRTOS: Running the RTOS on a ARM Cortex-M Core",
+      "revision": "freertos.org page 'Updated Oct 2026'",
+      "section": "Inverse Relationship Between Numeric Priority Value and the Logical Priority Setting > Relevance when using the RTOS",
+      "snippet": "Therefore, any interrupt service routine that uses an RTOS API function must have its priority manually set to a value that is numerically equal to or greater than the configMAX_SYSCALL_INTERRUPT_PRIORITY setting. This ensures the interrupt's logical priority is equal to or less than the configMAX_SYSCALL_INTERRUPT_PRIORITY setting. Cortex-M interrupts default to having a priority value of zero.",
       "content_type": "text",
-      "page_number": null
+      "page_number": null,
+      "page_kind": null,
+      "url": "https://www.freertos.org/Documentation/02-Kernel/03-Supported-devices/04-Demos/ARM-Cortex/RTOS-Cortex-M3-M4",
+      "verification": "verified"
     }
   ],
   "expected": {

@@ -40,3 +40,28 @@ Holdout excerpts are unchanged; their verified replacements are proposed in `HOL
 New cases (no previous version): `abstain-esp32-stops-responding` (dev), `abstain-stm32-i2c-hal-error` (dev),
 `abstain-arduino-analog-wrong` (holdout), `abstain-esp32-undecoded-backtrace` (holdout).
 Totals: 30 cases = 20 dev + 10 holdout (the original 18/8 diagnostic split is unchanged).
+
+## H1–H4: holdout corrections (approved by user 2026-11-05 18:05 IST; H4 conditional)
+
+Originals remain unchanged in `cases_original/` (as first committed in `fe03a9d`).
+
+| # | Case (split) | Field | Old | New | Reason | Source |
+|---|---|---|---|---|---|---|
+| H1 | arduino-millis-int-overflow (holdout) | firmware_code | `int now = millis(); if (now - lastBlink >= 1000) {... lastBlink = now; }` | `if (millis() - lastBlink >= 1000) {... lastBlink = millis(); }` with `int lastBlink` | The old code's 16-bit subtraction keeps working across the 32.767 s wrap (LED keeps blinking), contradicting the claimed symptom; the new code fails deterministically and is well-defined C | `host_tests/millis_rollover.c` (+ `.expected.txt`), `apps/api/tests/test_millis_rollover_model.py` |
+| H1 | same | serial_logs | `t=31000 blink` ... `(no further blinks)` | empty | The code prints nothing | case firmware_code |
+| H1 | same | title, user_question | "Timer stops after about 32 seconds"; "LED blinks for ~32 s then stops." | "LED blinks for ~33 s, then looks constantly on"; "The LED blinks every second for about 33 seconds, then looks constantly on (dimmer)." | Symptom of the new code: lastBlink goes negative, is sign-extended, the difference is always >= 1000, LED toggles every loop | simulation above |
+| H1 | same | expected.root_cause / fix / line / root_cause_keywords | 16-bit int overflow breaks the comparison; "use unsigned long for now and lastBlink"; line 4; groups [overflow…] + [int, millis] | sign extension of negative 16-bit lastBlink; `unsigned long lastBlink` with `millis() - lastBlink >= interval` (not `millis() > lastBlink + interval`); line 1; groups [overflow, wrap, 16-bit, 32,767, negative, sign] + [\bint\b, lastBlink] | Match the new code; the `>` form is not rollover-safe | Arduino reference `millis()` (verified) |
+| H2 | stm32-uart-hal-not-enabled (holdout) | compiler_output, failure_stage | linker output `undefined reference to 'HAL_UART_Init'` / `collect2: error: ld returned 1 exit status` | measured compile errors `unknown type name 'UART_HandleTypeDef'`, `call to undeclared function 'HAL_UART_Init'`; `failure_stage: "compile"` | With HAL_UART_MODULE_ENABLED commented out, stm32f4xx_hal_conf.h does not include stm32f4xx_hal_uart.h, so main.c fails to compile before linking | `host_tests/uart_hal/` (clang 22.1.8 via zig, STM32F401xE, HAL v1.8.6). GCC wording NOT measured (arm-none-eabi-gcc unavailable here); output is clang's verbatim |
+| H2 | same | firmware_code, title, category, expected.root_cause | no include in main.c; "undefined reference to HAL_UART_Init"; linker; "...unresolved at link time" | `#include "stm32f4xx_hal.h"` added (as in the measured main.c); "unknown type name UART_HandleTypeDef"; compiler; "...undeclared and main.c fails to compile" | Consistent with the measured output; keywords and fix unchanged | as above |
+| H3 | stm32-hardfault-null-fnptr (holdout) | serial_logs | `CFSR = 0x00020000  HFSR = 0x40000000` / `MMFAR= 0xE000EDF4  BFAR = 0xE000EDF8` | `CFSR = 0x00020000 (UFSR.INVSTATE)  HFSR = 0x40000000 (FORCED)` / `MMFAR: not valid (CFSR.MMARVALID=0)  BFAR: not valid (CFSR.BFARVALID=0)` | The old values were neither register contents nor the registers' addresses (0xE000ED34 / 0xE000ED38); with MMARVALID=BFARVALID=0 neither holds a fault address | Arm DUI 0553B Cortex-M4 Generic User Guide §4.3 (pp. 245–246, verified) |
+| H4 | arduino-millis-int-overflow, esp32-flash-pins, esp32-i2c-no-pullups, freertos-isr-priority-assert, stm32-hardfault-null-fnptr (2), stm32-uart-hal-not-enabled (holdout) | reference_context | paraphrased excerpts | verbatim excerpts with document, revision, page/URL, section, `verification: verified` | Only entries verified verbatim against the official document are applied | `reference_sources.json` |
+
+**H4 not applied (flagged, unverified wording kept):**
+- esp32-brownout-wifi (`differs`): the original excerpt says the supply "must deliver these peaks"; the datasheet (v5.3, Table 5-4, p.52) gives 240 mA as a *typical* 802.11b TX current, and the wording is not in the document. Better support is Table 5-2, p.51 (supply ≥ 0.5 A). This paraphrase also states the cause and the fix (see leakage note in METHODOLOGY.md). Needs your decision.
+- stm32-missing-volatile (`differs`): the "abstract machine" wording comes from the C standard, not the cited GCC manual. Needs a correct source or a different excerpt.
+
+## Freeze (2026-11-05)
+
+After C1–C7, H1–H3 and H4 (verified only), both splits were frozen in `DATASET_MANIFEST.json`
+(SHA-256 per file, CRLF normalised to LF; one manifest hash per split). `run_eval.py` refuses to run
+if either split differs. Any later change needs approval, a row here, and `dataset_manifest.py --freeze`.

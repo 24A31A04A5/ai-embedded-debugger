@@ -166,10 +166,127 @@ def build_prompt(case: dict[str, Any], condition: str) -> tuple[str, str]:
     return system, prompt
 
 
+# ───────────────────────────── Integrity checks ─────────────────────────────
+
+ANSWER_KEYS = ("root_cause_keywords", "fix_keywords", "needed_info_keywords", "expected_citation")
+LEAK_SHINGLE = 5  # words; 4-word overlaps are common technical phrases ("the wi fi driver")
+
+
+def _words(text: str) -> list[str]:
+    return re.findall(r"[a-z0-9_]+(?:\.[a-z0-9_]+)*", text.lower())
+
+
+def _shingles(text: str, n: int = LEAK_SHINGLE) -> set[str]:
+    w = _words(text)
+    if 0 < len(w) < n:  # short answers are matched whole
+        return {" ".join(w)}
+    return {" ".join(w[i : i + n]) for i in range(len(w) - n + 1)}
+
+
+def case_inputs(case: dict[str, Any]) -> list[str]:
+    """The problem evidence every condition receives (identical across conditions)."""
+    return [
+        case["target"],
+        case["firmware_code"],
+        case["compiler_output"],
+        case["serial_logs"],
+        case.get("user_question") or "",
+    ]
+
+
+def leakage_problems(cases: list[dict[str, Any]]) -> list[str]:
+    """Check that expected answers / fix hints cannot reach the model, and inputs are identical.
+
+    1. No 5-word sequence from expected.root_cause or expected.fix appears in a retrieved excerpt
+       unless it is already part of the problem inputs (code, logs, question).
+    2. The full prompt (system + user) of every condition contains neither the expected root cause
+       nor the expected fix text, nor any answer-key field name.
+    3. All three conditions receive the same problem inputs; only `grounded` adds excerpts, and
+       baseline/no_rag user prompts are byte-identical.
+    """
+    problems: list[str] = []
+    for case in cases:
+        cid, exp = case["id"], case["expected"]
+        answer = _shingles(exp["root_cause"]) | _shingles(exp["fix"])
+        inputs = _shingles(" ".join(case_inputs(case)))
+        short = [
+            " ".join(_words(t)) for t in (exp["root_cause"], exp["fix"]) if len(_words(t)) < LEAK_SHINGLE
+        ]
+        for i, r in enumerate(case["reference_context"]):
+            for field_name in ("snippet", "title", "section"):
+                value = str(r.get(field_name) or "")
+                hit = (answer & _shingles(value)) - inputs
+                hit |= {t for t in short if t and f" {t} " in f" {' '.join(_words(value))} "}
+                if hit:
+                    problems.append(f"{cid}: excerpt {i} {field_name} repeats expected answer: {sorted(hit)[:3]}")
+        prompts = {cond: build_prompt(case, cond) for cond in CONDITIONS}
+        for cond, (system, user) in prompts.items():
+            text = (system + "\n" + user).lower()
+            for key in ("root_cause", "fix"):
+                if exp[key].lower() in text:
+                    problems.append(f"{cid}/{cond}: prompt contains expected.{key}")
+            for key in ANSWER_KEYS:
+                if key in text:
+                    problems.append(f"{cid}/{cond}: prompt mentions answer key '{key}'")
+            for part in case_inputs(case):
+                if part and part.strip() not in user:
+                    problems.append(f"{cid}/{cond}: prompt is missing part of the case inputs")
+                    break
+        if prompts["baseline"][1] != prompts["no_rag"][1]:
+            problems.append(f"{cid}: baseline and no_rag user prompts differ")
+        no_docs = dict(case, reference_context=[])
+        if build_prompt(no_docs, "grounded")[1] != prompts["no_rag"][1]:
+            problems.append(f"{cid}: grounded prompt differs from no_rag beyond the excerpts")
+    return problems
+
+
+def integrity_problems(cases: list[dict[str, Any]], check_manifest: bool = True) -> list[str]:
+    problems: list[str] = []
+    if check_manifest:
+        sys.path.insert(0, str(EVAL_DIR))
+        from dataset_manifest import verify
+
+        problems += verify()
+    problems += leakage_problems(cases)
+    return problems
+
+
 # ───────────────────────────── Model calls ─────────────────────────────
 
 
-def call_model(system: str, prompt: str, model: str) -> dict[str, Any]:
+def usage_of(resp: Any) -> dict[str, Any]:
+    """Token counts and the served model version only; never prompt or answer text."""
+    um = getattr(resp, "usage_metadata", None)
+
+    def n(name: str) -> int | None:
+        v = getattr(um, name, None) if um is not None else None
+        return int(v) if v is not None else None
+
+    return {
+        "model_version": getattr(resp, "model_version", None) if resp is not None else None,
+        "prompt_tokens": n("prompt_token_count"),
+        "output_tokens": n("candidates_token_count"),
+        "thought_tokens": n("thoughts_token_count"),
+        "total_tokens": n("total_token_count"),
+    }
+
+
+NOT_CONFIRMED = "not independently confirmed"
+
+
+def served_versions(scores: list[Any], attr: str) -> list[str] | str:
+    """Served model versions Google returned (modelVersion); NOT_CONFIRMED when none were returned."""
+    found: set[str] = set()
+    for sc in scores:
+        u = getattr(sc, attr, None)
+        if isinstance(u, dict):
+            v = u.get("model_version")
+            if isinstance(v, str) and v:
+                found.add(v)
+    return sorted(found) if found else NOT_CONFIRMED
+
+
+def call_model(system: str, prompt: str, model: str, usage: dict[str, Any] | None = None) -> dict[str, Any]:
     from google import genai
     from google.genai import types
 
@@ -186,6 +303,8 @@ def call_model(system: str, prompt: str, model: str) -> dict[str, Any]:
             temperature=0.2,
         ),
     )
+    if usage is not None:
+        usage.update(usage_of(resp))
     if not resp.text:
         raise ValueError("empty response")
     data: dict[str, Any] = json.loads(resp.text)
@@ -204,7 +323,7 @@ Does the answer identify the SAME underlying root cause as the reference (wordin
 a vaguer or different cause is NOT the same)? Reply with exactly one word: YES or NO."""
 
 
-def judge_root_cause(expected: str, answer: str, model: str) -> bool:
+def judge_root_cause(expected: str, answer: str, model: str, usage: dict[str, Any] | None = None) -> bool:
     """Secondary signal only. Use --judge-model to grade with a different model than the one tested."""
     from google import genai
     from google.genai import types
@@ -215,6 +334,8 @@ def judge_root_cause(expected: str, answer: str, model: str) -> bool:
         contents=JUDGE_PROMPT.format(expected=expected, answer=answer),
         config=types.GenerateContentConfig(temperature=0.0),
     )
+    if usage is not None:
+        usage.update(usage_of(resp))
     return (resp.text or "").strip().upper().startswith("YES")
 
 
@@ -377,6 +498,8 @@ class Score:
     confidence: str | None = None
     confidently_wrong: bool = False
     latency_s: float = 0.0
+    usage: dict[str, Any] = field(default_factory=dict)
+    judge_usage: dict[str, Any] = field(default_factory=dict)
     root_cause_answer: str = ""
     extra: dict[str, Any] = field(default_factory=dict)
 
@@ -679,6 +802,14 @@ def write_human_sheet(
 # ───────────────────────────── Main ─────────────────────────────
 
 
+def _manifest_hashes() -> dict[str, str] | None:
+    path = EVAL_DIR / "DATASET_MANIFEST.json"
+    if not path.exists():
+        return None
+    splits = json.loads(path.read_text(encoding="utf-8"))["splits"]
+    return {k: v["manifest_sha256"] for k, v in splits.items()}
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
@@ -689,6 +820,12 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--repeats", type=int, default=1, help="Runs per case (Gemini output varies)")
     ap.add_argument("--model", default=DEFAULT_MODEL)
     ap.add_argument(
+        "--model-version",
+        default=os.getenv("EVAL_MODEL_VERSION", "3.5-flash-05-2026"),
+        help="Version reported by GetModel for --model (verified 2026-11-05); recorded, not sent",
+    )
+    ap.add_argument("--judge-model-version", default=os.getenv("EVAL_JUDGE_MODEL_VERSION"))
+    ap.add_argument(
         "--judge", action="store_true", help="Also grade root cause with an LLM judge (secondary)"
     )
     ap.add_argument(
@@ -697,6 +834,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--delay", type=float, default=1.0, help="Seconds between calls (rate limits)")
     ap.add_argument("--dry-run", action="store_true", help="Use mock answers, no API calls")
     ap.add_argument("--validate", action="store_true", help="Only validate case files")
+    ap.add_argument(
+        "--no-manifest-check",
+        action="store_true",
+        help="Skip the frozen-dataset check (only while editing cases; never for reported runs)",
+    )
     args = ap.parse_args(argv)
 
     cases = load_cases(args.split, args.cases)
@@ -705,6 +847,15 @@ def main(argv: list[str] | None = None) -> int:
         print("Case validation failed:\n  " + "\n  ".join(errors))
         return 1
     print(f"{len(cases)} cases valid.")
+    integrity = integrity_problems(load_cases(), check_manifest=not args.no_manifest_check)
+    if integrity:
+        print("Integrity check failed (frozen datasets / leakage):\n  " + "\n  ".join(integrity))
+        return 1
+    print(
+        "Integrity OK: "
+        + ("dev and holdout match DATASET_MANIFEST.json; " if not args.no_manifest_check else "")
+        + "no answer leakage; identical inputs across conditions."
+    )
     if args.validate:
         return 0
     if not args.dry_run and not os.getenv("GEMINI_API_KEY"):
@@ -727,13 +878,15 @@ def main(argv: list[str] | None = None) -> int:
             for cond in args.conditions:
                 for run in range(1, args.repeats + 1):
                     t0 = time.perf_counter()
+                    usage: dict[str, Any] = {}
                     try:
                         if args.dry_run:
                             resp = mock_response(case, cond)
                         else:
                             system, prompt = build_prompt(case, cond)
-                            resp = call_model(system, prompt, args.model)
+                            resp = call_model(system, prompt, args.model, usage)
                         s = score_response(case, cond, run, resp)
+                        s.usage = usage
                         s.latency_s = round(time.perf_counter() - t0, 2)
                         if args.judge and not args.dry_run:
                             if not case["expected"].get("abstain"):
@@ -741,6 +894,7 @@ def main(argv: list[str] | None = None) -> int:
                                     case["expected"]["root_cause"],
                                     s.root_cause_answer,
                                     judge_model or args.model,
+                                    s.judge_usage,
                                 )
                     except Exception as e:  # keep going; failures are reported
                         resp = {}
@@ -767,6 +921,13 @@ def main(argv: list[str] | None = None) -> int:
     summary = summarize(scores)
     meta = {
         "model": args.model,
+        "requested_model": args.model,
+        "requested_model_version_getmodel": args.model_version,
+        "judge_model_version_getmodel": args.judge_model_version,
+        # Served model: only what Google returns in each response (modelVersion). Empty means
+        # routing is not independently confirmed.
+        "served_model_versions": served_versions(scores, "usage"),
+        "served_judge_model_versions": served_versions(scores, "judge_usage"),
         "cases": len(cases),
         "split": args.split,
         "repeats": args.repeats,
@@ -774,6 +935,7 @@ def main(argv: list[str] | None = None) -> int:
         "judge_model": judge_model,
         "timestamp": stamp,
         "dry_run": args.dry_run,
+        "dataset_manifest": _manifest_hashes(),
     }
     write_human_sheet(out / "human_verification.csv", cases, sheet_rows)
     (out / "summary.json").write_text(
