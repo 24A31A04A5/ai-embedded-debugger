@@ -51,7 +51,9 @@ class InMemoryStorageService(BaseStorageService):
     def __init__(self) -> None:
         self.store: dict[str, bytes] = {}
 
-    def upload_file(self, storage_key: str, data: bytes, content_type: str = "application/octet-stream") -> None:
+    def upload_file(
+        self, storage_key: str, data: bytes, content_type: str = "application/octet-stream"
+    ) -> None:
         self.store[storage_key] = data
 
     def get_file(self, storage_key: str) -> bytes:
@@ -228,6 +230,7 @@ class TestRateLimitDisabledFlag:
         try:
             with patch("app.routers.debug.analyze_debugging_context") as mock_ai:
                 from app.schemas.debug import DebugResponse, LikelyCause
+
                 mock_ai.return_value = DebugResponse(
                     problem_observed="test",
                     evidence_used=["test evidence"],
@@ -253,9 +256,7 @@ class TestRateLimitDisabledFlag:
 
 
 class TestOversizedPayloadRejection:
-    def test_oversized_firmware_code_rejected(
-        self, mock_user: User, mock_project: Project
-    ) -> None:
+    def test_oversized_firmware_code_rejected(self, mock_user: User, mock_project: Project) -> None:
         """Payload with firmware_code exceeding max_length=200,000 should be rejected with 422."""
         mock_db = MagicMock()
         mock_db.query.return_value.filter.return_value.first.return_value = mock_project
@@ -273,9 +274,7 @@ class TestOversizedPayloadRejection:
         finally:
             app.dependency_overrides.clear()
 
-    def test_oversized_serial_logs_rejected(
-        self, mock_user: User, mock_project: Project
-    ) -> None:
+    def test_oversized_serial_logs_rejected(self, mock_user: User, mock_project: Project) -> None:
         mock_db = MagicMock()
         mock_db.query.return_value.filter.return_value.first.return_value = mock_project
 
@@ -292,9 +291,7 @@ class TestOversizedPayloadRejection:
         finally:
             app.dependency_overrides.clear()
 
-    def test_oversized_question_rejected(
-        self, mock_user: User, mock_project: Project
-    ) -> None:
+    def test_oversized_question_rejected(self, mock_user: User, mock_project: Project) -> None:
         mock_db = MagicMock()
         mock_db.query.return_value.filter.return_value.first.return_value = mock_project
 
@@ -324,6 +321,7 @@ class TestOversizedPayloadRejection:
         try:
             with patch("app.routers.debug.analyze_debugging_context") as mock_ai:
                 from app.schemas.debug import DebugResponse, LikelyCause
+
                 mock_ai.return_value = DebugResponse(
                     problem_observed="Test OK",
                     evidence_used=["test evidence"],
@@ -350,8 +348,11 @@ class TestOversizedPayloadRejection:
 
 class TestUploadSizeProtection:
     def test_oversized_code_file_upload_rejected(
-        self, mock_user: User, mock_project: Project, in_memory_storage: InMemoryStorageService,
-        monkeypatch: pytest.MonkeyPatch
+        self,
+        mock_user: User,
+        mock_project: Project,
+        in_memory_storage: InMemoryStorageService,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("MAX_UPLOAD_SIZE_MB", "1")
         get_settings.cache_clear()
@@ -399,8 +400,11 @@ class TestUploadSizeProtection:
             app.dependency_overrides.clear()
 
     def test_oversized_document_upload_rejected(
-        self, mock_user: User, mock_project: Project, in_memory_storage: InMemoryStorageService,
-        monkeypatch: pytest.MonkeyPatch
+        self,
+        mock_user: User,
+        mock_project: Project,
+        in_memory_storage: InMemoryStorageService,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("MAX_UPLOAD_SIZE_MB", "1")
         get_settings.cache_clear()
@@ -433,8 +437,11 @@ class TestUploadSizeProtection:
 
 class TestQuotaEnforcement:
     def test_file_quota_blocks_upload_when_at_limit(
-        self, mock_user: User, mock_project: Project, in_memory_storage: InMemoryStorageService,
-        monkeypatch: pytest.MonkeyPatch
+        self,
+        mock_user: User,
+        mock_project: Project,
+        in_memory_storage: InMemoryStorageService,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("MAX_FILES_PER_PROJECT", "2")
         get_settings.cache_clear()
@@ -473,8 +480,11 @@ class TestQuotaEnforcement:
             get_settings.cache_clear()
 
     def test_file_quota_allows_upload_when_under_limit(
-        self, mock_user: User, mock_project: Project, in_memory_storage: InMemoryStorageService,
-        monkeypatch: pytest.MonkeyPatch
+        self,
+        mock_user: User,
+        mock_project: Project,
+        in_memory_storage: InMemoryStorageService,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("MAX_FILES_PER_PROJECT", "50")
         get_settings.cache_clear()
@@ -510,8 +520,11 @@ class TestQuotaEnforcement:
             get_settings.cache_clear()
 
     def test_document_quota_blocks_upload_when_at_limit(
-        self, mock_user: User, mock_project: Project, in_memory_storage: InMemoryStorageService,
-        monkeypatch: pytest.MonkeyPatch
+        self,
+        mock_user: User,
+        mock_project: Project,
+        in_memory_storage: InMemoryStorageService,
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("MAX_DOCUMENTS_PER_PROJECT", "3")
         get_settings.cache_clear()
@@ -580,6 +593,7 @@ class TestAIRateLimiting:
         try:
             with patch("app.routers.debug.analyze_debugging_context") as mock_ai:
                 from app.schemas.debug import DebugResponse, LikelyCause
+
                 mock_ai.return_value = DebugResponse(
                     problem_observed="ok",
                     evidence_used=["ok evidence"],
@@ -625,6 +639,7 @@ class TestAIRateLimiting:
         try:
             with patch("app.routers.debug.analyze_debugging_context") as mock_ai:
                 from app.schemas.debug import DebugResponse, LikelyCause
+
                 mock_ai.return_value = DebugResponse(
                     problem_observed="ok",
                     evidence_used=["ok evidence"],
@@ -658,9 +673,11 @@ class TestAIRateLimiting:
 
 class TestUploadRateLimiting:
     def test_upload_rate_limit_returns_429_on_excess(
-        self, mock_user: User, mock_project: Project,
+        self,
+        mock_user: User,
+        mock_project: Project,
         in_memory_storage: InMemoryStorageService,
-        monkeypatch: pytest.MonkeyPatch
+        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         monkeypatch.setenv("RATE_LIMIT_UPLOAD_REQUESTS_PER_MINUTE", "2")
         monkeypatch.setenv("RATE_LIMIT_ENABLED", "true")

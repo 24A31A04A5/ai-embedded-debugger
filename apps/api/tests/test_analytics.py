@@ -28,7 +28,9 @@ class InMemoryStorageService(BaseStorageService):
     def __init__(self) -> None:
         self.store: dict[str, bytes] = {}
 
-    def upload_file(self, storage_key: str, data: bytes, content_type: str = "application/octet-stream") -> None:
+    def upload_file(
+        self, storage_key: str, data: bytes, content_type: str = "application/octet-stream"
+    ) -> None:
         self.store[storage_key] = data
 
     def get_file(self, storage_key: str) -> bytes:
@@ -257,9 +259,7 @@ class TestAnalyticsServiceUnit:
 
 
 class TestAnalyticsRouterIntegrations:
-    def test_debug_endpoint_tracks_lifecycle(
-        self, mock_user: User, mock_project: Project
-    ) -> None:
+    def test_debug_endpoint_tracks_lifecycle(self, mock_user: User, mock_project: Project) -> None:
         mock_db = MagicMock()
         mock_db.query.return_value.filter.return_value.first.return_value = mock_project
 
@@ -268,9 +268,12 @@ class TestAnalyticsRouterIntegrations:
 
         client = TestClient(app)
         try:
-            with patch("app.routers.debug.analyze_debugging_context") as mock_ai, patch.object(
-                AnalyticsService, "track_event", wraps=AnalyticsService.track_event
-            ) as spy_track:
+            with (
+                patch("app.routers.debug.analyze_debugging_context") as mock_ai,
+                patch.object(
+                    AnalyticsService, "track_event", wraps=AnalyticsService.track_event
+                ) as spy_track,
+            ):
                 mock_ai.return_value = DebugResponse(
                     problem_observed="OK",
                     evidence_used=["line 1"],
@@ -309,10 +312,15 @@ class TestAnalyticsRouterIntegrations:
 
         client = TestClient(app)
         try:
-            with patch(
-                "app.routers.debug.analyze_debugging_context",
-                side_effect=ValueError("Model unavailable"),
-            ), patch.object(AnalyticsService, "track_event", wraps=AnalyticsService.track_event) as spy_track:
+            with (
+                patch(
+                    "app.routers.debug.analyze_debugging_context",
+                    side_effect=ValueError("Model unavailable"),
+                ),
+                patch.object(
+                    AnalyticsService, "track_event", wraps=AnalyticsService.track_event
+                ) as spy_track,
+            ):
                 response = client.post(
                     f"/v1/projects/{mock_project.id}/debug",
                     json={"user_question": "help"},
@@ -352,7 +360,9 @@ class TestAnalyticsRouterIntegrations:
 
         client = TestClient(app)
         try:
-            with patch.object(AnalyticsService, "track_event", wraps=AnalyticsService.track_event) as spy_track:
+            with patch.object(
+                AnalyticsService, "track_event", wraps=AnalyticsService.track_event
+            ) as spy_track:
                 r = client.post(
                     f"/v1/projects/{mock_project.id}/files/upload",
                     files={"file": ("main.c", io.BytesIO(b"int main() { return 0; }"), "text/x-c")},
@@ -364,9 +374,7 @@ class TestAnalyticsRouterIntegrations:
         finally:
             app.dependency_overrides.clear()
 
-    def test_feedback_submission_tracks_event(
-        self, mock_user: User, mock_project: Project
-    ) -> None:
+    def test_feedback_submission_tracks_event(self, mock_user: User, mock_project: Project) -> None:
         from app.models.debug_session import DebugSession
 
         session_id = uuid.uuid4()
@@ -398,7 +406,9 @@ class TestAnalyticsRouterIntegrations:
 
         client = TestClient(app)
         try:
-            with patch.object(AnalyticsService, "track_event", wraps=AnalyticsService.track_event) as spy_track:
+            with patch.object(
+                AnalyticsService, "track_event", wraps=AnalyticsService.track_event
+            ) as spy_track:
                 r = client.post(
                     f"/v1/sessions/{session_id}/feedback",
                     json={"rating": 1, "reason": "Useful answer"},

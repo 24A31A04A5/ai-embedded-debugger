@@ -1,0 +1,36 @@
+{
+  "id": "dev_09_freertos_stack_overflow",
+  "category": "serial_log",
+  "description": "FreeRTOS stack overflow detected by configCHECK_FOR_STACK_OVERFLOW",
+  "firmware_code": "#include <FreeRTOS.h>\n#include <task.h>\n#include <stdio.h>\n#include <string.h>\n\nvoid vTask1(void *pvParameters) {\n    char large_buffer[4096];\n    memset(large_buffer, 0xAA, sizeof(large_buffer));\n    printf(\"Task 1 running\\n\");\n    vTaskDelay(pdMS_TO_TICKS(1000));\n}\n\nint main(void) {\n    xTaskCreate(vTask1, \"Task1\", 512, NULL, 1, NULL);\n    vTaskStartScheduler();\n    return 0;\n}",
+  "compiler_output": "",
+  "serial_logs": "FreeRTOS Stack Overflow Hook!\r\nTask name: Task1\r\nStack high water mark: 0 bytes\r\n\r\nAssertion failed: pxCurrentTCB->pxStack < pxCurrentTCB->pxEndOfStack, file tasks.c, line 1234\r\n",
+  "user_question": "Why does FreeRTOS report stack overflow for Task1?",
+  "expected_root_cause": "Task stack size (512 words = 2KB) too small for 4KB local array",
+  "expected_fix": "Increase stack size in xTaskCreate to at least 2048 words (8KB) or reduce local buffer size",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [
+    {
+      "kind": "resource_misuse",
+      "severity": "critical",
+      "confirmed": true,
+      "location": "main.c:15",
+      "evidence": "xTaskCreate(vTask1, \"Task1\", 512, NULL, 1, NULL);",
+      "suggestion": "Increase stack size: xTaskCreate(vTask1, \"Task1\", 2048, NULL, 1, NULL);"
+    }
+  ],
+  "expected_compiler_messages": null,
+  "expected_serial_log_events": [
+    {
+      "event_type": "crash_fault",
+      "severity": "critical",
+      "is_repeated": false,
+      "message": "FreeRTOS Stack Overflow Hook - Task1",
+      "evidence": "Stack high water mark: 0 bytes",
+      "likely_cause": "Task stack (512 words) insufficient for 4KB local array",
+      "suggested_action": "Increase task stack size or reduce local variable allocation"
+    }
+  ],
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": "Enable configCHECK_FOR_STACK_OVERFLOW=2 for runtime checking"
+}

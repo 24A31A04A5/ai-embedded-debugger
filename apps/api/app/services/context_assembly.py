@@ -60,9 +60,7 @@ _SPEC_RE = re.compile(
 )
 
 
-def truncate_text(
-    text: str, max_chars: int, label: str
-) -> tuple[str, bool, int, int, str | None]:
+def truncate_text(text: str, max_chars: int, label: str) -> tuple[str, bool, int, int, str | None]:
     """Truncate text if it exceeds max_chars, returning truncation stats and note."""
     orig_len = len(text)
     if orig_len <= max_chars:
@@ -367,9 +365,7 @@ class ContextAssemblyService:
                 try:
                     valid_doc_uuids = None
                     if selected_document_ids:
-                        valid_doc_uuids = [
-                            uuid.UUID(str(did)) for did in selected_document_ids
-                        ]
+                        valid_doc_uuids = [uuid.UUID(str(did)) for did in selected_document_ids]
 
                     retrieved_results = retrieval_service.search(
                         project_id=project.id,
@@ -428,4 +424,3 @@ class ContextAssemblyService:
             is_truncated=is_any_truncated,
             truncation_notes=truncation_notes,
         )
-

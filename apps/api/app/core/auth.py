@@ -15,7 +15,6 @@ from app.models.user import User
 logger = logging.getLogger(__name__)
 
 
-
 class FastApiRequestAdapter:
     """Adapts a FastAPI request to the interface expected by Clerk's authenticate_request."""
 
@@ -63,7 +62,6 @@ def verify_clerk_token(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
         ) from e
-
 
 
 def get_current_user(

@@ -1,0 +1,25 @@
+{
+  "id": "dev_17_off_by_one_array",
+  "category": "code_issue",
+  "description": "Off-by-one error in array access",
+  "firmware_code": "#include <stdint.h>\n#include <stdio.h>\n\nuint16_t adc_samples[10];\n\nvoid process_samples(void) {\n    for (int i = 0; i <= 10; i++) {\n        adc_samples[i] = i * 100;\n    }\n}\n\nint main(void) {\n    process_samples();\n    return 0;\n}",
+  "compiler_output": "",
+  "serial_logs": "",
+  "user_question": "Is there a bug in this array processing code?",
+  "expected_root_cause": "Loop condition i <= 10 accesses index 10, but array only has indices 0-9",
+  "expected_fix": "Change loop condition to i < 10",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [
+    {
+      "kind": "out_of_bounds",
+      "severity": "high",
+      "confirmed": false,
+      "location": "main.c:7",
+      "evidence": "for (int i = 0; i <= 10; i++)",
+      "suggestion": "Change to: for (int i = 0; i < 10; i++)"
+    }
+  ],
+  "expected_compiler_messages": null,
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": null
+}

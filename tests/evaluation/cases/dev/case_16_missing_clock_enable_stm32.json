@@ -1,0 +1,25 @@
+{
+  "id": "dev_16_missing_clock_enable_stm32",
+  "category": "code_issue",
+  "description": "STM32 GPIO not working due to missing peripheral clock enable",
+  "firmware_code": "#include \"stm32f4xx_hal.h\"\n\nint main(void) {\n    HAL_Init();\n    \n    GPIO_InitTypeDef GPIO_InitStruct = {0};\n    GPIO_InitStruct.Pin = GPIO_PIN_5;\n    GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;\n    GPIO_InitStruct.Pull = GPIO_NOPULL;\n    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;\n    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);\n\n    while (1) {\n        HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);\n        HAL_Delay(500);\n    }\n}",
+  "compiler_output": "",
+  "serial_logs": "",
+  "user_question": "Why doesn't the LED on PA5 toggle?",
+  "expected_root_cause": "GPIOA peripheral clock not enabled before HAL_GPIO_Init",
+  "expected_fix": "Add __HAL_RCC_GPIOA_CLK_ENABLE() before HAL_GPIO_Init",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [
+    {
+      "kind": "peripheral_register",
+      "severity": "high",
+      "confirmed": false,
+      "location": "main.c:9",
+      "evidence": "HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);",
+      "suggestion": "Enable GPIOA clock: __HAL_RCC_GPIOA_CLK_ENABLE(); before HAL_GPIO_Init"
+    }
+  ],
+  "expected_compiler_messages": null,
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": "Check STM32F4 reference manual for RCC_AHB1ENR GPIOAEN bit"
+}

@@ -1,0 +1,36 @@
+{
+  "id": "dev_05_esp32_guru_meditation_loadprohibited",
+  "category": "serial_log",
+  "description": "ESP32 Guru Meditation Error: LoadProhibited on invalid memory access",
+  "firmware_code": "#include <stdio.h>\n#include \"driver/gpio.h\"\n\nvoid app_main(void) {\n    gpio_config_t io_conf = {\n        .pin_bit_mask = (1ULL << 2),\n        .mode = GPIO_MODE_OUTPUT,\n    };\n    gpio_config(&io_conf);\n    \n    volatile uint32_t *bad_ptr = (uint32_t *)0xDEADBEEF;\n    *bad_ptr = 0x12345678;\n}",
+  "compiler_output": "",
+  "serial_logs": "ets Jun  8 2016 00:22:57\n\nrst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)\nconfigsip: 0, SPIWP:0xee\nclk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00\nmode:DIO, clock div:1\nload:0x3fff0018,len:4\nload:0x3fff001c,len:1212\nhash ok\n\nentry 0x400807d8\nGuru Meditation Error: Core  0 panic'ed (LoadProhibited). Exception was unhandled.\nCore  0 register dump:\nPC      : 0x400d1234  PS      : 0x00060d30  A0      : 0x800d4567  A1      : 0x3ffb1234  \nA2      : 0xdeadbeef  A3      : 0x00000000  A4      : 0x3ffb5678  A5      : 0x00000001  \nA6      : 0x00000000  A7      : 0x00000000  A8      : 0x800d1234  A9      : 0x3ffb1234  \nA10     : 0x00000000  A11     : 0x00000000  A12     : 0x00000000  A13     : 0x00000000  \nA14     : 0x00000000  A15     : 0x00000000  SAR     : 0x0000001a  EXCCAUSE: 0x0000001c  \nEXCVADDR: 0xdeadbeef  LBEG    : 0x4000c2e0  LEND    : 0x4000c2f6  LCOUNT  : 0x00000000  \n\nBacktrace: 0x400d1234:0x3ffb1234 0x400d4567:0x3ffb125c\n\nELF file SHA256: 0000000000000000\n\nRebooting...",
+  "user_question": "What caused this Guru Meditation Error?",
+  "expected_root_cause": "Invalid memory access at address 0xDEADBEEF - dereferencing a bad pointer",
+  "expected_fix": "Remove or fix the invalid pointer dereference at line with 0xDEADBEEF",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [
+    {
+      "kind": "pointer_misuse",
+      "severity": "critical",
+      "confirmed": true,
+      "location": "main.c:13",
+      "evidence": "*bad_ptr = 0x12345678;",
+      "suggestion": "Remove invalid pointer dereference or use valid memory address"
+    }
+  ],
+  "expected_compiler_messages": null,
+  "expected_serial_log_events": [
+    {
+      "event_type": "crash_fault",
+      "severity": "critical",
+      "is_repeated": false,
+      "message": "Guru Meditation Error: Core 0 panic'ed (LoadProhibited)",
+      "evidence": "Guru Meditation Error: Core  0 panic'ed (LoadProhibited). Exception was unhandled.",
+      "likely_cause": "Invalid memory access at address 0xDEADBEEF (EXCVADDR register)",
+      "suggested_action": "Decode backtrace using addr2line with ELF file to locate exact source line"
+    }
+  ],
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": "Provide ELF file for backtrace decoding to exact source location"
+}

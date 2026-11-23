@@ -30,7 +30,9 @@ def is_safe_request_id(request_id: str | None) -> bool:
 class RequestCorrelationMiddleware(BaseHTTPMiddleware):
     """Assigns or preserves a safe request correlation ID and measures request latency."""
 
-    async def dispatch(self, request: Request, call_next: Callable[[Request], Response]) -> Response:
+    async def dispatch(
+        self, request: Request, call_next: Callable[[Request], Response]
+    ) -> Response:
         settings = get_settings()
         header_name = getattr(settings, "request_id_header_name", "X-Request-ID")
 

@@ -33,15 +33,20 @@ class DebugSessionCreate(BaseModel):
         default="", max_length=200_000, description="The serial monitor or runtime logs."
     )
     user_question: str | None = Field(
-        default=None, max_length=10_000, description="Optional specific debugging question or prompt."
+        default=None,
+        max_length=10_000,
+        description="Optional specific debugging question or prompt.",
     )
     selected_file_ids: list[uuid.UUID] | None = Field(
-        default=None, max_length=50, description="Optional list of uploaded project file IDs to include in context."
+        default=None,
+        max_length=50,
+        description="Optional list of uploaded project file IDs to include in context.",
     )
     selected_document_ids: list[uuid.UUID] | None = Field(
-        default=None, max_length=50, description="Optional list of uploaded project document IDs to scope retrieval."
+        default=None,
+        max_length=50,
+        description="Optional list of uploaded project document IDs to scope retrieval.",
     )
-
 
 
 class DebugSessionSummary(BaseModel):

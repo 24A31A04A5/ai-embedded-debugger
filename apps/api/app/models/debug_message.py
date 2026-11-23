@@ -46,6 +46,4 @@ class DebugMessage(Base):
         nullable=False,
     )
 
-    session: Mapped[DebugSession] = relationship(
-        "DebugSession", back_populates="messages"
-    )
+    session: Mapped[DebugSession] = relationship("DebugSession", back_populates="messages")

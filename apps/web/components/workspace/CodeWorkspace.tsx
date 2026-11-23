@@ -59,12 +59,12 @@ export function CodeWorkspace({
   const isCpp = activeFileName.endsWith(".cpp") || activeFileName.endsWith(".hpp");
 
   return (
-    <div className={`flex flex-1 flex-col overflow-hidden bg-[oklch(0.10_0.015_260)] border border-border/40 rounded-xl shadow-lg relative ${className}`}>
+    <div className={`flex flex-1 flex-col overflow-hidden bg-[oklch(0.095_0.015_260)] border border-border/40 relative ${className}`}>
       {/* Editor Tab Framing Bar */}
-      <div className="flex items-center justify-between border-b border-border/40 bg-[oklch(0.12_0.015_260/0.95)] px-3 py-1.5 shrink-0 select-none">
+      <div className="flex items-center justify-between border-b border-border/40 bg-[oklch(0.10_0.015_260/0.98)] px-3 py-1.5 shrink-0 select-none">
         {/* Active file tab */}
         <div className="flex items-center gap-2 min-w-0">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[oklch(0.14_0.02_270)] border border-[var(--accent-purple)]/30 text-foreground font-mono text-xs shadow-xs transition-all duration-150">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[oklch(0.13_0.02_270)] border border-[var(--accent-purple)]/25 text-foreground font-mono text-xs transition-all duration-150">
             <FileCode className="h-3.5 w-3.5 text-[var(--accent-purple)] shrink-0" />
             <span className="font-medium truncate max-w-[140px] sm:max-w-[220px]">
               {activeFileName}
@@ -72,7 +72,7 @@ export function CodeWorkspace({
             <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-purple)] shadow-[0_0_6px_var(--accent-purple)] ml-1 shrink-0" />
           </div>
 
-          <Badge variant="outline" className="hidden sm:inline-flex text-[10px] font-mono text-muted-foreground border-border/40 py-0.5">
+          <Badge variant="outline" className="hidden sm:inline-flex text-[10px] font-mono text-muted-foreground border-border/40 py-0.5 rounded-md">
             {isCpp ? "C++20" : "C11 (GCC)"}
           </Badge>
         </div>
@@ -93,7 +93,7 @@ export function CodeWorkspace({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`h-6 px-2 text-[11px] gap-1 rounded transition-all duration-150 active:scale-95 ${
+                  className={`h-6 px-2 text-[11px] gap-1 rounded-md transition-all duration-150 active:scale-95 ${
                     copied
                       ? "text-[var(--color-emerald)] bg-[var(--color-emerald)]/10"
                       : "text-muted-foreground hover:text-foreground hover:bg-white/5"
@@ -126,7 +126,7 @@ export function CodeWorkspace({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className={`h-6 px-2 text-[11px] gap-1 rounded transition-all duration-150 active:scale-95 ${
+                  className={`h-6 px-2 text-[11px] gap-1 rounded-md transition-all duration-150 active:scale-95 ${
                     cleared
                       ? "text-[var(--color-warning-amber)] bg-[var(--color-warning-amber)]/10"
                       : "text-muted-foreground hover:text-[var(--color-error-red)] hover:bg-white/5"
@@ -156,7 +156,7 @@ export function CodeWorkspace({
       </div>
 
       {/* Editor Content Area */}
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="flex flex-1 overflow-hidden relative bg-[oklch(0.09_0.015_260)]">
         <CodeEditor
           value={value}
           onChange={onChange}

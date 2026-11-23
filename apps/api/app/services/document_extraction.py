@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 class DocumentExtractionError(Exception):
     """Exception raised when document text extraction fails."""
+
     pass
 
 
@@ -75,7 +76,9 @@ class DocumentExtractionService:
                     # Attempt decrypt with empty password for standard open permissions
                     decrypt_success = reader.decrypt("")
                     if decrypt_success == 0:
-                        raise DocumentExtractionError("PDF is password protected and cannot be extracted")
+                        raise DocumentExtractionError(
+                            "PDF is password protected and cannot be extracted"
+                        )
                 except Exception as e:
                     raise DocumentExtractionError(f"Encrypted PDF cannot be read: {e}") from e
 
@@ -116,4 +119,3 @@ class DocumentExtractionService:
         except (PyPdfError, Exception) as e:
             logger.warning("PDF extraction failed: %s", e)
             raise DocumentExtractionError(f"Failed to extract text from PDF: {e}") from e
-

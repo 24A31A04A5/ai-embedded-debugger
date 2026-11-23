@@ -190,9 +190,7 @@ class TestDocumentRetrievalService:
         mock_filter3 = mock_filter2.filter.return_value
         mock_order = mock_filter3.order_by.return_value
         # When similarity_threshold > -1.0, there are filter calls
-        mock_order.limit.return_value.all.return_value = [
-            (chunk, "esp32_datasheet.pdf", 0.92)
-        ]
+        mock_order.limit.return_value.all.return_value = [(chunk, "esp32_datasheet.pdf", 0.92)]
         # Fallback chain for flexible filter mocking
         mock_filter2.order_by.return_value.limit.return_value.all.return_value = [
             (chunk, "esp32_datasheet.pdf", 0.92)
@@ -293,6 +291,7 @@ class TestDocumentSearchEndpoint:
         app.dependency_overrides[get_db] = lambda: mock_db
 
         from app.routers.documents import get_retrieval_service
+
         app.dependency_overrides[get_retrieval_service] = lambda: mock_retrieval
 
         client = TestClient(app)
@@ -345,6 +344,7 @@ class TestDocumentSearchEndpoint:
         app.dependency_overrides[get_db] = lambda: mock_db
 
         from app.routers.documents import get_retrieval_service
+
         app.dependency_overrides[get_retrieval_service] = lambda: mock_retrieval
 
         doc_filter_id = uuid.uuid4()
@@ -453,6 +453,7 @@ class TestDocumentSearchEndpoint:
         app.dependency_overrides[get_db] = lambda: mock_db
 
         from app.routers.documents import get_retrieval_service
+
         app.dependency_overrides[get_retrieval_service] = lambda: mock_retrieval
 
         client = TestClient(app)

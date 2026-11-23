@@ -10,22 +10,53 @@ _SECRET_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     # Google / Gemini API keys (starts with AIzaSy...)
     (re.compile(r"AIzaSy[A-Za-z0-9_-]{33}"), "[REDACTED_GEMINI_KEY]"),
     # Generic api_key= / key= query parameters or assignments
-    (re.compile(r"(api[_-]?key\s*[:=]\s*['\"]?)[A-Za-z0-9_\-\.]{8,}['\"]?", re.IGNORECASE), r"\1[REDACTED]"),
+    (
+        re.compile(r"(api[_-]?key\s*[:=]\s*['\"]?)[A-Za-z0-9_\-\.]{8,}['\"]?", re.IGNORECASE),
+        r"\1[REDACTED]",
+    ),
     # Clerk secret keys (sk_test_..., sk_live_..., or clerk_test_...)
-    (re.compile(r"(?:clerk_(?:test|live)_|sk_(?:test|live)_)[A-Za-z0-9]{20,}"), "[REDACTED_CLERK_KEY]"),
+    (
+        re.compile(r"(?:clerk_(?:test|live)_|sk_(?:test|live)_)[A-Za-z0-9]{20,}"),
+        "[REDACTED_CLERK_KEY]",
+    ),
     # Bearer tokens
     (re.compile(r"(Bearer\s+)[A-Za-z0-9_\-\.]{16,}", re.IGNORECASE), r"\1[REDACTED_TOKEN]"),
     # AWS access key IDs (AKIA...)
     (re.compile(r"\b(AKIA[0-9A-Z]{16})\b"), "[REDACTED_AWS_KEY]"),
     # AWS secret access keys in key=... or secret=... patterns
-    (re.compile(r"((?:aws_secret_access_key|secret_key|password|secret)\s*[:=]\s*['\"]?)[A-Za-z0-9/+=]{16,}['\"]?", re.IGNORECASE), r"\1[REDACTED]"),
+    (
+        re.compile(
+            r"((?:aws_secret_access_key|secret_key|password|secret)\s*[:=]\s*['\"]?)[A-Za-z0-9/+=]{16,}['\"]?",
+            re.IGNORECASE,
+        ),
+        r"\1[REDACTED]",
+    ),
 ]
 
 # Windows reserved device names
 _RESERVED_DEVICE_NAMES = {
-    "CON", "PRN", "AUX", "NUL",
-    "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9",
-    "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+    "CON",
+    "PRN",
+    "AUX",
+    "NUL",
+    "COM1",
+    "COM2",
+    "COM3",
+    "COM4",
+    "COM5",
+    "COM6",
+    "COM7",
+    "COM8",
+    "COM9",
+    "LPT1",
+    "LPT2",
+    "LPT3",
+    "LPT4",
+    "LPT5",
+    "LPT6",
+    "LPT7",
+    "LPT8",
+    "LPT9",
 }
 
 
@@ -96,5 +127,3 @@ def sanitize_error_detail(error: Exception | str, default: str = "Operation fail
 
     # Return safe default message for all other unexpected exceptions
     return default
-
-

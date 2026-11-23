@@ -179,7 +179,9 @@ class TestEmbeddingService:
     def test_embed_text_returns_correct_dimension(self) -> None:
         mock_client = MagicMock()
         expected_vec = [0.1] * 3072
-        mock_client.models.embed_content.return_value = self._mock_embedding_response([expected_vec])
+        mock_client.models.embed_content.return_value = self._mock_embedding_response(
+            [expected_vec]
+        )
 
         with patch("app.services.embedding.genai") as mock_genai:
             mock_genai.Client.return_value = mock_client
@@ -464,7 +466,9 @@ class TestDocumentProcessingService:
 
         chunking = DocumentChunkingService(chunk_size=1000, chunk_overlap=0)
 
-        svc = DocumentProcessingService(db=mock_db, embedding_service=mock_emb, chunking_service=chunking)
+        svc = DocumentProcessingService(
+            db=mock_db, embedding_service=mock_emb, chunking_service=chunking
+        )
         chunks_a = svc.process_document(doc_a, "Project A content.")
         chunks_b = svc.process_document(doc_b, "Project B content.")
 

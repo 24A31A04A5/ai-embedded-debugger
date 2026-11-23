@@ -23,12 +23,16 @@ _test_router = APIRouter(prefix="/test-monitoring", tags=["test-monitoring"])
 @_test_router.get("/error-crash")
 def trigger_unhandled_crash():
     """Simulate an unexpected internal crash."""
-    raise RuntimeError("Unexpected internal crash with db_pass=supersecretpassword and path=/var/internal/db.sqlite")
+    raise RuntimeError(
+        "Unexpected internal crash with db_pass=supersecretpassword and path=/var/internal/db.sqlite"
+    )
 
 
 @_test_router.get("/error-value")
 def trigger_value_error():
-    raise ValueError("Database connection failed: postgresql://user:secret123@db.prod.internal:5432/main")
+    raise ValueError(
+        "Database connection failed: postgresql://user:secret123@db.prod.internal:5432/main"
+    )
 
 
 @_test_router.get("/validation-test")
@@ -104,7 +108,9 @@ class TestGlobalExceptionHandling:
         assert "request_id" in body
         assert response.headers["x-request-id"] == body["request_id"]
 
-    def test_unhandled_exception_never_exposes_secrets_or_paths(self, safe_client: TestClient) -> None:
+    def test_unhandled_exception_never_exposes_secrets_or_paths(
+        self, safe_client: TestClient
+    ) -> None:
         """Internal details, passwords, paths, or connection strings must never leak to client."""
         response = safe_client.get("/test-monitoring/error-crash")
         assert response.status_code == 500

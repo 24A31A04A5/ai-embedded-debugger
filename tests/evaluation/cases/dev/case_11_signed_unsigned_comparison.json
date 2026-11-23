@@ -1,0 +1,36 @@
+{
+  "id": "dev_11_signed_unsigned_comparison",
+  "category": "code_issue",
+  "description": "Signed/unsigned comparison warning leading to logic bug",
+  "firmware_code": "#include <stdint.h>\n#include <stdio.h>\n\nint process_length(int32_t len) {\n    uint32_t max_len = 1000;\n    if (len > max_len) {\n        return -1;\n    }\n    return 0;\n}\n\nint main(void) {\n    int32_t test = -1;\n    if (process_length(test) == -1) {\n        printf(\"Length too large\\n\");\n    } else {\n        printf(\"Length OK\\n\");\n    }\n    return 0;\n}",
+  "compiler_output": "main.c: In function 'process_length':\nmain.c:6:13: warning: comparison between signed and unsigned integer expressions [-Wsign-compare]\n     if (len > max_len) {\n             ^\n",
+  "serial_logs": "",
+  "user_question": "Why does this code print 'Length OK' when I pass -1?",
+  "expected_root_cause": "Signed int32_t -1 promoted to large unsigned value (0xFFFFFFFF) in comparison with uint32_t max_len",
+  "expected_fix": "Change max_len to int32_t or cast len to uint32_t after validating it's non-negative",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [
+    {
+      "kind": "incorrect_type",
+      "severity": "high",
+      "confirmed": true,
+      "location": "main.c:6",
+      "evidence": "if (len > max_len)",
+      "suggestion": "Use same signedness: int32_t max_len = 1000; or validate len >= 0 before comparison"
+    }
+  ],
+  "expected_compiler_messages": [
+    {
+      "message_type": "warning",
+      "severity": "medium",
+      "is_root_cause": true,
+      "file": "main.c",
+      "line": 6,
+      "message": "comparison between signed and unsigned integer expressions",
+      "likely_cause": "Signed len (-1) converted to large unsigned value in comparison",
+      "suggested_fix": "Use consistent signed types or validate input before comparison"
+    }
+  ],
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": null
+}

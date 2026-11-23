@@ -21,7 +21,6 @@ from app.schemas.file import ProjectFileContentResponse, ProjectFileResponse
 from app.services.storage import BaseStorageService, get_storage_service
 
 
-
 router = APIRouter(prefix="/projects", tags=["files"])
 
 CODE_EXTENSIONS = {".c", ".cpp", ".h", ".hpp", ".cc", ".cxx", ".ino"}
@@ -75,11 +74,7 @@ async def upload_project_file(
     settings = get_settings()
 
     # Enforce maximum files per project quota
-    current_count = (
-        db.query(ProjectFile)
-        .filter(ProjectFile.project_id == project.id)
-        .count()
-    )
+    current_count = db.query(ProjectFile).filter(ProjectFile.project_id == project.id).count()
     if current_count >= settings.max_files_per_project:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -127,7 +122,6 @@ async def upload_project_file(
     checksum = hashlib.sha256(content).hexdigest()
     file_id = uuid.uuid4()
     storage_key = f"projects/{project.id}/files/{file_id}_{safe_filename}"
-
 
     storage.upload_file(
         storage_key=storage_key,

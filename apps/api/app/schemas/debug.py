@@ -4,7 +4,6 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 
-
 class DebugRequest(BaseModel):
     firmware_code: str = Field(
         default="", max_length=200_000, description="The C/C++ firmware source code."
@@ -16,18 +15,23 @@ class DebugRequest(BaseModel):
         default="", max_length=200_000, description="The serial monitor or runtime logs."
     )
     user_question: str | None = Field(
-        default=None, max_length=10_000, description="Optional specific debugging question or prompt."
+        default=None,
+        max_length=10_000,
+        description="Optional specific debugging question or prompt.",
     )
     selected_file_ids: list[UUID] | None = Field(
-        default=None, max_length=50, description="Optional list of uploaded project file IDs to include in context."
+        default=None,
+        max_length=50,
+        description="Optional list of uploaded project file IDs to include in context.",
     )
     selected_document_ids: list[UUID] | None = Field(
-        default=None, max_length=50, description="Optional list of uploaded project document IDs to scope retrieval."
+        default=None,
+        max_length=50,
+        description="Optional list of uploaded project document IDs to scope retrieval.",
     )
     session_id: UUID | None = Field(
         default=None, description="Optional session ID to incorporate prior session history."
     )
-
 
 
 class LikelyCause(BaseModel):
@@ -79,14 +83,16 @@ class CodeIssue(BaseModel):
         description="Recommended fix or next step for this specific issue.",
     )
 
+
 class CompilerMessage(BaseModel):
     """A single parsed GCC/G++/linker diagnostic from the compiler output."""
 
-    message_type: Literal["error", "warning", "note", "linker_error", "linker_warning", "other"] = Field(
-        ..., description="Classification of the compiler/linker message."
+    message_type: Literal["error", "warning", "note", "linker_error", "linker_warning", "other"] = (
+        Field(..., description="Classification of the compiler/linker message.")
     )
     severity: Literal["critical", "high", "medium", "low", "info"] = Field(
-        ..., description="Impact level: critical/high for build-blocking errors, medium/low for warnings, info for notes."
+        ...,
+        description="Impact level: critical/high for build-blocking errors, medium/low for warnings, info for notes.",
     )
     is_root_cause: bool = Field(
         ...,
@@ -137,7 +143,8 @@ class SerialLogEvent(BaseModel):
         "other",
     ] = Field(..., description="Classification of the runtime/serial log event.")
     severity: Literal["critical", "high", "medium", "low", "info"] = Field(
-        ..., description="Severity of this runtime event: critical/high for crashes/panics/timeouts, medium for warnings, info for normal events."
+        ...,
+        description="Severity of this runtime event: critical/high for crashes/panics/timeouts, medium for warnings, info for normal events.",
     )
     is_repeated: bool = Field(
         default=False,
@@ -190,24 +197,48 @@ class DebugResponse(BaseModel):
     )
     confidence_level: Literal["high", "medium", "low"] | None = Field(
         default=None,
-        description="Overall confidence level in the diagnosis based on the completeness and directness of provided evidence.",
+        description=(
+            "Evidence-based confidence rubric: "
+            "'high' = root cause directly confirmed by compiler error, crash log, or explicit datasheet citation with matching register/bit field; "
+            "'medium' = strong inference from multiple corroborating evidence pieces; "
+            "'low' = suspected cause based on code patterns alone, or critical evidence missing. "
+            "This is an ordinal evidence-quality label, NOT a calibrated probability."
+        ),
     )
     evidence_used: list[str] = Field(
         ..., description="Key pieces of evidence from the code or logs."
     )
-    likely_causes: list[LikelyCause] = Field(..., description="Ranked list of likely causes.")
+    likely_causes: list[LikelyCause] = Field(
+        ...,
+        description="Ranked list of likely causes with plausibility reflecting evidence quality.",
+    )
     recommended_steps: list[str] = Field(
         ..., description="Actionable verification or debugging steps in logical execution order."
     )
-    proposed_fix: str = Field(..., description="Explanation of the proposed solution.")
+    proposed_fix: str = Field(
+        ...,
+        description=(
+            "Explanation of the proposed solution. Must distinguish evidence-backed vs. suggested parts: "
+            "'Evidence-backed: [specific fix from compiler error/datasheet]. Suggested: [inferred fix needing verification].'"
+        ),
+    )
     corrected_code: str | None = Field(
-        default=None, description="The corrected code snippet or patch, if applicable."
+        default=None,
+        description=(
+            "The corrected code snippet or patch. If provided, prefix with comment: "
+            "'// Evidence-backed fix' or '// Suggested fix - verify on hardware'."
+        ),
     )
     risks_limitations: str | None = Field(
         default=None, description="Risks of the fix or hardware damage warnings."
     )
     follow_up_required: str | None = Field(
-        default=None, description="What information is missing to make a confident diagnosis."
+        default=None,
+        description=(
+            "What information is missing to make a confident diagnosis. "
+            "If no relevant datasheet chunks were retrieved, MUST state: "
+            "'No relevant datasheet chunks retrieved for [specific topic]. Provide datasheet pages covering [topic] for grounded analysis.'"
+        ),
     )
     datasheet_citations: list[DocumentCitation] | None = Field(
         default=None,
@@ -237,6 +268,3 @@ class DebugResponse(BaseModel):
             "Classified runtime log events, faults, panics, timeouts, or repeated anomalies extracted from serial logs."
         ),
     )
-
-
-

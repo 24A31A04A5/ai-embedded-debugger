@@ -267,8 +267,12 @@ class TestTechnicalSourcePrioritization:
 class TestMultipleSupportingChunks:
     def test_format_prompt_emits_all_chunks(self, project_ctx: ProjectContext) -> None:
         chunks = [
-            _make_doc_context("Register CR1 Bit 0 CEN", content_type="register_description", score=0.92),
-            _make_doc_context("Register CR1 Bit 1 UDIS", content_type="register_description", score=0.88),
+            _make_doc_context(
+                "Register CR1 Bit 0 CEN", content_type="register_description", score=0.92
+            ),
+            _make_doc_context(
+                "Register CR1 Bit 1 UDIS", content_type="register_description", score=0.88
+            ),
             _make_doc_context("GPIO Pin 42 is SDA", content_type="pin_configuration", score=0.75),
         ]
         ctx = AssembledDebugContext(
@@ -378,9 +382,7 @@ class TestBackwardCompatibility:
         """Legacy DocumentContext without content_type/section still serializes."""
         ctx = AssembledDebugContext(
             project=project_ctx,
-            document_context=[
-                DocumentContext(snippet="Legacy chunk content without metadata")
-            ],
+            document_context=[DocumentContext(snippet="Legacy chunk content without metadata")],
         )
         prompt = ctx.format_prompt()
         assert "Legacy chunk content without metadata" in prompt

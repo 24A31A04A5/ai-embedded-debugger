@@ -7,8 +7,8 @@ import {
   Bug,
   ChevronDown,
   ChevronRight,
-  Clock,
   Cpu,
+  Clock,
   ExternalLink,
   FileCode,
   FileTerminal,
@@ -22,6 +22,9 @@ import {
   Terminal,
   Zap,
 } from "lucide-react";
+
+import { BenchmarkResultsCard } from "@/components/ai/BenchmarkResultsCard";
+import { SampleProjectCard } from "@/components/ai/SampleProjectData";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -476,7 +479,7 @@ function BentoDashboard() {
               Control Center
             </Badge>
             <span className="text-xs text-muted-foreground font-mono">
-              v1.0.0-prod
+              v0.1.0-beta
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground font-display">
@@ -623,11 +626,16 @@ function BentoDashboard() {
             <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
               <span className="flex items-center gap-1">
                 <ShieldCheck className="h-3.5 w-3.5 text-[var(--accent-purple)]" />
-                Zero Hallucinations Guarantee
+                Every fix cites a datasheet page, or says it&apos;s unsure
               </span>
             </div>
           </CardFooter>
         </Card>
+
+        {/* ── BENCHMARK RESULTS CARD (Full width below hero) ── */}
+        <div className="md:col-span-12 lg:col-span-12">
+          <BenchmarkResultsCard />
+        </div>
 
         {/* ── CARD 6: SYSTEM / AI ENGINE STATUS (Col 4) ── */}
         <Card variant="glass" className="md:col-span-6 lg:col-span-4 flex flex-col justify-between interactive-card group">
@@ -902,7 +910,10 @@ function BentoDashboard() {
           </CardContent>
 
           <CardFooter className="pt-2 border-t border-border/30 text-[10px] text-muted-foreground">
-            Fast keyboard shortcut: <kbd className="px-1 py-0.5 bg-muted rounded text-[9px] font-mono ml-1">⌘B</kbd>
+            Fast keyboard shortcut:{' '}
+            <kbd className="px-1 py-0.5 bg-muted rounded text-[9px] font-mono ml-1 mr-1">⌘B</kbd>{' '}
+            <span className="text-muted-foreground/50">/</span>{' '}
+            <kbd className="px-1 py-0.5 bg-muted rounded text-[9px] font-mono ml-1">Ctrl+B</kbd>
           </CardFooter>
         </Card>
 
@@ -1166,6 +1177,37 @@ function InteractiveDemoReference() {
 }
 
 /* ────────────────────────────────────────────────────────────
+   Sample Project Demo
+   ──────────────────────────────────────────────────────────── */
+
+function SampleProjectDemo() {
+  return (
+    <section id="sample" className="py-16 px-4 sm:px-6 max-w-7xl mx-auto border-t border-border/40">
+      <div className="text-center max-w-2xl mx-auto mb-12">
+        <Badge variant="outline" className="mb-3 text-[10px] border-[var(--accent-purple)]/40 text-[var(--accent-purple)]">
+          Interactive Demo
+        </Badge>
+        <h2 className="text-2xl sm:text-3xl font-bold font-display tracking-tight text-foreground">
+          Try the Sample Project
+        </h2>
+        <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+          Explore a complete ESP32-S3 blink example with an intentional bug. View the firmware, compiler error,
+          and the datasheet excerpt that grounds the AI&apos;s fix recommendation.
+        </p>
+      </div>
+
+      <div className="max-w-4xl mx-auto">
+        <SampleProjectCard />
+      </div>
+
+      <div className="text-center mt-8 text-xs text-muted-foreground">
+        This sample demonstrates the full diagnostic pipeline: compiler error → RAG retrieval → grounded fix with citations.
+      </div>
+    </section>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
    Footer
    ──────────────────────────────────────────────────────────── */
 
@@ -1203,6 +1245,7 @@ export default function HomePage() {
         <BentoDashboard />
         <CapabilitiesOverview />
         <InteractiveDemoReference />
+        <SampleProjectDemo />
       </main>
       <Footer />
     </div>

@@ -47,10 +47,14 @@ class ProjectAnalyticsSummary(BaseModel):
     total_debug_requests: int = Field(default=0, description="Total debug analysis invocations.")
     successful_debug_requests: int = Field(default=0, description="Successful debug invocations.")
     failed_debug_requests: int = Field(default=0, description="Failed debug invocations.")
-    avg_debug_latency_ms: float | None = Field(default=None, description="Average debug latency in ms.")
+    avg_debug_latency_ms: float | None = Field(
+        default=None, description="Average debug latency in ms."
+    )
     total_files_uploaded: int = Field(default=0, description="Firmware and log files uploaded.")
     total_documents_uploaded: int = Field(default=0, description="Datasheets and manuals uploaded.")
-    total_sessions_created: int = Field(default=0, description="Interactive debug sessions created.")
+    total_sessions_created: int = Field(
+        default=0, description="Interactive debug sessions created."
+    )
     feedback_count: int = Field(default=0, description="Total feedback submissions.")
     positive_feedback_count: int = Field(default=0, description="Positive rating submissions.")
     event_counts: dict[str, int] = Field(

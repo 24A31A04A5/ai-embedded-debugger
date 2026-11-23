@@ -1,0 +1,589 @@
+{
+  "metadata": {
+    "split": "dev",
+    "timestamp": "2026-11-22T08:33:23.919419",
+    "repeat_runs": 1,
+    "use_mock": true,
+    "dev_mode": true
+  },
+  "aggregates": {
+    "plain_gemini": {
+      "approach": "plain_gemini",
+      "total_cases": 2,
+      "successful_cases": 2,
+      "failed_cases": 0,
+      "root_cause_accuracy": 0.5,
+      "fix_accuracy": 0.5,
+      "confidence_accuracy": 1.0,
+      "code_issues_accuracy": 0.0,
+      "compiler_messages_accuracy": 0.5,
+      "serial_log_events_accuracy": 0.5,
+      "citation_relevance": 1.0,
+      "avg_valid_relevant_citations": 0.0,
+      "avg_valid_alternative_citations": 0.0,
+      "avg_irrelevant_citations": 0.0,
+      "avg_fabricated_citations": 0.0,
+      "avg_missing_citations": 0.0,
+      "avg_unsupported_claims": 1.0,
+      "high_severity_unsupported_claims": 2,
+      "uncertainty_handling_rate": 0.5,
+      "avg_latency_ms": 50.0,
+      "p50_latency_ms": 50,
+      "p95_latency_ms": 50,
+      "api_success_rate": 1.0,
+      "avg_api_calls_per_case": 1.0
+    },
+    "prompt_only": {
+      "approach": "prompt_only",
+      "total_cases": 2,
+      "successful_cases": 2,
+      "failed_cases": 0,
+      "root_cause_accuracy": 0.5,
+      "fix_accuracy": 0.5,
+      "confidence_accuracy": 0.5,
+      "code_issues_accuracy": 0.0,
+      "compiler_messages_accuracy": 0.5,
+      "serial_log_events_accuracy": 0.5,
+      "citation_relevance": 1.0,
+      "avg_valid_relevant_citations": 0.0,
+      "avg_valid_alternative_citations": 0.0,
+      "avg_irrelevant_citations": 0.0,
+      "avg_fabricated_citations": 0.0,
+      "avg_missing_citations": 0.0,
+      "avg_unsupported_claims": 1.0,
+      "high_severity_unsupported_claims": 2,
+      "uncertainty_handling_rate": 1.0,
+      "avg_latency_ms": 50.0,
+      "p50_latency_ms": 50,
+      "p95_latency_ms": 50,
+      "api_success_rate": 1.0,
+      "avg_api_calls_per_case": 1.0
+    },
+    "full_pipeline": {
+      "approach": "full_pipeline",
+      "total_cases": 2,
+      "successful_cases": 2,
+      "failed_cases": 0,
+      "root_cause_accuracy": 0.5,
+      "fix_accuracy": 0.5,
+      "confidence_accuracy": 0.0,
+      "code_issues_accuracy": 0.0,
+      "compiler_messages_accuracy": 0.5,
+      "serial_log_events_accuracy": 0.5,
+      "citation_relevance": 1.0,
+      "avg_valid_relevant_citations": 0.0,
+      "avg_valid_alternative_citations": 0.0,
+      "avg_irrelevant_citations": 0.0,
+      "avg_fabricated_citations": 0.0,
+      "avg_missing_citations": 0.0,
+      "avg_unsupported_claims": 1.0,
+      "high_severity_unsupported_claims": 2,
+      "uncertainty_handling_rate": 0.0,
+      "avg_latency_ms": 50.0,
+      "p50_latency_ms": 50,
+      "p95_latency_ms": 50,
+      "api_success_rate": 1.0,
+      "avg_api_calls_per_case": 1.0
+    }
+  },
+  "raw_results": {
+    "plain_gemini": [
+      {
+        "test_case_id": "dev_01_missing_semicolon",
+        "approach": "plain_gemini",
+        "run_index": 0,
+        "root_cause_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Root cause incorrect: only 0/2 key terms matched",
+          "matched_evidence": [],
+          "missing_evidence": [
+            "semicolon",
+            "UCSR0B"
+          ]
+        },
+        "fix_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Fix incorrect: only 0/4 key elements addressed",
+          "matched_evidence": [],
+          "missing_evidence": [
+            "semicolon",
+            "UCSR0B",
+            "RXEN0",
+            "TXEN0"
+          ]
+        },
+        "confidence_score": {
+          "label": "correct",
+          "score": 1.0,
+          "justification": "Confidence correctly calibrated to evidence: low",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "code_issues_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Missed all 1 expected code issues",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "compiler_messages_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Missed all 1 expected compiler messages",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "serial_log_events_score": {
+          "label": "correct",
+          "score": 1.0,
+          "justification": "No serial log events expected or predicted",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "citation_validation": {
+          "total_predicted": 0,
+          "total_expected": 0,
+          "total_retrieved": 0,
+          "valid_relevant": 0,
+          "valid_alternative": 0,
+          "irrelevant": 0,
+          "fabricated": 0,
+          "missing": 0,
+          "citation_relevance_score": 1.0,
+          "details": []
+        },
+        "unsupported_claims": [
+          {
+            "claim": "Fix the identified issue",
+            "field": "proposed_fix",
+            "evidence_available": false,
+            "severity": "high"
+          }
+        ],
+        "uncertainty_handling_score": {
+          "label": "partially_correct",
+          "score": 0.5,
+          "justification": "Low confidence but no follow-up specified",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "latency_ms": 50,
+        "api_error": null,
+        "api_call_count": 1,
+        "timestamp": "2026-11-22T08:33:23.917173"
+      },
+      {
+        "test_case_id": "dev_15_uart_baudrate_mismatch",
+        "approach": "plain_gemini",
+        "run_index": 0,
+        "root_cause_score": {
+          "label": "correct",
+          "score": 1.0,
+          "justification": "Root cause correctly identifies 0/0 key technical terms",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "fix_score": {
+          "label": "correct",
+          "score": 1.0,
+          "justification": "Fix correctly addresses 0/0 key technical elements",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "confidence_score": {
+          "label": "correct",
+          "score": 1.0,
+          "justification": "Confidence correctly calibrated to evidence: low",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "code_issues_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Missed all 1 expected code issues",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "compiler_messages_score": {
+          "label": "correct",
+          "score": 1.0,
+          "justification": "No compiler messages expected or predicted",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "serial_log_events_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Missed all 1 expected serial events",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "citation_validation": {
+          "total_predicted": 0,
+          "total_expected": 0,
+          "total_retrieved": 0,
+          "valid_relevant": 0,
+          "valid_alternative": 0,
+          "irrelevant": 0,
+          "fabricated": 0,
+          "missing": 0,
+          "citation_relevance_score": 1.0,
+          "details": []
+        },
+        "unsupported_claims": [
+          {
+            "claim": "Fix the identified issue",
+            "field": "proposed_fix",
+            "evidence_available": false,
+            "severity": "high"
+          }
+        ],
+        "uncertainty_handling_score": {
+          "label": "partially_correct",
+          "score": 0.5,
+          "justification": "Low confidence but no follow-up specified",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "latency_ms": 50,
+        "api_error": null,
+        "api_call_count": 1,
+        "timestamp": "2026-11-22T08:33:23.918677"
+      }
+    ],
+    "prompt_only": [
+      {
+        "test_case_id": "dev_01_missing_semicolon",
+        "approach": "prompt_only",
+        "run_index": 0,
+        "root_cause_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Root cause incorrect: only 0/2 key terms matched",
+          "matched_evidence": [],
+          "missing_evidence": [
+            "semicolon",
+            "UCSR0B"
+          ]
+        },
+        "fix_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Fix incorrect: only 0/4 key elements addressed",
+          "matched_evidence": [],
+          "missing_evidence": [
+            "semicolon",
+            "UCSR0B",
+            "RXEN0",
+            "TXEN0"
+          ]
+        },
+        "confidence_score": {
+          "label": "partially_correct",
+          "score": 0.5,
+          "justification": "Confidence slightly miscalibrated: predicted medium, evidence suggests low",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "code_issues_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Missed all 1 expected code issues",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "compiler_messages_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Missed all 1 expected compiler messages",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "serial_log_events_score": {
+          "label": "correct",
+          "score": 1.0,
+          "justification": "No serial log events expected or predicted",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "citation_validation": {
+          "total_predicted": 0,
+          "total_expected": 0,
+          "total_retrieved": 0,
+          "valid_relevant": 0,
+          "valid_alternative": 0,
+          "irrelevant": 0,
+          "fabricated": 0,
+          "missing": 0,
+          "citation_relevance_score": 1.0,
+          "details": []
+        },
+        "unsupported_claims": [
+          {
+            "claim": "Suggested fix based on common patterns",
+            "field": "proposed_fix",
+            "evidence_available": false,
+            "severity": "high"
+          }
+        ],
+        "uncertainty_handling_score": {
+          "label": "correct",
+          "score": 1.0,
+          "justification": "Confident (medium) without unnecessary follow-up",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "latency_ms": 50,
+        "api_error": null,
+        "api_call_count": 1,
+        "timestamp": "2026-11-22T08:33:23.918351"
+      },
+      {
+        "test_case_id": "dev_15_uart_baudrate_mismatch",
+        "approach": "prompt_only",
+        "run_index": 0,
+        "root_cause_score": {
+          "label": "correct",
+          "score": 1.0,
+          "justification": "Root cause correctly identifies 0/0 key technical terms",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "fix_score": {
+          "label": "correct",
+          "score": 1.0,
+          "justification": "Fix correctly addresses 0/0 key technical elements",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "confidence_score": {
+          "label": "partially_correct",
+          "score": 0.5,
+          "justification": "Confidence slightly miscalibrated: predicted medium, evidence suggests low",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "code_issues_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Missed all 1 expected code issues",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "compiler_messages_score": {
+          "label": "correct",
+          "score": 1.0,
+          "justification": "No compiler messages expected or predicted",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "serial_log_events_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Missed all 1 expected serial events",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "citation_validation": {
+          "total_predicted": 0,
+          "total_expected": 0,
+          "total_retrieved": 0,
+          "valid_relevant": 0,
+          "valid_alternative": 0,
+          "irrelevant": 0,
+          "fabricated": 0,
+          "missing": 0,
+          "citation_relevance_score": 1.0,
+          "details": []
+        },
+        "unsupported_claims": [
+          {
+            "claim": "Suggested fix based on common patterns",
+            "field": "proposed_fix",
+            "evidence_available": false,
+            "severity": "high"
+          }
+        ],
+        "uncertainty_handling_score": {
+          "label": "correct",
+          "score": 1.0,
+          "justification": "Confident (medium) without unnecessary follow-up",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "latency_ms": 50,
+        "api_error": null,
+        "api_call_count": 1,
+        "timestamp": "2026-11-22T08:33:23.918952"
+      }
+    ],
+    "full_pipeline": [
+      {
+        "test_case_id": "dev_01_missing_semicolon",
+        "approach": "full_pipeline",
+        "run_index": 0,
+        "root_cause_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Root cause incorrect: only 0/2 key terms matched",
+          "matched_evidence": [],
+          "missing_evidence": [
+            "semicolon",
+            "UCSR0B"
+          ]
+        },
+        "fix_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Fix incorrect: only 0/4 key elements addressed [Evidence-backed distinction present]",
+          "matched_evidence": [],
+          "missing_evidence": [
+            "semicolon",
+            "UCSR0B",
+            "RXEN0",
+            "TXEN0"
+          ]
+        },
+        "confidence_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Confidence miscalibrated: predicted high, evidence suggests low",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "code_issues_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Missed all 1 expected code issues",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "compiler_messages_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Missed all 1 expected compiler messages",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "serial_log_events_score": {
+          "label": "correct",
+          "score": 1.0,
+          "justification": "No serial log events expected or predicted",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "citation_validation": {
+          "total_predicted": 0,
+          "total_expected": 0,
+          "total_retrieved": 0,
+          "valid_relevant": 0,
+          "valid_alternative": 0,
+          "irrelevant": 0,
+          "fabricated": 0,
+          "missing": 0,
+          "citation_relevance_score": 1.0,
+          "details": []
+        },
+        "unsupported_claims": [
+          {
+            "claim": "Evidence-backed fix requires retrieval",
+            "field": "proposed_fix",
+            "evidence_available": false,
+            "severity": "high"
+          }
+        ],
+        "uncertainty_handling_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Uncertainty handling unclear: confidence=high, follow_up=yes",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "latency_ms": 50,
+        "api_error": null,
+        "api_call_count": 1,
+        "timestamp": "2026-11-22T08:33:23.918537"
+      },
+      {
+        "test_case_id": "dev_15_uart_baudrate_mismatch",
+        "approach": "full_pipeline",
+        "run_index": 0,
+        "root_cause_score": {
+          "label": "correct",
+          "score": 1.0,
+          "justification": "Root cause correctly identifies 0/0 key technical terms",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "fix_score": {
+          "label": "correct",
+          "score": 1.0,
+          "justification": "Fix correctly addresses 0/0 key technical elements [Evidence-backed distinction present]",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "confidence_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Confidence miscalibrated: predicted high, evidence suggests low",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "code_issues_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Missed all 1 expected code issues",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "compiler_messages_score": {
+          "label": "correct",
+          "score": 1.0,
+          "justification": "No compiler messages expected or predicted",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "serial_log_events_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Missed all 1 expected serial events",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "citation_validation": {
+          "total_predicted": 0,
+          "total_expected": 0,
+          "total_retrieved": 0,
+          "valid_relevant": 0,
+          "valid_alternative": 0,
+          "irrelevant": 0,
+          "fabricated": 0,
+          "missing": 0,
+          "citation_relevance_score": 1.0,
+          "details": []
+        },
+        "unsupported_claims": [
+          {
+            "claim": "Evidence-backed fix requires retrieval",
+            "field": "proposed_fix",
+            "evidence_available": false,
+            "severity": "high"
+          }
+        ],
+        "uncertainty_handling_score": {
+          "label": "incorrect",
+          "score": 0.0,
+          "justification": "Uncertainty handling unclear: confidence=high, follow_up=yes",
+          "matched_evidence": [],
+          "missing_evidence": []
+        },
+        "latency_ms": 50,
+        "api_error": null,
+        "api_call_count": 1,
+        "timestamp": "2026-11-22T08:33:23.919094"
+      }
+    ]
+  }
+}

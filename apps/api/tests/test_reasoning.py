@@ -212,9 +212,13 @@ COMPILER_LOG_CORRELATION_RESPONSE = DebugResponse(
 
 INSUFFICIENT_EVIDENCE_RESPONSE = DebugResponse(
     problem_observed="Cannot confirm root cause: no compiler output, serial logs, or MCU register details provided.",
-    evidence_used=["User question indicates sensor fails, but no logs or code lines were provided."],
+    evidence_used=[
+        "User question indicates sensor fails, but no logs or code lines were provided."
+    ],
     likely_causes=[
-        LikelyCause(cause="Missing hardware wiring or incorrect baud rate (suspected)", plausibility="low"),
+        LikelyCause(
+            cause="Missing hardware wiring or incorrect baud rate (suspected)", plausibility="low"
+        ),
         LikelyCause(cause="Firmware initialization failure (suspected)", plausibility="low"),
     ],
     recommended_steps=[
@@ -246,7 +250,9 @@ class TestMultiSourceReasoning:
         with patch("app.ai.gemini.genai.Client", return_value=mock_client):
             result = analyze_debugging_context(ctx)
 
-        assert "pull-up" in result.problem_observed.lower() or "i2c" in result.problem_observed.lower()
+        assert (
+            "pull-up" in result.problem_observed.lower() or "i2c" in result.problem_observed.lower()
+        )
         assert len(result.evidence_used) >= 3
         assert result.code_issues is not None
         assert result.compiler_messages is not None
@@ -300,7 +306,10 @@ class TestCompilerSerialLogCorrelation:
 
         assert result.compiler_messages is not None
         assert result.serial_log_events is not None
-        assert "uninitialized" in result.problem_observed.lower() or "hardfault" in result.problem_observed.lower()
+        assert (
+            "uninitialized" in result.problem_observed.lower()
+            or "hardfault" in result.problem_observed.lower()
+        )
         assert result.likely_causes[0].plausibility == "high"
 
 

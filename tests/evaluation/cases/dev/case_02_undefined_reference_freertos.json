@@ -1,0 +1,26 @@
+{
+  "id": "dev_02_undefined_reference_freertos",
+  "category": "linker_error",
+  "description": "Undefined reference to FreeRTOS API due to missing library link",
+  "firmware_code": "#include <FreeRTOS.h>\n#include <task.h>\n#include <stdio.h>\n\nvoid vTaskFunction(void *pvParameters) {\n    for (;;) {\n        printf(\"Task running\\n\");\n        vTaskDelay(pdMS_TO_TICKS(1000));\n    }\n}\n\nint main(void) {\n    xTaskCreate(vTaskFunction, \"Task\", 256, NULL, 1, NULL);\n    vTaskStartScheduler();\n    return 0;\n}",
+  "compiler_output": "main.c:(.text+0x2a): undefined reference to `vTaskDelay'\nmain.c:(.text+0x3e): undefined reference to `xTaskCreate'\nmain.c:(.text+0x4a): undefined reference to `vTaskStartScheduler'\ncollect2: error: ld returned 1 exit status\n",
+  "serial_logs": "",
+  "user_question": "Why am I getting undefined reference errors for FreeRTOS functions?",
+  "expected_root_cause": "FreeRTOS library not linked - missing -lfreertos in linker flags",
+  "expected_fix": "Add FreeRTOS library to linker command: -lfreertos or ensure FreeRTOS source is compiled and linked",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [],
+  "expected_compiler_messages": [
+    {
+      "message_type": "linker_error",
+      "severity": "critical",
+      "is_root_cause": true,
+      "file": "main.c",
+      "message": "undefined reference to `vTaskDelay'",
+      "likely_cause": "FreeRTOS library not linked",
+      "suggested_fix": "Add -lfreertos to linker flags or include FreeRTOS source in build"
+    }
+  ],
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": "Verify FreeRTOSConfig.h is present and correct for target MCU"
+}

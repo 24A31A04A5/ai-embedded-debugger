@@ -145,7 +145,10 @@ NULL_POINTER_RESPONSE = DebugResponse(
 
 MINIMAL_CLEAN_RESPONSE = DebugResponse(
     problem_observed="No definitive firmware bug detected from the provided snippet.",
-    evidence_used=["Code appears structurally correct.", "No compiler errors or runtime logs provided."],
+    evidence_used=[
+        "Code appears structurally correct.",
+        "No compiler errors or runtime logs provided.",
+    ],
     likely_causes=[
         LikelyCause(
             cause="Insufficient context to determine root cause",
@@ -227,10 +230,7 @@ class TestNormalCodeAnalysis:
         ctx = AssembledDebugContext(
             project=ProjectContext(project_id=uuid.uuid4(), project_name="ESP32 Blinky"),
             firmware_code=(
-                "void uart_read_line(char *src) {\n"
-                "  char dst[16];\n"
-                "  strcpy(dst, src);\n"
-                "}"
+                "void uart_read_line(char *src) {\n  char dst[16];\n  strcpy(dst, src);\n}"
             ),
             compiler_output="warning: __builtin___strcpy_chk overflow",
         )
@@ -297,10 +297,22 @@ class TestClearBugDetection:
     def test_logic_error_kind_schema_is_valid(self) -> None:
         """Validate CodeIssue accepts all defined kind literals."""
         for kind in [
-            "syntax_error", "compile_error", "null_pointer", "dangling_pointer",
-            "pointer_misuse", "buffer_overflow", "out_of_bounds", "uninitialized_variable",
-            "incorrect_type", "incorrect_cast", "memory_leak", "resource_misuse",
-            "logic_error", "control_flow", "peripheral_register", "other",
+            "syntax_error",
+            "compile_error",
+            "null_pointer",
+            "dangling_pointer",
+            "pointer_misuse",
+            "buffer_overflow",
+            "out_of_bounds",
+            "uninitialized_variable",
+            "incorrect_type",
+            "incorrect_cast",
+            "memory_leak",
+            "resource_misuse",
+            "logic_error",
+            "control_flow",
+            "peripheral_register",
+            "other",
         ]:
             issue = CodeIssue(
                 kind=kind,  # type: ignore[arg-type]
@@ -384,7 +396,6 @@ class TestInsufficientEvidence:
         # The model should populate follow_up_required asking for more context
         assert result.follow_up_required is not None
         assert len(result.follow_up_required.strip()) > 0
-
 
     def test_response_is_valid_when_code_issues_is_none(self) -> None:
         """DebugResponse must be valid with code_issues=None (optional field)."""
@@ -557,6 +568,7 @@ class TestExistingDebugBehaviorPreserved:
     def test_existing_required_fields_not_removed(self) -> None:
         """Verify DebugResponse still requires problem_observed, likely_causes, etc."""
         import pydantic
+
         with pytest.raises(pydantic.ValidationError):
             DebugResponse()  # type: ignore[call-arg]
 

@@ -353,9 +353,7 @@ def test_context_truncation_limits(mock_user: User, mock_project: Project) -> No
     assert "[TRUNCATED from 500 chars]" in prompt
 
 
-def test_session_history_context_assembly(
-    mock_user: User, mock_project: Project
-) -> None:
+def test_session_history_context_assembly(mock_user: User, mock_project: Project) -> None:
     """Previous session history is assembled chronologically into context."""
     mock_db = MagicMock()
     mock_storage = MagicMock()
@@ -452,9 +450,7 @@ def test_empty_optional_inputs(mock_user: User, mock_project: Project) -> None:
     assert "<session_history>" not in prompt
 
 
-def test_debug_endpoint_with_context_assembly(
-    mock_user: User, mock_project: Project
-) -> None:
+def test_debug_endpoint_with_context_assembly(mock_user: User, mock_project: Project) -> None:
     """The /v1/projects/{project_id}/debug endpoint runs ContextAssemblyService and AI analysis."""
     mock_db = MagicMock()
     mock_storage = MagicMock()

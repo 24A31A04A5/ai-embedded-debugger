@@ -424,9 +424,14 @@ class TestPreviousSessionContextIntegration:
         # First query for Project
         mock_db.query.return_value.filter.return_value.first.return_value = mock_project
         # Query for DebugSession
-        mock_db.query.return_value.filter.return_value.filter.return_value.first.return_value = db_session
+        mock_db.query.return_value.filter.return_value.filter.return_value.first.return_value = (
+            db_session
+        )
         # Query for DebugMessage (returned in desc order, reversed by assembly service)
-        mock_db.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = [msg2, msg1]
+        mock_db.query.return_value.filter.return_value.order_by.return_value.limit.return_value.all.return_value = [
+            msg2,
+            msg1,
+        ]
 
         svc = ContextAssemblyService(db=mock_db)
         context = svc.assemble_context(

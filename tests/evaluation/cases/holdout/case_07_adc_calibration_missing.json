@@ -1,0 +1,36 @@
+{
+  "id": "holdout_07_adc_calibration_missing",
+  "category": "code_issue",
+  "description": "ADC readings inaccurate due to missing calibration initialization",
+  "firmware_code": "#include <stdio.h>\n#include \"driver/adc.h\"\n#include \"esp_adc_cal.h\"\n\nvoid app_main(void) {\n    adc1_config_width(ADC_WIDTH_BIT_12);\n    adc1_config_channel_atten(ADC1_CHANNEL_0, ADC_ATTEN_DB_11);\n\n    while (1) {\n        int raw = adc1_get_raw(ADC1_CHANNEL_0);\n        printf(\"ADC Raw: %d\\n\", raw);\n        vTaskDelay(pdMS_TO_TICKS(1000));\n    }\n}",
+  "compiler_output": "",
+  "serial_logs": "ADC Raw: 4095\nADC Raw: 4095\nADC Raw: 4095\nADC Raw: 4095\n",
+  "user_question": "Why does ADC always read 4095 (max) even with input voltage at 0V?",
+  "expected_root_cause": "ADC calibration not initialized - esp_adc_cal_characterize() not called, and GPIO may not be configured as analog",
+  "expected_fix": "Call esp_adc_cal_characterize() and ensure GPIO is configured for ADC function; check for pin conflicts",
+  "expected_confidence_level": "medium",
+  "expected_code_issues": [
+    {
+      "kind": "peripheral_register",
+      "severity": "high",
+      "confirmed": false,
+      "location": "main.c:7-8",
+      "evidence": "adc1_config_width(ADC_WIDTH_BIT_12);\\n    adc1_config_channel_atten(ADC1_CHANNEL_0, ADC_ATTEN_DB_11);",
+      "suggestion": "Add esp_adc_cal_characterize() and verify pin is not used by other peripheral"
+    }
+  ],
+  "expected_compiler_messages": null,
+  "expected_serial_log_events": [
+    {
+      "event_type": "unexpected_value",
+      "severity": "medium",
+      "is_repeated": true,
+      "message": "ADC reads maximum value (4095) consistently",
+      "evidence": "ADC Raw: 4095",
+      "likely_cause": "Missing ADC calibration or pin mux conflict",
+      "suggested_action": "Initialize ADC calibration; verify pin is not shared with digital function"
+    }
+  ],
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": "Check ESP32 Technical Reference Manual for ADC calibration procedure"
+}

@@ -1,0 +1,36 @@
+{
+  "id": "dev_03_buffer_overflow_strcpy",
+  "category": "code_issue",
+  "description": "Buffer overflow from unsafe strcpy into fixed-size buffer",
+  "firmware_code": "#include <string.h>\n#include <stdio.h>\n\nvoid process_command(const char *input) {\n    char buffer[32];\n    strcpy(buffer, input);\n    printf(\"Processing: %s\\n\", buffer);\n}\n\nint main(void) {\n    char user_input[256];\n    fgets(user_input, sizeof(user_input), stdin);\n    process_command(user_input);\n    return 0;\n}",
+  "compiler_output": "main.c: In function 'process_command':\nmain.c:5:5: warning: 'strcpy' is deprecated: This function is unsafe; use strncpy instead [-Wdeprecated-declarations]\n     strcpy(buffer, input);\n     ^~~~~~\n",
+  "serial_logs": "",
+  "user_question": "Is this code safe? The compiler warns about strcpy.",
+  "expected_root_cause": "Unsafe strcpy without bounds checking can overflow the 32-byte buffer",
+  "expected_fix": "Replace strcpy with strncpy or snprintf with explicit size limit",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [
+    {
+      "kind": "buffer_overflow",
+      "severity": "high",
+      "confirmed": false,
+      "location": "main.c:5",
+      "evidence": "strcpy(buffer, input);",
+      "suggestion": "Use strncpy(buffer, input, sizeof(buffer) - 1); buffer[sizeof(buffer) - 1] = '\\0';"
+    }
+  ],
+  "expected_compiler_messages": [
+    {
+      "message_type": "warning",
+      "severity": "medium",
+      "is_root_cause": false,
+      "file": "main.c",
+      "line": 5,
+      "message": "'strcpy' is deprecated: This function is unsafe; use strncpy instead",
+      "likely_cause": "strcpy does not check destination buffer size",
+      "suggested_fix": "Use strncpy or snprintf with explicit size limit"
+    }
+  ],
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": null
+}

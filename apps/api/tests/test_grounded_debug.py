@@ -345,7 +345,10 @@ class TestGroundedDebugEndpoints:
                 assert data["problem_observed"] == MOCK_GROUNDED_RESPONSE.problem_observed
                 assert data["datasheet_citations"] is not None
                 assert len(data["datasheet_citations"]) == 1
-                assert "esp32_technical_reference.pdf" in data["datasheet_citations"][0]["document_name"]
+                assert (
+                    "esp32_technical_reference.pdf"
+                    in data["datasheet_citations"][0]["document_name"]
+                )
                 assert data["grounded_summary"] is not None
                 assert mock_ai.called
             finally:

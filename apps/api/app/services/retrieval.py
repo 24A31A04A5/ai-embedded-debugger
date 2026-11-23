@@ -42,11 +42,18 @@ def extract_query_intent(query: str) -> dict[str, Any]:
 
     q_lower = query.lower()
 
-    if re.search(r"\b(?:register|bit|bits|offset|reset\s+value|0x[0-9a-f]+|cr\d+|sr\d+|dr\d+)\b", q_lower):
+    if re.search(
+        r"\b(?:register|bit|bits|offset|reset\s+value|0x[0-9a-f]+|cr\d+|sr\d+|dr\d+)\b", q_lower
+    ):
         intent["is_register"] = True
-    if re.search(r"\b(?:pin|gpio\d*|pinout|sda|scl|rx|tx|mosi|miso|sck|pad|alternate\s+function)\b", q_lower):
+    if re.search(
+        r"\b(?:pin|gpio\d*|pinout|sda|scl|rx|tx|mosi|miso|sck|pad|alternate\s+function)\b", q_lower
+    ):
         intent["is_pinout"] = True
-    if re.search(r"\b(?:table|spec|specification|voltage|current|timing|max|min|typ|electrical|vcc|vdd|vss|frequency|baud)\b", q_lower):
+    if re.search(
+        r"\b(?:table|spec|specification|voltage|current|timing|max|min|typ|electrical|vcc|vdd|vss|frequency|baud)\b",
+        q_lower,
+    ):
         intent["is_spec"] = True
 
     return intent
@@ -144,11 +151,17 @@ class DocumentRetrievalService:
 
             # Technical intent ranking bonus
             rank_score = sim_score
-            if intent.get("is_register") and (meta.get("has_register") or meta.get("content_type") == "register_description"):
+            if intent.get("is_register") and (
+                meta.get("has_register") or meta.get("content_type") == "register_description"
+            ):
                 rank_score += 0.03
-            if intent.get("is_pinout") and (meta.get("has_pinout") or meta.get("content_type") == "pin_configuration"):
+            if intent.get("is_pinout") and (
+                meta.get("has_pinout") or meta.get("content_type") == "pin_configuration"
+            ):
                 rank_score += 0.03
-            if intent.get("is_spec") and (meta.get("has_table") or meta.get("content_type") == "table_or_specification"):
+            if intent.get("is_spec") and (
+                meta.get("has_table") or meta.get("content_type") == "table_or_specification"
+            ):
                 rank_score += 0.03
 
             item = DocumentSearchResultItem(
@@ -213,4 +226,3 @@ class DocumentRetrievalService:
             has_pinout=has_pinout,
             query_text=cleaned_query,
         )
-

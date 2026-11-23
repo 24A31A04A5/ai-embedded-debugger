@@ -50,6 +50,4 @@ class Feedback(Base):
     )
 
     user: Mapped[User] = relationship("User", back_populates="feedbacks")
-    session: Mapped[DebugSession] = relationship(
-        "DebugSession", back_populates="feedbacks"
-    )
+    session: Mapped[DebugSession] = relationship("DebugSession", back_populates="feedbacks")

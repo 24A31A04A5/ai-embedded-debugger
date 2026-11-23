@@ -22,8 +22,6 @@ HEADING_REGEX = re.compile(
 )
 
 
-
-
 def classify_technical_content(text: str) -> dict[str, Any]:
     """Detect presence of register maps, tables, pinouts, and technical specs."""
     meta: dict[str, Any] = {}
@@ -38,7 +36,11 @@ def classify_technical_content(text: str) -> dict[str, Any]:
     has_table = bool(
         "|" in text
         or "\t" in text
-        or bool(re.search(r"\b(?:Table\s+\d+|Min\s+Typ\s+Max|VIL|VIH|VDD|VSS|Symbol\s+Parameter)\b", text))
+        or bool(
+            re.search(
+                r"\b(?:Table\s+\d+|Min\s+Typ\s+Max|VIL|VIH|VDD|VSS|Symbol\s+Parameter)\b", text
+            )
+        )
     )
     has_pinout = bool(
         re.search(
@@ -216,8 +218,6 @@ class DocumentChunkingService:
 
         _flush()
         return chunks
-
-
 
     def _split_large_segment(self, segment: str) -> list[str]:
         """Break an oversized segment into sentence-level pieces, then

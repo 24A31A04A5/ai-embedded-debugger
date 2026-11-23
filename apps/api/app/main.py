@@ -14,7 +14,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from app.core.config import get_settings
+from app.core.config import DEFAULT_LOCAL_CORS_ORIGINS, get_settings
 from app.core.correlation import RequestCorrelationMiddleware
 from app.core.error_monitoring import get_error_tracker
 from app.core.logging import get_request_id, setup_logging
@@ -41,8 +41,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             logger.warning("CLERK_SECRET_KEY is not configured; authenticated endpoints will fail.")
         if not current_settings.gemini_api_key:
             logger.warning("GEMINI_API_KEY is not configured; AI analysis/embeddings will fail.")
-        if current_settings.cors_origins == ["http://localhost:3000"]:
-            logger.warning("CORS_ORIGINS is using development default (localhost) in production.")
+        if current_settings.cors_origins == DEFAULT_LOCAL_CORS_ORIGINS:
+            logger.warning("CORS_ORIGINS is using development defaults in production.")
         if current_settings.expose_error_details:
             logger.warning("EXPOSE_ERROR_DETAILS is enabled in production; details may leak.")
     else:
@@ -95,7 +95,7 @@ else:
     allowed_origins = [o.strip() for o in str(raw_origins).split(",") if o.strip()]
 
 has_wildcard = "*" in allowed_origins
-cors_allow_origins = ["*"] if has_wildcard else (allowed_origins or ["http://localhost:3000"])
+cors_allow_origins = ["*"] if has_wildcard else (allowed_origins or DEFAULT_LOCAL_CORS_ORIGINS)
 cors_allow_credentials = not has_wildcard
 
 app.add_middleware(

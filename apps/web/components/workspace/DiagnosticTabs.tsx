@@ -57,14 +57,14 @@ export function DiagnosticTabs({
   const hasCurrentContent = activeTab === "compiler" ? !!compilerOutput : !!serialLogs;
 
   return (
-    <div className={`flex flex-col bg-[oklch(0.11_0.015_260)] border border-border/40 rounded-xl overflow-hidden transition-all duration-200 ${className}`}>
+    <div className={`flex flex-col bg-[oklch(0.09_0.015_260)] border-t border-border/40 overflow-hidden transition-all duration-200 ${className}`}>
       <Tabs
         value={activeTab}
         onValueChange={(v) => setActiveTab(v as "compiler" | "serial")}
         className="flex flex-1 flex-col h-full overflow-hidden"
       >
         {/* Diagnostic Bar Header */}
-        <div className="flex items-center justify-between px-3 py-1.5 bg-[oklch(0.12_0.015_260/0.95)] border-b border-border/30 shrink-0">
+        <div className="flex items-center justify-between px-3 py-1.5 bg-[oklch(0.10_0.015_260/0.98)] border-b border-border/30 shrink-0">
           <div className="flex items-center gap-2">
             <TabsList className="h-7 bg-black/20 p-0.5 border border-border/30 rounded-md">
               <TabsTrigger
@@ -155,7 +155,7 @@ export function DiagnosticTabs({
 
         {/* Tab Contents (only when expanded) */}
         {!isCollapsed && (
-          <div className="flex flex-1 overflow-hidden relative">
+          <div className="flex flex-1 overflow-hidden relative bg-[oklch(0.09_0.015_260)]">
             <TabsContent value="compiler" className="flex-1 h-full m-0 data-[state=inactive]:hidden overflow-hidden">
               <CodeEditor
                 value={compilerOutput}

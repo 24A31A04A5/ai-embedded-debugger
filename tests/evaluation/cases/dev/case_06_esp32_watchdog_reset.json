@@ -1,0 +1,37 @@
+{
+  "id": "dev_06_esp32_watchdog_reset",
+  "category": "serial_log",
+  "description": "ESP32 Task Watchdog Timer reset due to blocking code",
+  "firmware_code": "#include <stdio.h>\n#include \"freertos/FreeRTOS.h\"\n#include \"freertos/task.h\"\n#include \"esp_task_wdt.h\"\n\nvoid app_main(void) {\n    esp_task_wdt_init(5, true);\n    esp_task_wdt_add(NULL);\n    \n    while (1) {\n        // Blocking delay without feeding watchdog\n        for (volatile int i = 0; i < 10000000; i++);\n        printf(\"Loop iteration\\n\");\n    }\n}",
+  "compiler_output": "",
+  "serial_logs": "I (321) cpu_start: Starting scheduler on PRO CPU.\nI (321) cpu_start: Starting scheduler on APP CPU.\nI (321) task_wdt: Task watchdog got triggered. The following tasks did not reset the watchdog in time:\nI (321) task_wdt:  - IDLE0 (CPU 0)\nE (321) task_wdt: Task watchdog got triggered. The following tasks did not reset the watchdog in time:\nE (321) task_wdt:  - IDLE1 (CPU 1)\nE (321) task_wdt: Abort was called at PC 0x4008abcd on core 0\n\nGuru Meditation Error: Core  0 panic'ed (Interrupt wdt timeout on CPU0).\n\nRebooting...",
+  "user_question": "Why does the ESP32 keep rebooting with watchdog timeout?",
+  "expected_root_cause": "Task watchdog timeout - code blocks in loop without calling esp_task_wdt_reset() or yielding",
+  "expected_fix": "Add esp_task_wdt_reset() in the loop or use vTaskDelay() to yield",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [
+    {
+      "kind": "control_flow",
+      "severity": "critical",
+      "confirmed": true,
+      "location": "main.c:11-14",
+      "evidence": "for (volatile int i = 0; i < 10000000; i++);",
+      "suggestion": "Replace busy-wait with vTaskDelay(pdMS_TO_TICKS(1000)) or call esp_task_wdt_reset() periodically"
+    }
+  ],
+  "expected_compiler_messages": null,
+  "expected_serial_log_events": [
+    {
+      "event_type": "watchdog_reset",
+      "severity": "critical",
+      "is_repeated": true,
+      "repeat_count": 2,
+      "message": "Task watchdog got triggered - IDLE tasks not resetting watchdog",
+      "evidence": "Task watchdog got triggered. The following tasks did not reset the watchdog in time: - IDLE0 (CPU 0)",
+      "likely_cause": "Blocking code prevents watchdog feed; IDLE task starved",
+      "suggested_action": "Use vTaskDelay() instead of busy-wait loops; ensure watchdog is fed"
+    }
+  ],
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": null
+}

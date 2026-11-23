@@ -1,0 +1,36 @@
+{
+  "id": "dev_01_missing_semicolon",
+  "category": "compiler_error",
+  "description": "Missing semicolon causing cascading compiler errors",
+  "firmware_code": "#include <stdio.h>\n#include <string.h>\n\nvoid uart_init(void) {\n    UCSR0B = (1 << RXEN0) | (1 << TXEN0)\n    UCSR0C = (1 << UCSZ01) | (1 << UCSZ00)\n    UBRR0H = 0\n    UBRR0L = 103\n}\n\nint main(void) {\n    uart_init()\n    char buffer[64]\n    strcpy(buffer, \"Hello World\\n\")\n    for (int i = 0; buffer[i]; i++) {\n        while (!(UCSR0A & (1 << UDRE0)))\n        UDR0 = buffer[i]\n    }\n    return 0\n}",
+  "compiler_output": "main.c:5:1: error: expected ';' before 'UCSR0C'\n     UCSR0C = (1 << UCSZ01) | (1 << UCSZ00)\n     ^~~~~~\nmain.c:6:1: error: expected ';' before 'UBRR0H'\n     UBRR0H = 0\n     ^~~~~~\nmain.c:7:1: error: expected ';' before 'UBRR0L'\n     UBRR0L = 103\n     ^~~~~~\nmain.c:11:1: error: expected ';' before 'char'\n     char buffer[64]\n     ^~~~~\nmain.c:12:1: error: expected ';' before 'strcpy'\n     strcpy(buffer, \"Hello World\\n\")\n     ^~~~~~\nmain.c:13:1: error: expected ';' before 'for'\n     for (int i = 0; buffer[i]; i++) {\n     ^~~\nmain.c:15:1: error: expected ';' before 'UDR0'\n     UDR0 = buffer[i]\n     ^~~~\nmain.c:17:1: error: expected ';' before 'return'\n     return 0\n     ^~~~~~\n",
+  "serial_logs": "",
+  "user_question": "Why won't this compile? It shows many errors but I only forgot one semicolon.",
+  "expected_root_cause": "Missing semicolon after UCSR0B assignment on line 5 causes cascading parser errors",
+  "expected_fix": "Add semicolon after 'UCSR0B = (1 << RXEN0) | (1 << TXEN0)' on line 5",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [
+    {
+      "kind": "syntax_error",
+      "severity": "critical",
+      "confirmed": true,
+      "location": "main.c:5",
+      "evidence": "UCSR0B = (1 << RXEN0) | (1 << TXEN0)",
+      "suggestion": "Add semicolon at end of statement"
+    }
+  ],
+  "expected_compiler_messages": [
+    {
+      "message_type": "error",
+      "severity": "critical",
+      "is_root_cause": true,
+      "file": "main.c",
+      "line": 5,
+      "message": "expected ';' before 'UCSR0C'",
+      "likely_cause": "Missing semicolon after previous statement",
+      "suggested_fix": "Add semicolon after UCSR0B assignment"
+    }
+  ],
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": null
+}

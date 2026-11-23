@@ -20,9 +20,7 @@ class InMemoryRateLimiter:
         self._requests: dict[str, list[float]] = {}
         self._lock = Lock()
 
-    def is_rate_limited(
-        self, key: str, limit: int, window_seconds: int = 60
-    ) -> tuple[bool, int]:
+    def is_rate_limited(self, key: str, limit: int, window_seconds: int = 60) -> tuple[bool, int]:
         """Check if request for key exceeds limit in window_seconds.
 
         Returns (is_limited, retry_after_seconds).

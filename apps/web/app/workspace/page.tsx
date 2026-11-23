@@ -1,16 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import {
-  AlertCircle,
-  CheckCircle2,
-  Code2,
-  FolderOpen,
-  Plus,
-  Sparkles,
-  Terminal,
-  X,
-} from "lucide-react";
+import { AlertCircle, CheckCircle2, FolderOpen, Plus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -89,9 +80,6 @@ export default function WorkspacePage() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isDiagnosticsCollapsed, setIsDiagnosticsCollapsed] = useState(false);
-  const [activeMobileView, setActiveMobileView] = useState<
-    "code" | "diagnostics" | "ai" | "files"
-  >("code");
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -230,7 +218,6 @@ export default function WorkspacePage() {
         if (metadata.file_type === "code") {
           setFirmwareCode(content);
           setActiveFileName(metadata.filename);
-          setActiveMobileView("code");
         } else {
           const looksLikeCompiler =
             /error:|warning:|undefined reference|linker|gcc|g\+\+/i.test(
@@ -241,7 +228,6 @@ export default function WorkspacePage() {
           } else {
             setSerialLogs(content);
           }
-          setActiveMobileView("diagnostics");
         }
       } catch (e) {
         console.error("Failed to load file content", e);
@@ -302,15 +288,12 @@ export default function WorkspacePage() {
       const aiMsg = session.messages.find((m) => m.role === "assistant");
       if (aiMsg) {
         setDiagnosis(JSON.parse(aiMsg.content));
-        // Switch to AI analysis view on mobile/tablet so the result is immediately seen
-        setActiveMobileView("ai");
       }
     } catch (e) {
       console.error(e);
       const msg = e instanceof Error ? e.message : "Analysis failed. Please try again.";
       setAnalysisError(msg);
       showToast(msg, "error");
-      setActiveMobileView("ai");
     } finally {
       setIsAnalyzing(false);
     }
@@ -351,7 +334,6 @@ export default function WorkspacePage() {
         const aiMsg = sessionData.messages.find((m) => m.role === "assistant");
         if (aiMsg) {
           setDiagnosis(JSON.parse(aiMsg.content));
-          setActiveMobileView("ai");
         }
 
         setFeedback(feedbackData);
@@ -425,11 +407,11 @@ export default function WorkspacePage() {
         hasDiagnosis={Boolean(diagnosis)}
       />
 
-      {/* 2. Mobile Drawer for Project Files & Sessions */}
+      {/* 2. Mobile Drawer for Explorer */}
       <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
         <SheetContent
           side="left"
-          className="w-72 p-0 bg-[oklch(0.12_0.015_260/0.95)] backdrop-blur-2xl border-border/50"
+          className="w-80 p-0 bg-[oklch(0.10_0.015_260/0.98)] backdrop-blur-2xl border-border/50"
         >
           <SheetHeader className="sr-only">
             <SheetTitle>Project Files &amp; Sessions</SheetTitle>
@@ -456,10 +438,10 @@ export default function WorkspacePage() {
       </Sheet>
 
       {/* 3. Main Multi-Panel Workspace */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden bg-[radial-gradient(circle_at_top,oklch(0.16_0.02_260)_0%,oklch(0.10_0.015_260)_48%,oklch(0.09_0.015_260)_100%)]">
         {!activeProject && !loading ? (
           <div className="flex flex-1 flex-col items-center justify-center p-6 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-border/60 bg-card/60 text-muted-foreground shadow-sm mb-3">
+            <div className="flex h-14 w-14 items-center justify-center rounded-xl border border-border/60 bg-card/60 text-muted-foreground shadow-sm mb-3">
               <FolderOpen className="h-6 w-6" />
             </div>
             <h2 className="text-base font-semibold text-foreground">
@@ -479,10 +461,10 @@ export default function WorkspacePage() {
             </Button>
           </div>
         ) : (
-          <>
-            {/* Desktop Left Panel: Files & Sessions Sidebar */}
+          <div className="flex flex-1 overflow-hidden">
+            {/* Explorer */}
             {sidebarOpen && (
-              <aside className="hidden lg:flex w-60 xl:w-64 shrink-0 flex-col border-r border-border/40 overflow-hidden">
+              <aside className="hidden lg:flex w-72 shrink-0 flex-col border-r border-[oklch(0.30_0.015_260)] bg-[oklch(0.10_0.015_260/0.98)] overflow-hidden">
                 <ProjectFilesPanel
                   files={files}
                   selectedFileId={selectedFileId}
@@ -494,105 +476,17 @@ export default function WorkspacePage() {
                   activeSessionId={activeSessionId}
                   onSelectSession={handleSelectSession}
                   onDeleteSession={handleDeleteSession}
+                  activeFileName={activeFileName}
+                  compilerOutput={compilerOutput}
+                  serialLogs={serialLogs}
                 />
               </aside>
             )}
 
-            {/* Tablet & Mobile Layout (< lg) */}
-            <div className="flex flex-1 flex-col overflow-hidden lg:hidden">
-              {/* Responsive Tab Bar */}
-              <div
-                className="flex items-center border-b border-border/40 bg-[oklch(0.12_0.015_260/0.85)] px-2 py-1 shrink-0 overflow-x-auto gap-1"
-                role="tablist"
-                aria-label="Workspace views"
-              >
-                <button
-                  id="tab-code"
-                  type="button"
-                  role="tab"
-                  aria-selected={activeMobileView === "code"}
-                  aria-controls="tabpanel-code"
-                  onClick={() => setActiveMobileView("code")}
-                  className={`flex flex-1 min-w-[80px] min-h-[44px] items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-xs font-medium transition-all ${
-                    activeMobileView === "code"
-                      ? "bg-[var(--accent-purple)]/15 text-foreground border border-[var(--accent-purple)]/30 font-semibold"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Code2 className="h-3.5 w-3.5 text-[var(--accent-purple)]" />
-                  <span>Editor</span>
-                  {firmwareCode.trim() && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--accent-purple)]" aria-hidden="true" />
-                  )}
-                </button>
-
-                <button
-                  id="tab-diagnostics"
-                  type="button"
-                  role="tab"
-                  aria-selected={activeMobileView === "diagnostics"}
-                  aria-controls="tabpanel-diagnostics"
-                  onClick={() => setActiveMobileView("diagnostics")}
-                  className={`flex flex-1 min-w-[95px] min-h-[44px] items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-xs font-medium transition-all ${
-                    activeMobileView === "diagnostics"
-                      ? "bg-[var(--accent-purple)]/15 text-foreground border border-[var(--accent-purple)]/30 font-semibold"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Terminal className="h-3.5 w-3.5 text-[var(--color-warning-amber)]" />
-                  <span>Logs &amp; Output</span>
-                  {(compilerOutput.trim() || serialLogs.trim()) && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-warning-amber)]" aria-hidden="true" />
-                  )}
-                </button>
-
-                <button
-                  id="tab-ai"
-                  type="button"
-                  role="tab"
-                  aria-selected={activeMobileView === "ai"}
-                  aria-controls="tabpanel-ai"
-                  onClick={() => setActiveMobileView("ai")}
-                  className={`flex flex-1 min-w-[85px] min-h-[44px] items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-xs font-medium transition-all ${
-                    activeMobileView === "ai"
-                      ? "bg-[var(--accent-purple)]/15 text-foreground border border-[var(--accent-purple)]/30 font-semibold"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <Sparkles className="h-3.5 w-3.5 text-[var(--accent-purple)]" />
-                  <span>AI Debug</span>
-                  {diagnosis && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-emerald)]" aria-hidden="true" />
-                  )}
-                </button>
-
-                <button
-                  id="tab-files"
-                  type="button"
-                  role="tab"
-                  aria-selected={activeMobileView === "files"}
-                  aria-controls="tabpanel-files"
-                  onClick={() => setActiveMobileView("files")}
-                  className={`flex flex-1 min-w-[75px] min-h-[44px] items-center justify-center gap-1.5 py-2.5 px-2 rounded-lg text-xs font-medium transition-all ${
-                    activeMobileView === "files"
-                      ? "bg-[var(--accent-purple)]/15 text-foreground border border-[var(--accent-purple)]/30 font-semibold"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <FolderOpen className="h-3.5 w-3.5 text-[var(--accent-indigo)]" />
-                  <span>Files</span>
-                  {(files.length > 0 || sessions.length > 0) && (
-                    <span className="text-[9px] font-mono px-1 rounded bg-white/10" aria-label={`${files.length + sessions.length} items`}>
-                      {files.length + sessions.length}
-                    </span>
-                  )}
-                </button>
-              </div>
-
-              {/* View Content */}
-              <div className="flex-1 overflow-hidden p-2">
-                {activeMobileView === "code" && (
-                  <div id="tabpanel-code" role="tabpanel" aria-labelledby="tab-code" className="h-full">
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+              <div className="grid min-h-0 flex-1 gap-0 lg:grid-cols-[minmax(0,1fr)_390px] xl:grid-cols-[minmax(0,1fr)_440px]">
+                <div className="flex min-w-0 flex-1 flex-col overflow-hidden border-r border-[oklch(0.30_0.015_260)]">
+                  <div className="flex-1 min-h-0 overflow-hidden border-b border-[oklch(0.30_0.015_260)] p-2 sm:p-3">
                     <CodeWorkspace
                       value={firmwareCode}
                       onChange={setFirmwareCode}
@@ -600,106 +494,40 @@ export default function WorkspacePage() {
                       onClear={() => setFirmwareCode("")}
                     />
                   </div>
-                )}
-                {activeMobileView === "diagnostics" && (
-                  <div id="tabpanel-diagnostics" role="tabpanel" aria-labelledby="tab-diagnostics" className="h-full">
+
+                  <div
+                    className={`border-t border-[oklch(0.30_0.015_260)] bg-[oklch(0.09_0.015_260/0.98)] transition-[height] duration-200 ${
+                      isDiagnosticsCollapsed ? "h-10" : "h-60 xl:h-68"
+                    }`}
+                  >
                     <DiagnosticTabs
                       compilerOutput={compilerOutput}
                       onCompilerChange={setCompilerOutput}
                       serialLogs={serialLogs}
                       onSerialChange={setSerialLogs}
-                      isCollapsed={false}
-                      onToggleCollapse={() => {}}
-                      className="h-full"
+                      isCollapsed={isDiagnosticsCollapsed}
+                      onToggleCollapse={() =>
+                        setIsDiagnosticsCollapsed(!isDiagnosticsCollapsed)
+                      }
+                      className="h-full rounded-none border-0"
                     />
                   </div>
-                )}
-                {activeMobileView === "ai" && (
-                  <div id="tabpanel-ai" role="tabpanel" aria-labelledby="tab-ai" className="h-full overflow-y-auto">
-                    <AIAnalysisPanel
-                      diagnosis={diagnosis}
-                      isAnalyzing={isAnalyzing}
-                      sessionId={activeSessionId}
-                      feedback={feedback}
-                      onSubmitFeedback={handleSubmitFeedback}
-                      error={analysisError}
-                      onRetry={handleAnalyze}
-                    />
-                  </div>
-                )}
-                {activeMobileView === "files" && (
-                  <div id="tabpanel-files" role="tabpanel" aria-labelledby="tab-files" className="h-full">
-                    <ProjectFilesPanel
-                      files={files}
-                      selectedFileId={selectedFileId}
-                      isUploading={isUploading}
-                      onUpload={handleUpload}
-                      onSelectFile={(id) => {
-                        handleSelectFile(id);
-                        setActiveMobileView("code");
-                      }}
-                      onDeleteFile={handleDeleteFile}
-                      sessions={sessions}
-                      activeSessionId={activeSessionId}
-                      onSelectSession={(id) => {
-                        handleSelectSession(id);
-                        setActiveMobileView("ai");
-                      }}
-                      onDeleteSession={handleDeleteSession}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Desktop Center & Right Multi-Panel Layout (>= lg) */}
-            <div className="hidden lg:flex flex-1 overflow-hidden">
-              {/* Center IDE Column: Code Workspace + Bottom Diagnostics Drawer */}
-              <div className="flex flex-1 flex-col min-w-0 p-2.5 gap-2.5 overflow-hidden">
-                {/* Top: Central Code Editor */}
-                <div className="flex flex-1 min-h-0 overflow-hidden">
-                  <CodeWorkspace
-                    value={firmwareCode}
-                    onChange={setFirmwareCode}
-                    activeFileName={activeFileName}
-                    onClear={() => setFirmwareCode("")}
-                  />
                 </div>
 
-                {/* Bottom: Diagnostics Drawer (Collapsible) */}
-                <div
-                  className={`shrink-0 transition-all duration-200 ${
-                    isDiagnosticsCollapsed ? "h-9" : "h-56 xl:h-64"
-                  }`}
-                >
-                  <DiagnosticTabs
-                    compilerOutput={compilerOutput}
-                    onCompilerChange={setCompilerOutput}
-                    serialLogs={serialLogs}
-                    onSerialChange={setSerialLogs}
-                    isCollapsed={isDiagnosticsCollapsed}
-                    onToggleCollapse={() =>
-                      setIsDiagnosticsCollapsed(!isDiagnosticsCollapsed)
-                    }
-                    className="h-full"
+                <div className="hidden lg:flex min-w-0 flex-col overflow-hidden border-l border-[var(--accent-purple)]/35 bg-[oklch(0.095_0.015_260)]">
+                  <AIAnalysisPanel
+                    diagnosis={diagnosis}
+                    isAnalyzing={isAnalyzing}
+                    sessionId={activeSessionId}
+                    feedback={feedback}
+                    onSubmitFeedback={handleSubmitFeedback}
+                    error={analysisError}
+                    onRetry={handleAnalyze}
                   />
                 </div>
               </div>
-
-              {/* Right: AI Diagnostic Intelligence Panel */}
-              <div className="w-[420px] xl:w-[460px] 2xl:w-[500px] shrink-0 flex flex-col border-l border-border/40 overflow-hidden bg-background">
-                <AIAnalysisPanel
-                  diagnosis={diagnosis}
-                  isAnalyzing={isAnalyzing}
-                  sessionId={activeSessionId}
-                  feedback={feedback}
-                  onSubmitFeedback={handleSubmitFeedback}
-                  error={analysisError}
-                  onRetry={handleAnalyze}
-                />
-              </div>
             </div>
-          </>
+          </div>
         )}
       </div>
 

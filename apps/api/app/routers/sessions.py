@@ -69,7 +69,6 @@ def create_debug_session(
     db: Annotated[Session, Depends(get_db)],
     storage: Annotated[BaseStorageService, Depends(get_storage_service)] = None,  # type: ignore[assignment]
 ) -> DebugSessionDetail:
-
     """Create a new debug session: run AI analysis and persist both the request and the response."""
     project = _get_project_for_user(project_id, current_user, db)
 
@@ -113,7 +112,6 @@ def create_debug_session(
             detail=f"AI Analysis failed: {error_msg}",
         ) from e
 
-
     # Create the session
     session_id = uuid.uuid4()
     db_session = DebugSession(
@@ -139,7 +137,9 @@ def create_debug_session(
         user_content_parts.append(f"[files_included]\n{files_summary}")
     if assembled_context.document_context:
         docs_summary = ", ".join(
-            f"{d.title or d.source or 'Doc'} (p.{d.page_number})" if d.page_number is not None else (d.title or d.source or "Doc")
+            f"{d.title or d.source or 'Doc'} (p.{d.page_number})"
+            if d.page_number is not None
+            else (d.title or d.source or "Doc")
             for d in assembled_context.document_context
         )
         user_content_parts.append(f"[documents_referenced]\n{docs_summary}")

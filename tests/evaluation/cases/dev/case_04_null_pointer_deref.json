@@ -1,0 +1,25 @@
+{
+  "id": "dev_04_null_pointer_deref",
+  "category": "code_issue",
+  "description": "Potential null pointer dereference from unchecked malloc return",
+  "firmware_code": "#include <stdlib.h>\n#include <string.h>\n\nchar *duplicate_string(const char *src) {\n    char *dst = malloc(strlen(src) + 1);\n    strcpy(dst, src);\n    return dst;\n}\n\nint main(void) {\n    char *copy = duplicate_string(\"test\");\n    free(copy);\n    return 0;\n}",
+  "compiler_output": "",
+  "serial_logs": "",
+  "user_question": "Is there any issue with this memory allocation code?",
+  "expected_root_cause": "malloc can return NULL on failure; code dereferences without checking",
+  "expected_fix": "Check malloc return value before using the pointer",
+  "expected_confidence_level": "medium",
+  "expected_code_issues": [
+    {
+      "kind": "null_pointer",
+      "severity": "high",
+      "confirmed": false,
+      "location": "main.c:5",
+      "evidence": "char *dst = malloc(strlen(src) + 1);\\n    strcpy(dst, src);",
+      "suggestion": "Add NULL check: if (!dst) return NULL;"
+    }
+  ],
+  "expected_compiler_messages": null,
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": "Consider embedded context: malloc may not be available or may need custom allocator"
+}

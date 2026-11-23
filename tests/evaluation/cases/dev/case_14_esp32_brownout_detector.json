@@ -1,0 +1,27 @@
+{
+  "id": "dev_14_esp32_brownout_detector",
+  "category": "serial_log",
+  "description": "ESP32 brownout detector triggered due to insufficient power supply",
+  "firmware_code": "#include <stdio.h>\n#include \"driver/gpio.h\"\n#include \"esp_log.h\"\n\n#define LED_PIN 2\n\nvoid app_main(void) {\n    gpio_config_t io_conf = {\n        .pin_bit_mask = (1ULL << LED_PIN),\n        .mode = GPIO_MODE_OUTPUT,\n    };\n    gpio_config(&io_conf);\n\n    while (1) {\n        gpio_set_level(LED_PIN, 1);\n        vTaskDelay(pdMS_TO_TICKS(500));\n        gpio_set_level(LED_PIN, 0);\n        vTaskDelay(pdMS_TO_TICKS(500));\n    }\n}",
+  "compiler_output": "",
+  "serial_logs": "ets Jun  8 2016 00:22:57\n\nrst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)\nconfigsip: 0, SPIWP:0xee\nclk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00\nmode:DIO, clock div:1\nload:0x3fff0018,len:4\nload:0x3fff001c,len:1212\nhash ok\n\nentry 0x400807d8\nI (321) cpu_start: Starting scheduler on PRO CPU.\nI (321) cpu_start: Starting scheduler on APP CPU.\nBrownout detector was triggered\n\nets Jun  8 2016 00:22:57\n... (repeats)",
+  "user_question": "Why does ESP32 keep rebooting with 'Brownout detector was triggered'?",
+  "expected_root_cause": "Power supply voltage dropping below brownout threshold (typically ~2.7V) under load",
+  "expected_fix": "Use stable 3.3V supply with adequate current capacity; add decoupling capacitors; check USB cable/port current limit",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [],
+  "expected_compiler_messages": null,
+  "expected_serial_log_events": [
+    {
+      "event_type": "brownout_reset",
+      "severity": "critical",
+      "is_repeated": true,
+      "message": "Brownout detector was triggered - supply voltage too low",
+      "evidence": "Brownout detector was triggered",
+      "likely_cause": "Insufficient power supply current or voltage drop under load",
+      "suggested_action": "Measure 3.3V rail with multimeter under load; use powered hub or better supply; add 100uF + 100nF decoupling"
+    }
+  ],
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": "Check ESP32 datasheet for brownout detector voltage threshold"
+}

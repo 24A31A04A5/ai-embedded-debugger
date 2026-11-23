@@ -1,0 +1,36 @@
+{
+  "id": "dev_15_uart_baudrate_mismatch",
+  "category": "serial_log",
+  "description": "UART communication failure due to baud rate mismatch",
+  "firmware_code": "#include <stdio.h>\n#include \"driver/uart.h\"\n\n#define UART_NUM UART_NUM_0\n#define BAUD_RATE 115200\n\nvoid app_main(void) {\n    uart_config_t uart_config = {\n        .baud_rate = 9600,\n        .data_bits = UART_DATA_8_BITS,\n        .parity = UART_PARITY_DISABLE,\n        .stop_bits = UART_STOP_BITS_1,\n        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE\n    };\n    uart_param_config(UART_NUM, &uart_config);\n    uart_driver_install(UART_NUM, 1024, 0, 0, NULL, 0);\n\n    while (1) {\n        uart_write_bytes(UART_NUM, \"Hello\\n\", 6);\n        vTaskDelay(pdMS_TO_TICKS(1000));\n    }\n}",
+  "compiler_output": "",
+  "serial_logs": "Garbage characters: ⸮⸮�⸮⸮\nGarbage characters: ⸮⸮�⸮⸮\nGarbage characters: ⸮⸮�⸮⸮\n",
+  "user_question": "Why is UART outputting garbage characters?",
+  "expected_root_cause": "Baud rate mismatch - firmware configured for 9600 but host expects 115200 (or vice versa)",
+  "expected_fix": "Match baud rates: change firmware to 115200 or host to 9600",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [
+    {
+      "kind": "peripheral_register",
+      "severity": "high",
+      "confirmed": true,
+      "location": "main.c:11",
+      "evidence": ".baud_rate = 9600,",
+      "suggestion": "Change to 115200 to match host terminal setting"
+    }
+  ],
+  "expected_compiler_messages": null,
+  "expected_serial_log_events": [
+    {
+      "event_type": "communication_error",
+      "severity": "high",
+      "is_repeated": true,
+      "message": "UART garbage output - baud rate mismatch",
+      "evidence": "Garbage characters: ⸮⸮�⸮⸮",
+      "likely_cause": "Transmitter and receiver baud rates don't match",
+      "suggested_action": "Verify both sides use same baud rate (9600/115200/other)"
+    }
+  ],
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": null
+}

@@ -1,0 +1,25 @@
+{
+  "id": "dev_12_missing_volatile_register",
+  "category": "code_issue",
+  "description": "Missing volatile qualifier on hardware register access",
+  "firmware_code": "#include <stdint.h>\n\n#define GPIOA_BASE 0x40020000\n#define GPIOA_ODR (*(uint32_t *)(GPIOA_BASE + 0x14))\n\ntoggle_led(void) {\n    GPIOA_ODR ^= (1 << 5);\n}\n\nint main(void) {\n    while (1) {\n        toggle_led();\n        for (volatile int i = 0; i < 100000; i++);\n    }\n}",
+  "compiler_output": "",
+  "serial_logs": "",
+  "user_question": "Why does the LED not toggle when optimization is enabled?",
+  "expected_root_cause": "GPIOA_ODR register access not declared volatile - compiler optimizes away the write",
+  "expected_fix": "Add volatile qualifier: #define GPIOA_ODR (*(volatile uint32_t *)(GPIOA_BASE + 0x14))",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [
+    {
+      "kind": "peripheral_register",
+      "severity": "high",
+      "confirmed": false,
+      "location": "main.c:4",
+      "evidence": "#define GPIOA_ODR (*(uint32_t *)(GPIOA_BASE + 0x14))",
+      "suggestion": "Add volatile: #define GPIOA_ODR (*(volatile uint32_t *)(GPIOA_BASE + 0x14))"
+    }
+  ],
+  "expected_compiler_messages": null,
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": "Verify all memory-mapped register accesses use volatile"
+}

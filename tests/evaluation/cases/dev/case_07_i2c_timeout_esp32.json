@@ -1,0 +1,37 @@
+{
+  "id": "dev_07_i2c_timeout_esp32",
+  "category": "serial_log",
+  "description": "ESP32 I2C master write timeout due to missing pull-up resistors",
+  "firmware_code": "#include <stdio.h>\n#include \"driver/i2c.h\"\n#include \"esp_log.h\"\n\n#define I2C_MASTER_SCL_IO 22\n#define I2C_MASTER_SDA_IO 21\n#define I2C_MASTER_NUM I2C_NUM_0\n#define I2C_MASTER_FREQ_HZ 100000\n\nstatic const char *TAG = \"i2c_example\";\n\nvoid app_main(void) {\n    i2c_config_t conf = {\n        .mode = I2C_MODE_MASTER,\n        .sda_io_num = I2C_MASTER_SDA_IO,\n        .scl_io_num = I2C_MASTER_SCL_IO,\n        .sda_pullup_en = GPIO_PULLUP_DISABLE,\n        .scl_pullup_en = GPIO_PULLUP_DISABLE,\n        .master.clk_speed = I2C_MASTER_FREQ_HZ,\n    };\n    i2c_param_config(I2C_MASTER_NUM, &conf);\n    i2c_driver_install(I2C_MASTER_NUM, conf.mode, 0, 0, 0);\n\n    uint8_t data = 0x55;\n    esp_err_t ret = i2c_master_write_to_device(I2C_MASTER_NUM, 0x48, &data, 1, pdMS_TO_TICKS(1000));\n    if (ret != ESP_OK) {\n        ESP_LOGE(TAG, \"I2C write failed: %s\", esp_err_to_name(ret));\n    }\n}",
+  "compiler_output": "",
+  "serial_logs": "I (201) i2c_example: I2C initialized\nE (1201) i2c_example: I2C write failed: ESP_ERR_TIMEOUT\nE (2201) i2c_example: I2C write failed: ESP_ERR_TIMEOUT\nE (3201) i2c_example: I2C write failed: ESP_ERR_TIMEOUT\n",
+  "user_question": "Why does I2C write keep timing out?",
+  "expected_root_cause": "I2C pull-up resistors disabled in code (GPIO_PULLUP_DISABLE) and likely missing external pull-ups",
+  "expected_fix": "Enable internal pull-ups: .sda_pullup_en = GPIO_PULLUP_ENABLE, .scl_pullup_en = GPIO_PULLUP_ENABLE, and verify external 4.7k pull-ups",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [
+    {
+      "kind": "peripheral_register",
+      "severity": "high",
+      "confirmed": true,
+      "location": "main.c:18-19",
+      "evidence": ".sda_pullup_en = GPIO_PULLUP_DISABLE,\\n        .scl_pullup_en = GPIO_PULLUP_DISABLE,",
+      "suggestion": "Enable internal pull-ups: GPIO_PULLUP_ENABLE; ensure external 4.7k pull-up resistors on SDA/SCL"
+    }
+  ],
+  "expected_compiler_messages": null,
+  "expected_serial_log_events": [
+    {
+      "event_type": "timeout",
+      "severity": "high",
+      "is_repeated": true,
+      "repeat_count": 3,
+      "message": "I2C master write timeout (ESP_ERR_TIMEOUT)",
+      "evidence": "I2C write failed: ESP_ERR_TIMEOUT",
+      "likely_cause": "Missing I2C pull-up resistors - bus stuck low or floating",
+      "suggested_action": "Enable internal pull-ups in code; verify external 4.7kΩ pull-ups on SDA/SCL with multimeter"
+    }
+  ],
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": "Check ESP32 datasheet for I2C pull-up requirements and internal pull-up strength"
+}

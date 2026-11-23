@@ -127,9 +127,7 @@ class TestCrossUserIsolation:
         finally:
             app.dependency_overrides.clear()
 
-    def test_user_a_cannot_access_user_b_sessions(
-        self, user_a: User, project_b: Project
-    ) -> None:
+    def test_user_a_cannot_access_user_b_sessions(self, user_a: User, project_b: Project) -> None:
         mock_db = MagicMock()
         mock_db.query.return_value.filter.return_value.first.return_value = None
 
@@ -143,9 +141,7 @@ class TestCrossUserIsolation:
         finally:
             app.dependency_overrides.clear()
 
-    def test_user_a_cannot_access_user_b_documents(
-        self, user_a: User, project_b: Project
-    ) -> None:
+    def test_user_a_cannot_access_user_b_documents(self, user_a: User, project_b: Project) -> None:
         mock_db = MagicMock()
         mock_db.query.return_value.filter.return_value.first.return_value = None
 
@@ -227,6 +223,21 @@ class TestSecurityHeaders:
         assert headers.get("Referrer-Policy") == "strict-origin-when-cross-origin"
         assert "camera=()" in headers.get("Permissions-Policy", "")
 
+    def test_localhost_3001_origin_is_allowed_with_credentials(self) -> None:
+        client = TestClient(app)
+        response = client.options(
+            "/v1/projects",
+            headers={
+                "Origin": "http://localhost:3001",
+                "Access-Control-Request-Method": "GET",
+                "Access-Control-Request-Headers": "authorization,content-type",
+            },
+        )
+
+        assert response.status_code in {200, 204}
+        assert response.headers.get("access-control-allow-origin") == "http://localhost:3001"
+        assert response.headers.get("access-control-allow-credentials") == "true"
+
 
 # ─────────────────────────────────────────────
 # 6. Secret redaction & safe error handling
@@ -259,12 +270,13 @@ class TestSecretRedaction:
         assert "Gemini API connection or authentication failed." in detail
 
     def test_sanitize_error_detail_general_exception_returns_default(self) -> None:
-        exc = Exception("psycopg2.OperationalError: server closed the connection unexpectedly at 10.0.0.1:5432")
+        exc = Exception(
+            "psycopg2.OperationalError: server closed the connection unexpectedly at 10.0.0.1:5432"
+        )
         detail = sanitize_error_detail(exc, default="Operation failed.")
         assert detail == "Operation failed."
         assert "10.0.0.1" not in detail
         assert "psycopg2" not in detail
-
 
 
 # ─────────────────────────────────────────────
@@ -273,9 +285,7 @@ class TestSecretRedaction:
 
 
 class TestInputValidationBounds:
-    def test_oversized_question_fails_validation(
-        self, user_a: User, project_b: Project
-    ) -> None:
+    def test_oversized_question_fails_validation(self, user_a: User, project_b: Project) -> None:
         app.dependency_overrides[get_current_user] = lambda: user_a
         mock_db = MagicMock()
         mock_db.query.return_value.filter.return_value.first.return_value = project_b

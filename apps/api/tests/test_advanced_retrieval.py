@@ -380,4 +380,3 @@ class TestNoResultHandling:
         mock_db = MagicMock()
         svc = DocumentRetrievalService(db=mock_db, embedding_service=MockEmbeddingService())
         assert svc.search(project_id=mock_project.id, query="Test", top_k=0) == []
-

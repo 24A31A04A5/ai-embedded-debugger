@@ -67,7 +67,6 @@ class LocalStorageService(BaseStorageService):
 
         return target_path
 
-
     def upload_file(
         self, storage_key: str, data: bytes, content_type: str = "application/octet-stream"
     ) -> None:

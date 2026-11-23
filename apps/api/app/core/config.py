@@ -8,6 +8,12 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Repository root: apps/api/app/core -> parents[4]
 REPO_ROOT = Path(__file__).resolve().parents[4]
+DEFAULT_LOCAL_CORS_ORIGINS = [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
+]
 
 
 class Settings(BaseSettings):
@@ -26,7 +32,7 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     clerk_secret_key: str = ""
     gemini_api_key: str = ""
-    cors_origins: list[str] | str = ["http://localhost:3000"]
+    cors_origins: list[str] | str = DEFAULT_LOCAL_CORS_ORIGINS
 
     # Object Storage Settings
 
@@ -88,7 +94,7 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             v_stripped = v.strip()
             if not v_stripped:
-                return ["http://localhost:3000"]
+                return DEFAULT_LOCAL_CORS_ORIGINS
             if v_stripped.startswith("[") and v_stripped.endswith("]"):
                 try:
                     parsed = json.loads(v_stripped)
@@ -99,7 +105,7 @@ class Settings(BaseSettings):
             return [origin.strip() for origin in v_stripped.split(",") if origin.strip()]
         if isinstance(v, list):
             return [str(origin).strip() for origin in v if str(origin).strip()]
-        return ["http://localhost:3000"]
+        return DEFAULT_LOCAL_CORS_ORIGINS
 
 
 @lru_cache

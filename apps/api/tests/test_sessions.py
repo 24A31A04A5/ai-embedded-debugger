@@ -53,9 +53,7 @@ MOCK_DIAGNOSIS = DebugResponse(
 )
 
 
-def test_create_session_calls_ai_and_persists(
-    mock_user: User, mock_project: Project
-) -> None:
+def test_create_session_calls_ai_and_persists(mock_user: User, mock_project: Project) -> None:
     mock_db = MagicMock()
     mock_db.query.return_value.filter.return_value.first.return_value = mock_project
 
@@ -90,7 +88,10 @@ def test_create_session_calls_ai_and_persists(
         assert data["project_id"] == str(mock_project.id)
         # 3 domain adds: session + user message + assistant message
         from app.models.analytics_event import AnalyticsEvent
-        domain_adds = [c for c in mock_db.add.call_args_list if not isinstance(c.args[0], AnalyticsEvent)]
+
+        domain_adds = [
+            c for c in mock_db.add.call_args_list if not isinstance(c.args[0], AnalyticsEvent)
+        ]
         assert len(domain_adds) == 3
         assert mock_db.commit.called
     finally:
@@ -211,9 +212,7 @@ def test_session_not_found(mock_user: User, mock_project: Project) -> None:
 
     client = TestClient(app)
     try:
-        response = client.get(
-            f"/v1/projects/{mock_project.id}/sessions/{uuid.uuid4()}"
-        )
+        response = client.get(f"/v1/projects/{mock_project.id}/sessions/{uuid.uuid4()}")
         assert response.status_code == 404
         assert response.json()["detail"] == "Session not found"
     finally:

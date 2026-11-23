@@ -117,7 +117,7 @@ WARNING_RESPONSE = DebugResponse(
     problem_observed="Compiler warning: format '%d' expects argument of type 'int', but argument 2 has type 'uint32_t'.",
     evidence_used=[
         "src/sensor.c:45:12: warning: format '%d' expects argument of type 'int', but argument 2 has type 'uint32_t' (aka 'unsigned int') [-Wformat=]",
-        "printf(\"Count: %d\\n\", count);",
+        'printf("Count: %d\\n", count);',
     ],
     likely_causes=[
         LikelyCause(
@@ -125,9 +125,7 @@ WARNING_RESPONSE = DebugResponse(
             plausibility="high",
         )
     ],
-    recommended_steps=[
-        "Include <inttypes.h> and use PRIu32 format specifier, or cast/use %u."
-    ],
+    recommended_steps=["Include <inttypes.h> and use PRIu32 format specifier, or cast/use %u."],
     proposed_fix="Use PRIu32 macro from <inttypes.h> for portable 32-bit unsigned printing.",
     corrected_code='printf("Count: %" PRIu32 "\\n", count);',
     risks_limitations=None,
@@ -191,7 +189,7 @@ LINKER_ERROR_RESPONSE = DebugResponse(
             line=22,
             column=None,
             message="undefined reference to `xTaskCreate'",
-            code_context="xTaskCreate(task_blink, \"blink\", 2048, NULL, 5, NULL);",
+            code_context='xTaskCreate(task_blink, "blink", 2048, NULL, 5, NULL);',
             likely_cause="Consequence of missing FreeRTOS core library linkage.",
             suggested_fix="Link the FreeRTOS kernel library.",
         ),
@@ -211,9 +209,7 @@ CASCADING_ERRORS_RESPONSE = DebugResponse(
             plausibility="high",
         )
     ],
-    recommended_steps=[
-        "Add #include <stdint.h> at the top of include/gpio.h."
-    ],
+    recommended_steps=["Add #include <stdint.h> at the top of include/gpio.h."],
     proposed_fix="Include standard integer definitions in the header file.",
     corrected_code="#include <stdint.h>\n#include <stdbool.h>",
     risks_limitations=None,
@@ -474,7 +470,9 @@ class TestCleanCompilerOutput:
         clean_resp = DebugResponse(
             problem_observed="No compiler issues found.",
             evidence_used=["No compiler errors present."],
-            likely_causes=[LikelyCause(cause="Logic issue or hardware misconfiguration", plausibility="medium")],
+            likely_causes=[
+                LikelyCause(cause="Logic issue or hardware misconfiguration", plausibility="medium")
+            ],
             recommended_steps=["Check runtime serial monitor logs."],
             proposed_fix="Review peripheral initialization sequence.",
             compiler_messages=None,

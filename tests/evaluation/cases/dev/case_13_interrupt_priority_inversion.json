@@ -1,0 +1,25 @@
+{
+  "id": "dev_13_interrupt_priority_inversion",
+  "category": "code_issue",
+  "description": "Priority inversion in interrupt handler due to missing critical section",
+  "firmware_code": "#include <stdint.h>\n#include <stdbool.h>\n\nvolatile uint32_t shared_counter = 0;\n\nvoid EXTI0_IRQHandler(void) {\n    shared_counter++;\n}\n\nvoid SysTick_Handler(void) {\n    if (shared_counter > 1000) {\n        shared_counter = 0;\n    }\n}\n\nint main(void) {\n    while (1) {\n        if (shared_counter == 500) {\n            // Do something\n        }\n    }\n}",
+  "compiler_output": "",
+  "serial_logs": "",
+  "user_question": "Is there a race condition with shared_counter accessed from ISR and main loop?",
+  "expected_root_cause": "shared_counter accessed from both interrupt handler and main loop without atomic access or critical section",
+  "expected_fix": "Use __atomic_fetch_add or disable interrupts around shared_counter access in main loop",
+  "expected_confidence_level": "medium",
+  "expected_code_issues": [
+    {
+      "kind": "resource_misuse",
+      "severity": "medium",
+      "confirmed": false,
+      "location": "main.c:7",
+      "evidence": "shared_counter++; // in ISR",
+      "suggestion": "Use atomic operations or critical sections for shared variables"
+    }
+  ],
+  "expected_compiler_messages": null,
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": "Verify interrupt priorities and consider using atomic builtins"
+}

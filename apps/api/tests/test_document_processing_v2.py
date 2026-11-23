@@ -104,7 +104,6 @@ class TestPagePreservation:
         assert any(c.page_number == 3 and "Memory Mapping" in c.content for c in chunks)
 
 
-
 # ─────────────────────────────────────────────
 # 3. Section / heading preservation
 # ─────────────────────────────────────────────
@@ -223,7 +222,6 @@ class TestChunkMetadataTraceability:
             assert chunk.chunk_index == idx
             assert isinstance(chunk.metadata, dict)
             assert "content_type" in chunk.metadata
-
 
 
 # ─────────────────────────────────────────────

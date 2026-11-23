@@ -10,7 +10,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.core.config import Settings, get_settings
+from app.core.config import DEFAULT_LOCAL_CORS_ORIGINS, Settings, get_settings
 from app.core.database import build_engine
 from app.main import lifespan
 
@@ -61,8 +61,8 @@ class TestCorsConfiguration:
         assert parsed == ["https://debugger.example.com", "https://preview.example.com"]
 
     def test_falls_back_to_localhost_when_empty_string(self) -> None:
-        assert Settings.parse_cors_origins("") == ["http://localhost:3000"]
-        assert Settings.parse_cors_origins("   ") == ["http://localhost:3000"]
+        assert Settings.parse_cors_origins("") == DEFAULT_LOCAL_CORS_ORIGINS
+        assert Settings.parse_cors_origins("   ") == DEFAULT_LOCAL_CORS_ORIGINS
 
     def test_preserves_clean_list(self) -> None:
         origins = ["https://app.example.com", "https://api.example.com"]
@@ -80,7 +80,7 @@ class TestProductionLifespanAndObservability:
                 "app_env": "production",
                 "clerk_secret_key": "",
                 "gemini_api_key": "",
-                "cors_origins": ["http://localhost:3000"],
+                "cors_origins": DEFAULT_LOCAL_CORS_ORIGINS,
                 "expose_error_details": True,
             }
         )
@@ -98,7 +98,7 @@ class TestProductionLifespanAndObservability:
         logs = caplog.text
         assert "CLERK_SECRET_KEY is not configured" in logs
         assert "GEMINI_API_KEY is not configured" in logs
-        assert "CORS_ORIGINS is using development default" in logs
+        assert "CORS_ORIGINS is using development defaults" in logs
         assert "EXPOSE_ERROR_DETAILS is enabled in production" in logs
 
     def test_shutdown_disposes_database_engine(self) -> None:

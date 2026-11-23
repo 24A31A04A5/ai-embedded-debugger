@@ -1,0 +1,37 @@
+{
+  "id": "holdout_02_spi_communication_failure",
+  "category": "serial_log",
+  "description": "SPI communication failure due to incorrect mode configuration",
+  "firmware_code": "#include <stdio.h>\n#include \"driver/spi_master.h\"\n#include \"esp_log.h\"\n\n#define PIN_NUM_MISO 19\n#define PIN_NUM_MOSI 23\n#define PIN_NUM_CLK  18\n#define PIN_NUM_CS   5\n\nstatic const char *TAG = \"spi_example\";\n\nvoid app_main(void) {\n    spi_bus_config_t buscfg = {\n        .miso_io_num = PIN_NUM_MISO,\n        .mosi_io_num = PIN_NUM_MOSI,\n        .sclk_io_num = PIN_NUM_CLK,\n        .quadwp_io_num = -1,\n        .quadhd_io_num = -1,\n        .max_transfer_sz = 32\n    };\n    spi_device_interface_config_t devcfg = {\n        .clock_speed_hz = 1000000,\n        .mode = 3,\n        .spics_io_num = PIN_NUM_CS,\n        .queue_size = 7,\n    };\n    spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO);\n    spi_bus_add_device(SPI2_HOST, &devcfg, NULL);\n\n    uint8_t tx_data[2] = {0x0F, 0x00};\n    spi_transaction_t t = {\n        .length = 16,\n        .tx_buffer = tx_data,\n    };\n    esp_err_t ret = spi_device_polling_transmit(NULL, &t);\n    if (ret != ESP_OK) {\n        ESP_LOGE(TAG, \"SPI transmit failed: %s\", esp_err_to_name(ret));\n    }\n}",
+  "compiler_output": "",
+  "serial_logs": "E (102) spi_example: SPI transmit failed: ESP_ERR_INVALID_ARG\nE (1102) spi_example: SPI transmit failed: ESP_ERR_INVALID_ARG\nE (2102) spi_example: SPI transmit failed: ESP_ERR_INVALID_ARG\n",
+  "user_question": "Why does SPI transmit keep failing with ESP_ERR_INVALID_ARG?",
+  "expected_root_cause": "SPI device handle is NULL - spi_bus_add_device return value not captured",
+  "expected_fix": "Capture device handle: spi_device_handle_t handle; spi_bus_add_device(SPI2_HOST, &devcfg, &handle); then use handle in spi_device_polling_transmit",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [
+    {
+      "kind": "resource_misuse",
+      "severity": "high",
+      "confirmed": true,
+      "location": "main.c:24",
+      "evidence": "spi_bus_add_device(SPI2_HOST, &devcfg, NULL);",
+      "suggestion": "Capture device handle: spi_device_handle_t handle; spi_bus_add_device(SPI2_HOST, &devcfg, &handle);"
+    }
+  ],
+  "expected_compiler_messages": null,
+  "expected_serial_log_events": [
+    {
+      "event_type": "communication_error",
+      "severity": "high",
+      "is_repeated": true,
+      "repeat_count": 3,
+      "message": "SPI transmit failed: ESP_ERR_INVALID_ARG",
+      "evidence": "SPI transmit failed: ESP_ERR_INVALID_ARG",
+      "likely_cause": "NULL device handle passed to spi_device_polling_transmit",
+      "suggested_action": "Capture and use the device handle returned by spi_bus_add_device"
+    }
+  ],
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": null
+}

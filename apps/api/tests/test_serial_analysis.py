@@ -139,7 +139,7 @@ CRASH_FAULT_RESPONSE = DebugResponse(
         "Add an assert or check: if (packet == NULL) return ESP_ERR_INVALID_ARG;",
     ],
     proposed_fix="Validate incoming packet buffer pointer before accessing structure fields.",
-    corrected_code="if (packet == NULL) {\n    ESP_LOGE(TAG, \"packet is NULL\");\n    return ESP_ERR_INVALID_ARG;\n}",
+    corrected_code='if (packet == NULL) {\n    ESP_LOGE(TAG, "packet is NULL");\n    return ESP_ERR_INVALID_ARG;\n}',
     risks_limitations=None,
     follow_up_required=None,
     code_issues=[
@@ -470,7 +470,9 @@ class TestCleanNoLogHandling:
         clean_resp = DebugResponse(
             problem_observed="No runtime log issues present.",
             evidence_used=["No serial logs submitted."],
-            likely_causes=[LikelyCause(cause="Build issue or code logic bug", plausibility="medium")],
+            likely_causes=[
+                LikelyCause(cause="Build issue or code logic bug", plausibility="medium")
+            ],
             recommended_steps=["Upload serial logs if available."],
             proposed_fix="Review code logic.",
             serial_log_events=None,

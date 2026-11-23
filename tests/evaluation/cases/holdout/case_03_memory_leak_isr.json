@@ -1,0 +1,25 @@
+{
+  "id": "holdout_03_memory_leak_isr",
+  "category": "code_issue",
+  "description": "Memory leak in ISR due to allocation without free",
+  "firmware_code": "#include <stdlib.h>\n#include <string.h>\n#include <stdio.h>\n\nvoid process_data_isr(void) {\n    char *buffer = malloc(256);\n    if (buffer) {\n        snprintf(buffer, 256, \"ISR data: %d\\n\", rand());\n        // Process buffer...\n    }\n    // Missing free(buffer)\n}\n\nint main(void) {\n    while (1) {\n        process_data_isr();\n    }\n    return 0;\n}",
+  "compiler_output": "",
+  "serial_logs": "",
+  "user_question": "Is there a memory issue in this ISR code?",
+  "expected_root_cause": "malloc in ISR without corresponding free - memory leaks on each interrupt",
+  "expected_fix": "Add free(buffer) before function returns; avoid malloc in ISR - use static buffer instead",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [
+    {
+      "kind": "memory_leak",
+      "severity": "high",
+      "confirmed": false,
+      "location": "main.c:5",
+      "evidence": "char *buffer = malloc(256);",
+      "suggestion": "Add free(buffer); better: use static buffer in ISR to avoid allocation"
+    }
+  ],
+  "expected_compiler_messages": null,
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": "Avoid dynamic allocation in ISRs entirely - use pre-allocated buffers"
+}

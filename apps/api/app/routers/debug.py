@@ -106,5 +106,3 @@ def analyze_project_debug_info(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"AI Analysis failed: {error_msg}",
         ) from e
-
-

@@ -1,0 +1,25 @@
+{
+  "id": "holdout_06_freertos_queue_deadlock",
+  "category": "code_issue",
+  "description": "FreeRTOS queue deadlock due to blocking send from ISR",
+  "firmware_code": "#include <FreeRTOS.h>\n#include <task.h>\n#include <queue.h>\n#include <stdio.h>\n\nQueueHandle_t data_queue;\n\nvoid EXTI0_IRQHandler(void) {\n    int data = 42;\n    xQueueSend(data_queue, &data, portMAX_DELAY);\n}\n\nvoid vTaskConsumer(void *pvParameters) {\n    int received;\n    while (1) {\n        xQueueReceive(data_queue, &received, portMAX_DELAY);\n        printf(\"Received: %d\\n\", received);\n    }\n}\n\nint main(void) {\n    data_queue = xQueueCreate(10, sizeof(int));\n    xTaskCreate(vTaskConsumer, \"Consumer\", 256, NULL, 1, NULL);\n    vTaskStartScheduler();\n    return 0;\n}",
+  "compiler_output": "",
+  "serial_logs": "",
+  "user_question": "Is there a problem with using xQueueSend with portMAX_DELAY in an ISR?",
+  "expected_root_cause": "xQueueSend with portMAX_DELAY blocks indefinitely - not allowed in ISR context",
+  "expected_fix": "Use xQueueSendFromISR with pdFALSE/pdTRUE for xHigherPriorityTaskWoken",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [
+    {
+      "kind": "resource_misuse",
+      "severity": "critical",
+      "confirmed": false,
+      "location": "main.c:7",
+      "evidence": "xQueueSend(data_queue, &data, portMAX_DELAY);",
+      "suggestion": "Use xQueueSendFromISR(&xHigherPriorityTaskWoken) in ISR"
+    }
+  ],
+  "expected_compiler_messages": null,
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": "All FreeRTOS API calls in ISR must use *FromISR variants"
+}

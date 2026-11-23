@@ -119,8 +119,6 @@ class DocumentSearchRequest(BaseModel):
     )
 
 
-
-
 class DocumentSearchResultItem(BaseModel):
     """Schema for an individual search result chunk with traceability metadata."""
 

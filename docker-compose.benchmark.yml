@@ -1,0 +1,37 @@
+# =============================================================================
+# Isolated Development Benchmark Environment
+# =============================================================================
+# This compose file provides an isolated PostgreSQL + pgvector database
+# for running the benchmark smoke test. It does NOT connect to production.
+# =============================================================================
+
+services:
+  # Isolated PostgreSQL with pgvector for benchmark evaluation
+  pgvector-benchmark:
+    image: pgvector/pgvector:pg16
+    container_name: pgvector-benchmark
+    environment:
+      - POSTGRES_DB=aed_benchmark
+      - POSTGRES_USER=benchmark
+      - POSTGRES_PASSWORD=benchmark
+    ports:
+      - "5433:5432"  # Different port to avoid conflicts with any local pg
+    volumes:
+      - pgvector_benchmark_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U benchmark -d aed_benchmark"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  pgvector_benchmark_data:
+    driver: local
+
+# =============================================================================
+# Usage:
+#   docker compose -f docker-compose.benchmark.yml up -d
+#   docker compose -f docker-compose.benchmark.yml down -v  # clean shutdown with data removal
+# =============================================================================

@@ -56,6 +56,9 @@ interface ProjectFilesPanelProps {
   activeSessionId: string | null;
   onSelectSession: (id: string) => void;
   onDeleteSession: (id: string) => void;
+  activeFileName?: string;
+  compilerOutput?: string;
+  serialLogs?: string;
   className?: string;
 }
 
@@ -70,6 +73,9 @@ export function ProjectFilesPanel({
   activeSessionId,
   onSelectSession,
   onDeleteSession,
+  activeFileName,
+  compilerOutput,
+  serialLogs,
   className = "",
 }: ProjectFilesPanelProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -95,8 +101,58 @@ export function ProjectFilesPanel({
     if (file) onUpload(file);
   };
 
+  const openEditors = [
+    activeFileName ? { label: activeFileName, tone: "purple" as const } : null,
+    compilerOutput?.trim() ? { label: "Compiler Output", tone: "amber" as const } : null,
+    serialLogs?.trim() ? { label: "Serial / UART", tone: "indigo" as const } : null,
+  ].filter(Boolean) as Array<{ label: string; tone: "purple" | "amber" | "indigo" }>;
+
   return (
-    <div className={`flex flex-col h-full bg-[oklch(0.12_0.015_260/0.7)] backdrop-blur-md overflow-hidden ${className}`}>
+    <div className={`flex h-full flex-col overflow-hidden bg-[oklch(0.095_0.015_260/0.96)] ${className}`}>
+      <div className="flex items-center justify-between border-b border-border/40 bg-[oklch(0.09_0.015_260/0.98)] px-3 py-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <FolderOpen className="h-3.5 w-3.5 text-[var(--accent-purple)] shrink-0" />
+          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground font-mono">
+            Explorer
+          </span>
+        </div>
+        <span className="text-[10px] font-mono text-muted-foreground/50">
+          IDE
+        </span>
+      </div>
+
+      {/* Open Editors */}
+      <div className="border-b border-border/40 px-3 py-2">
+        <div className="mb-2 flex items-center gap-1.5 min-w-0">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground font-mono">
+            Open Editors
+          </span>
+        </div>
+        <div className="space-y-1">
+          {openEditors.length === 0 ? (
+            <div className="rounded-md border border-dashed border-border/40 bg-white/[0.02] px-2.5 py-2 text-[11px] text-muted-foreground/50">
+              No files open.
+            </div>
+          ) : (
+            openEditors.map((editor) => (
+              <div
+                key={editor.label}
+                className={`flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-mono ${
+                  editor.tone === "purple"
+                    ? "border-[var(--accent-purple)]/30 bg-[var(--accent-purple)]/10 text-foreground"
+                    : editor.tone === "amber"
+                      ? "border-[var(--color-warning-amber)]/25 bg-[var(--color-warning-amber)]/8 text-foreground"
+                      : "border-[var(--accent-indigo)]/25 bg-[var(--accent-indigo)]/8 text-foreground"
+                }`}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${editor.tone === "purple" ? "bg-[var(--accent-purple)]" : editor.tone === "amber" ? "bg-[var(--color-warning-amber)]" : "bg-[var(--accent-indigo)]"}`} />
+                <span className="truncate">{editor.label}</span>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
       {/* 1. Project Files Section */}
       <div
         className={`flex flex-1 flex-col min-h-0 border-b border-border/40 transition-all duration-150 ${

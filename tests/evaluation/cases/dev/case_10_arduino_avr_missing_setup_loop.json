@@ -1,0 +1,34 @@
+{
+  "id": "dev_10_arduino_avr_missing_setup_loop",
+  "category": "compiler_error",
+  "description": "Arduino sketch missing setup() and loop() functions",
+  "firmware_code": "#include <Arduino.h>\n\nint ledPin = 13;\n\nvoid blink() {\n    digitalWrite(ledPin, HIGH);\n    delay(1000);\n    digitalWrite(ledPin, LOW);\n    delay(1000);\n}\n",
+  "compiler_output": "sketch.ino.cpp: In function 'int main()':\nsketch.ino.cpp:10:1: error: 'setup' was not declared in this scope\n     setup();\n     ^~~~~\nsketch.ino.cpp:11:1: error: 'loop' was not declared in this scope\n     loop();\n     ^~~~~\n",
+  "serial_logs": "",
+  "user_question": "Why won't my Arduino sketch compile?",
+  "expected_root_cause": "Arduino sketches require setup() and loop() functions as entry points",
+  "expected_fix": "Add setup() to initialize pins and loop() to call blink() repeatedly",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [
+    {
+      "kind": "syntax_error",
+      "severity": "critical",
+      "confirmed": true,
+      "location": "sketch.ino:1",
+      "evidence": "No setup() or loop() functions defined",
+      "suggestion": "Add void setup() { pinMode(ledPin, OUTPUT); } and void loop() { blink(); }"
+    }
+  ],
+  "expected_compiler_messages": [
+    {
+      "message_type": "error",
+      "severity": "critical",
+      "is_root_cause": true,
+      "message": "'setup' was not declared in this scope",
+      "likely_cause": "Arduino requires setup() and loop() functions",
+      "suggested_fix": "Implement void setup() and void loop()"
+    }
+  ],
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": null
+}

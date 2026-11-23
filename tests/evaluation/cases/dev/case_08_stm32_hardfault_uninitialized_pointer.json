@@ -1,0 +1,36 @@
+{
+  "id": "dev_08_stm32_hardfault_uninitialized_pointer",
+  "category": "serial_log",
+  "description": "STM32 HardFault due to uninitialized function pointer",
+  "firmware_code": "#include \"main.h\"\n#include <stdio.h>\n\ntypedef void (*callback_t)(void);\n\ncallback_t user_callback;\n\nvoid HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {\n    if (GPIO_Pin == GPIO_PIN_0) {\n        user_callback();\n    }\n}\n\nint main(void) {\n    HAL_Init();\n    SystemClock_Config();\n    MX_GPIO_Init();\n    \n    while (1) {\n        HAL_Delay(1000);\n    }\n}",
+  "compiler_output": "",
+  "serial_logs": "HardFault_Handler\r\nCFSR: 0x00000400 (INVSTATE)\r\nHFSR: 0x40000000 (FORCED)\r\nDFSR: 0x00000000\r\nBFAR: 0x00000000\r\n\r\nPC: 0x00000000\r\nLR: 0x08000123\r\nR0: 0x00000000 R1: 0x00000000 R2: 0x00000000 R3: 0x00000000\r\nR12: 0x00000000 LR: 0x08000123 PC: 0x00000000 PSR: 0x61000000\r\n",
+  "user_question": "What caused this HardFault on STM32?",
+  "expected_root_cause": "Uninitialized function pointer user_callback called in interrupt handler - points to 0x00000000",
+  "expected_fix": "Initialize user_callback to a valid function or NULL and check before calling",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [
+    {
+      "kind": "null_pointer",
+      "severity": "critical",
+      "confirmed": true,
+      "location": "main.c:11",
+      "evidence": "user_callback();",
+      "suggestion": "Initialize callback: callback_t user_callback = NULL; and check if (user_callback) user_callback();"
+    }
+  ],
+  "expected_compiler_messages": null,
+  "expected_serial_log_events": [
+    {
+      "event_type": "crash_fault",
+      "severity": "critical",
+      "is_repeated": false,
+      "message": "HardFault: INVSTATE at PC=0x00000000",
+      "evidence": "PC: 0x00000000",
+      "likely_cause": "Function pointer called at NULL address - uninitialized callback",
+      "suggested_action": "Initialize function pointers to NULL and check before calling"
+    }
+  ],
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": null
+}

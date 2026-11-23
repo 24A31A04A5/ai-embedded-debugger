@@ -1,0 +1,36 @@
+{
+  "id": "holdout_04_esp32_rtc_wdt_reset",
+  "category": "serial_log",
+  "description": "ESP32 RTC Watchdog Timer reset during long initialization",
+  "firmware_code": "#include <stdio.h>\n#include \"freertos/FreeRTOS.h\"\n#include \"freertos/task.h\"\n#include \"esp_log.h\"\n\nvoid app_main(void) {\n    ESP_LOGI(\"init\", \"Starting long initialization...\");\n    \n    for (int i = 0; i < 1000000; i++) {\n        // Very long initialization without yielding\n        volatile int x = i * i;\n    }\n    \n    ESP_LOGI(\"init\", \"Initialization complete\");\n    \n    while (1) {\n        vTaskDelay(pdMS_TO_TICKS(1000));\n    }\n}",
+  "compiler_output": "",
+  "serial_logs": "I (0) init: Starting long initialization...\nE (1000) rtc_wdt: RTC watchdog timeout\n\nRebooting...\n\nI (0) init: Starting long initialization...\nE (1000) rtc_wdt: RTC watchdog timeout\n\nRebooting...\n",
+  "user_question": "Why does ESP32 reset during initialization with RTC watchdog timeout?",
+  "expected_root_cause": "RTC Watchdog Timer triggers because initialization takes too long without feeding the watchdog",
+  "expected_fix": "Call esp_task_wdt_reset() periodically during long initialization or disable RTC WDT temporarily with rtc_wdt_disable()",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [
+    {
+      "kind": "control_flow",
+      "severity": "critical",
+      "confirmed": true,
+      "location": "main.c:8-12",
+      "evidence": "for (int i = 0; i < 1000000; i++) { volatile int x = i * i; }",
+      "suggestion": "Add esp_task_wdt_reset() in loop or break initialization into smaller chunks with vTaskDelay"
+    }
+  ],
+  "expected_compiler_messages": null,
+  "expected_serial_log_events": [
+    {
+      "event_type": "watchdog_reset",
+      "severity": "critical",
+      "is_repeated": true,
+      "message": "RTC watchdog timeout during long initialization",
+      "evidence": "RTC watchdog timeout",
+      "likely_cause": "Initialization loop blocks for longer than RTC WDT timeout without yielding",
+      "suggested_action": "Feed watchdog periodically or disable RTC WDT during long init"
+    }
+  ],
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": "Check ESP32 Technical Reference Manual for RTC WDT timeout configuration"
+}

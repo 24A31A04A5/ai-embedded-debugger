@@ -1,0 +1,34 @@
+{
+  "id": "holdout_05_linker_region_overflow",
+  "category": "linker_error",
+  "description": "Linker region FLASH overflow - firmware too large for flash memory",
+  "firmware_code": "#include <stdint.h>\n\nconst uint8_t large_lookup_table[500000] = {0};\n\nint main(void) {\n    return 0;\n}",
+  "compiler_output": "/usr/bin/ld: region `FLASH' overflowed by 123456 bytes\ncollect2: error: ld returned 1 exit status\n",
+  "serial_logs": "",
+  "user_question": "Linker says region FLASH overflowed. What does this mean?",
+  "expected_root_cause": "Firmware size exceeds available flash memory - large_lookup_table (500KB) doesn't fit",
+  "expected_fix": "Reduce lookup table size, use compression, or move to external flash; check linker script FLASH region size",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [
+    {
+      "kind": "resource_misuse",
+      "severity": "critical",
+      "confirmed": true,
+      "location": "main.c:3",
+      "evidence": "const uint8_t large_lookup_table[500000] = {0};",
+      "suggestion": "Reduce table size or store in external memory"
+    }
+  ],
+  "expected_compiler_messages": [
+    {
+      "message_type": "linker_error",
+      "severity": "critical",
+      "is_root_cause": true,
+      "message": "region `FLASH' overflowed by 123456 bytes",
+      "likely_cause": "Firmware image larger than available flash memory",
+      "suggested_fix": "Reduce code/data size or use MCU with larger flash"
+    }
+  ],
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": "Check MCU datasheet for actual flash size and linker script"
+}

@@ -1,0 +1,25 @@
+{
+  "id": "holdout_08_circular_buffer_overflow",
+  "category": "code_issue",
+  "description": "Circular buffer overflow due to incorrect head/tail logic",
+  "firmware_code": "#include <stdint.h>\n#include <stdbool.h>\n\ntypedef struct {\n    uint8_t data[64];\n    uint8_t head;\n    uint8_t tail;\n} circular_buffer_t;\n\nbool buffer_push(circular_buffer_t *buf, uint8_t value) {\n    uint8_t next_head = (buf->head + 1) % 64;\n    if (next_head == buf->tail) {\n        return false;\n    }\n    buf->data[buf->head] = value;\n    buf->head = next_head;\n    return true;\n}\n\nbool buffer_pop(circular_buffer_t *buf, uint8_t *value) {\n    if (buf->head == buf->tail) {\n        return false;\n    }\n    *value = buf->data[buf->tail];\n    buf->tail = (buf->tail + 1) % 64;\n    return true;\n}\n\nint main(void) {\n    circular_buffer_t buf = {0};\n    for (int i = 0; i < 100; i++) {\n        buffer_push(&buf, i);\n    }\n    return 0;\n}",
+  "compiler_output": "",
+  "serial_logs": "",
+  "user_question": "Why does the buffer_push fail after 63 elements?",
+  "expected_root_cause": "Circular buffer full condition (next_head == tail) means one slot always reserved - max 63 elements in 64-byte buffer",
+  "expected_fix": "Accept that one slot is reserved for full/empty distinction, or use separate count variable to use all 64 slots",
+  "expected_confidence_level": "high",
+  "expected_code_issues": [
+    {
+      "kind": "logic_error",
+      "severity": "medium",
+      "confirmed": false,
+      "location": "main.c:9",
+      "evidence": "if (next_head == buf->tail)",
+      "suggestion": "This is standard circular buffer behavior - max capacity is size-1. Use count variable if full capacity needed."
+    }
+  ],
+  "expected_compiler_messages": null,
+  "expected_datasheet_citations": null,
+  "expected_follow_up_required": null
+}

@@ -75,9 +75,7 @@ class GeminiEmbeddingService(BaseEmbeddingService):
             )
             values = response.embeddings[0].values
             if len(values) != self._dim:
-                raise EmbeddingError(
-                    f"Unexpected dimension {len(values)}, expected {self._dim}"
-                )
+                raise EmbeddingError(f"Unexpected dimension {len(values)}, expected {self._dim}")
             return list(values)
         except EmbeddingError:
             raise
@@ -107,9 +105,7 @@ class GeminiEmbeddingService(BaseEmbeddingService):
                     )
                 results.append(values)
             if len(results) != len(texts):
-                raise EmbeddingError(
-                    f"Expected {len(texts)} embeddings, got {len(results)}"
-                )
+                raise EmbeddingError(f"Expected {len(texts)} embeddings, got {len(results)}")
             return results
         except EmbeddingError:
             raise

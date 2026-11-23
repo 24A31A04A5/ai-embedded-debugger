@@ -92,11 +92,7 @@ async def upload_document(
     settings = get_settings()
 
     # Enforce maximum documents per project quota
-    current_doc_count = (
-        db.query(Document)
-        .filter(Document.project_id == project.id)
-        .count()
-    )
+    current_doc_count = db.query(Document).filter(Document.project_id == project.id).count()
     if current_doc_count >= settings.max_documents_per_project:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -125,7 +121,6 @@ async def upload_document(
     checksum = hashlib.sha256(content).hexdigest()
     doc_id = uuid.uuid4()
     storage_key = f"projects/{project.id}/documents/{doc_id}_{safe_filename}"
-
 
     # Upload original PDF to object storage
     storage.upload_file(
@@ -186,7 +181,6 @@ async def upload_document(
                 logger.warning("Document processing failed for %s: %s", doc.id, proc_err)
                 doc.extraction_status = "ready"
                 doc.error_message = f"Text extracted but chunking/embedding failed: {proc_err}"
-
 
     except DocumentExtractionError as err:
         doc.extraction_status = "failed"
@@ -420,7 +414,6 @@ def search_project_documents(
 
         results = retrieval.search(**search_kwargs)
     except EmbeddingError as err:
-
         logger.error("Failed to generate embedding for query in project %s: %s", project.id, err)
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -449,4 +442,3 @@ def search_project_documents(
         results=results,
         total_results=len(results),
     )
-

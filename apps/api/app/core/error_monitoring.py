@@ -53,7 +53,10 @@ class LocalErrorTracker(BaseErrorTracker):
                 safe_context = {
                     k: sanitize_secrets(str(v))
                     for k, v in context.items()
-                    if not any(secret in k.lower() for secret in ("token", "key", "password", "secret", "auth"))
+                    if not any(
+                        secret in k.lower()
+                        for secret in ("token", "key", "password", "secret", "auth")
+                    )
                 }
                 extra_info = f" | context: {safe_context}"
 

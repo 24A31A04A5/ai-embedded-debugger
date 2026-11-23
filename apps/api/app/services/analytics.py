@@ -46,7 +46,10 @@ def sanitize_analytics_metadata(raw_metadata: dict[str, Any] | None) -> dict[str
         lower_key = key.lower()
         if lower_key in DISALLOWED_METADATA_KEYS:
             continue
-        if any(substr in lower_key for substr in ("password", "secret", "token", "prompt", "source_code")):
+        if any(
+            substr in lower_key
+            for substr in ("password", "secret", "token", "prompt", "source_code")
+        ):
             continue
         # Truncate string values to prevent accidental log dumping
         if isinstance(value, str) and len(value) > 256:
@@ -83,7 +86,9 @@ class AnalyticsService:
             clean_project_id = uuid.UUID(str(project_id)) if project_id else None
             clean_session_id = uuid.UUID(str(session_id)) if session_id else None
 
-            type_str = event_type.value if isinstance(event_type, AnalyticsEventType) else str(event_type)
+            type_str = (
+                event_type.value if isinstance(event_type, AnalyticsEventType) else str(event_type)
+            )
             clean_meta = sanitize_analytics_metadata(metadata)
 
             event = AnalyticsEvent(
@@ -162,9 +167,7 @@ class AnalyticsService:
                     positive_feedback_count += 1
 
         avg_latency = (
-            round(sum(debug_latencies) / len(debug_latencies), 1)
-            if debug_latencies
-            else None
+            round(sum(debug_latencies) / len(debug_latencies), 1) if debug_latencies else None
         )
 
         return ProjectAnalyticsSummary(

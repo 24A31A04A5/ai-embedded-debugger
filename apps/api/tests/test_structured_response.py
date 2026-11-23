@@ -117,7 +117,7 @@ COMPLETE_DEBUG_RESPONSE = DebugResponse(
     corrected_code=(
         "uint8_t *buf = malloc(256);\n"
         "if (!buf) {\n"
-        "    ESP_LOGE(TAG, \"Out of memory\");\n"
+        '    ESP_LOGE(TAG, "Out of memory");\n'
         "    return ESP_ERR_NO_MEM;\n"
         "}\n"
         "ESP_ERROR_CHECK(gpio_pullup_en(GPIO_NUM_21));\n"

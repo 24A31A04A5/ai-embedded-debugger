@@ -55,8 +55,10 @@ class DocumentContext(BaseModel):
     chunk_index: int | None = None
 
     # Phase 5.3 — embedded source traceability
-    content_type: str | None = None          # register_description | table_or_specification | pin_configuration | text
-    section: str | None = None               # section heading from the source document
+    content_type: str | None = (
+        None  # register_description | table_or_specification | pin_configuration | text
+    )
+    section: str | None = None  # section heading from the source document
     metadata_json: dict[str, Any] | None = None  # full chunk metadata passthrough
 
 
@@ -96,7 +98,9 @@ class AssembledDebugContext(BaseModel):
 
         # Compiler output
         if self.compiler_output.strip():
-            sections.append(f"<compiler_output>\n{self.compiler_output.strip()}\n</compiler_output>")
+            sections.append(
+                f"<compiler_output>\n{self.compiler_output.strip()}\n</compiler_output>"
+            )
 
         # Serial / runtime logs
         if self.serial_logs.strip():
@@ -106,7 +110,9 @@ class AssembledDebugContext(BaseModel):
         if self.uploaded_files:
             file_blocks: list[str] = []
             for f in self.uploaded_files:
-                trunc_note = f" [TRUNCATED from {f.original_length} chars]" if f.is_truncated else ""
+                trunc_note = (
+                    f" [TRUNCATED from {f.original_length} chars]" if f.is_truncated else ""
+                )
                 file_blocks.append(
                     f'<file id="{f.file_id}" name="{f.filename}" type="{f.file_type}"{trunc_note}>\n{f.content}\n</file>'
                 )
@@ -117,7 +123,9 @@ class AssembledDebugContext(BaseModel):
             history_blocks: list[str] = []
             for item in self.session_history:
                 history_blocks.append(f"[{item.role.upper()}]: {item.content}")
-            sections.append("<session_history>\n" + "\n\n".join(history_blocks) + "\n</session_history>")
+            sections.append(
+                "<session_history>\n" + "\n\n".join(history_blocks) + "\n</session_history>"
+            )
 
         # Retrieved datasheet & document context (RAG)
         # Phase 5.3: Emit embedded-specific source annotations (source_type, section)
@@ -155,6 +163,8 @@ class AssembledDebugContext(BaseModel):
         # Truncation notices
         if self.is_truncated and self.truncation_notes:
             notes_str = "\n".join(f"- {note}" for note in self.truncation_notes)
-            sections.append(f"<context_limits_notice>\nWarning: Some context items were truncated to fit budget:\n{notes_str}\n</context_limits_notice>")
+            sections.append(
+                f"<context_limits_notice>\nWarning: Some context items were truncated to fit budget:\n{notes_str}\n</context_limits_notice>"
+            )
 
         return "\n\n".join(sections)
