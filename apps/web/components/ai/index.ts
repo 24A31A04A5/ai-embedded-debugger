@@ -6,3 +6,4 @@ export * from "./CauseList";
 export * from "./RecommendedSteps";
 export * from "./ProposedFix";
 export * from "./EvidencePanel";
+export * from "./diff-types";

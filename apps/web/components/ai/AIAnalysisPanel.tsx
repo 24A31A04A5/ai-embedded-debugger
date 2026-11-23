@@ -10,6 +10,7 @@ import {
   ChevronUp,
   Code2,
   Cpu,
+  Eye,
   FileSearch,
   FileTerminal,
   Lightbulb,
@@ -38,6 +39,9 @@ import { ProposedFix } from "./ProposedFix";
 import { EvidencePanel } from "./EvidencePanel";
 import { AIRetrievalBadge } from "./AIRetrievalBadge";
 import { AIResponseSkeleton } from "./AIResponseSkeleton";
+import { CodeDiffPreview } from "@/components/workspace/CodeDiffPreview";
+import type { UseDiffPreviewStateReturn } from "./diff-types";
+import { useDiffPreviewState } from "./diff-types";
 
 interface AIAnalysisPanelProps {
   diagnosis: DiagnosisResult | null;
@@ -47,6 +51,7 @@ interface AIAnalysisPanelProps {
   onSubmitFeedback?: (rating: number) => void;
   error?: string | null;
   onRetry?: () => void;
+  activeFileName?: string | null;
 }
 
 /** Collapsible section wrapper for dense item lists */
@@ -104,7 +109,15 @@ export function AIAnalysisPanel({
   onSubmitFeedback,
   error,
   onRetry,
+  activeFileName,
 }: AIAnalysisPanelProps) {
+  // Manage diff preview state
+  const diffPreviewState: UseDiffPreviewStateReturn = useDiffPreviewState({
+    diagnosis,
+    activeFileName: activeFileName ?? undefined,
+  });
+  const { hasSuggestion, diffPreviewProps } = diffPreviewState;
+
   return (
     <div className="flex flex-1 flex-col overflow-hidden border-t border-border/60 lg:border-t-0 lg:border-l bg-background">
       {/* Panel Top Control Header */}
@@ -534,7 +547,38 @@ export function AIAnalysisPanel({
               </section>
             )}
 
-            {/* 9. Feedback Rating */}
+            {/* 9. AI Suggested Fix Diff Preview */}
+            {hasSuggestion && diffPreviewProps && (
+              <section className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    AI Suggested Fix Preview
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-xs gap-1.5 text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      // Scroll to the fix if needed
+                      const element = document.querySelector('[data-diff-preview]');
+                      if (element) {
+                        element.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                      }
+                    }}
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    <span>Open Full Diff</span>
+                  </Button>
+                </div>
+                <div className="rounded-xl border border-border/60 bg-card/50 overflow-hidden shadow-sm">
+                  <CodeDiffPreview
+                    {...diffPreviewProps}
+                  />
+                </div>
+              </section>
+            )}
+
+            {/* 10. Feedback Rating */}
             {sessionId && onSubmitFeedback && (
               <section className="mt-2 flex items-center justify-between rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm p-3.5 shadow-sm">
                 <div>

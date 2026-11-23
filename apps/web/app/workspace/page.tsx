@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AlertCircle, CheckCircle2, FolderOpen, Plus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -21,6 +21,7 @@ import {
   ProjectFilesPanel,
   CodeWorkspace,
   DiagnosticTabs,
+  CodeDiffPreview,
   type Project,
 } from "@/components/workspace";
 import { AIAnalysisPanel, type DiagnosisResult } from "@/components/ai";
@@ -103,6 +104,13 @@ export default function WorkspacePage() {
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Diff Preview State (for AI suggested fixes)
+  const [showDiffPreview, setShowDiffPreview] = useState(false);
+  // Track when user has explicitly closed the preview (prevents auto-reopen)
+  const [userDismissedDiff, setUserDismissedDiff] = useState(false);
+  // Track the source filename for the current diff suggestion (detects staleness)
+  const [diffSourceFileName, setDiffSourceFileName] = useState<string | null>(null);
+
   // Toast
   const [toast, setToast] = useState<{ message: string; type: ToastType } | null>(null);
   const showToast = useCallback(
@@ -142,6 +150,9 @@ export default function WorkspacePage() {
       setDiagnosis(null);
       setAnalysisError(null);
       setFeedback(null);
+      setShowDiffPreview(false);
+      setUserDismissedDiff(false);
+      setDiffSourceFileName(null);
       return;
     }
 
@@ -264,6 +275,10 @@ export default function WorkspacePage() {
     setDiagnosis(null);
     setFeedback(null);
     setActiveSessionId(null);
+    // Reset diff preview state on new analysis
+    setShowDiffPreview(false);
+    setUserDismissedDiff(false);
+    setDiffSourceFileName(null);
 
     try {
       const session = await api.createSession(
@@ -287,7 +302,8 @@ export default function WorkspacePage() {
 
       const aiMsg = session.messages.find((m) => m.role === "assistant");
       if (aiMsg) {
-        setDiagnosis(JSON.parse(aiMsg.content));
+        const parsedDiagnosis = JSON.parse(aiMsg.content);
+        setDiagnosis(parsedDiagnosis);
       }
     } catch (e) {
       console.error(e);
@@ -307,6 +323,10 @@ export default function WorkspacePage() {
       setDiagnosis(null);
       setAnalysisError(null);
       setFeedback(null);
+      // Reset diff preview state on session change
+      setShowDiffPreview(false);
+      setUserDismissedDiff(false);
+      setDiffSourceFileName(null);
 
       try {
         const [sessionData, feedbackData] = await Promise.all([
@@ -385,6 +405,120 @@ export default function WorkspacePage() {
   const canAnalyze = Boolean(
     firmwareCode.trim() || compilerOutput.trim() || serialLogs.trim()
   );
+
+  // Helper: Check if diagnosis has fix suggestions
+  const hasSuggestion = useMemo(() => {
+    if (!diagnosis) return false;
+    return Boolean(
+      diagnosis.corrected_code?.trim() ||
+      diagnosis.proposed_fix?.trim() ||
+      diagnosis.compiler_messages?.some(
+        (msg) => msg.suggested_fix && msg.suggested_fix.trim()
+      )
+    );
+  }, [diagnosis]);
+
+  // Helper: Map filename to Monaco language
+  const getLanguageFromFilename = (filename?: string): string => {
+    if (!filename) return "c";
+    const lowerName = filename.toLowerCase();
+    if (lowerName.endsWith(".cpp") || lowerName.endsWith(".hpp") || lowerName.endsWith(".cc")) {
+      return "cpp";
+    }
+    if (lowerName.endsWith(".c") || lowerName.endsWith(".h")) {
+      return "c";
+    }
+    if (lowerName.endsWith(".py")) return "python";
+    if (lowerName.endsWith(".sh") || lowerName.endsWith(".bash")) return "bash";
+    if (lowerName.endsWith(".ts") || lowerName.endsWith(".tsx")) return "typescript";
+    if (lowerName.endsWith(".js") || lowerName.endsWith(".jsx")) return "javascript";
+    if (lowerName.endsWith(".rs")) return "rust";
+    if (lowerName.endsWith(".go")) return "go";
+    if (lowerName.endsWith(".json")) return "json";
+    if (lowerName.endsWith(".md")) return "markdown";
+    return "c";
+  };
+
+  // Helper: Extract diff preview data from diagnosis
+  type DiffData = {
+    originalCode: string;
+    suggestedCode: string;
+    language: string;
+    isFullFileReplacement: boolean; // true = corrected_code, false = proposed_fix or compiler message fix
+  } | null;
+
+  // Get source filename for diff data - uses tracked file if available, falls back to activeFileName
+  const diffSourceFileNameForData = diffSourceFileName ?? activeFileName;
+
+  const diffData = useMemo<DiffData>(() => {
+    if (!diagnosis) return null;
+
+    let suggestedCode: string | null = null;
+    let originalCode: string = "";
+    let isFullFileReplacement = false;
+
+    // Priority 1: corrected_code (full replacement)
+    if (diagnosis.corrected_code?.trim()) {
+      suggestedCode = diagnosis.corrected_code.trim();
+      originalCode = diagnosis.problem_observed || "";
+      isFullFileReplacement = true;
+    }
+    // Priority 2: proposed_fix (may be snippet or description)
+    else if (diagnosis.proposed_fix?.trim()) {
+      suggestedCode = diagnosis.proposed_fix.trim();
+      originalCode = diagnosis.problem_observed || "";
+      isFullFileReplacement = false;
+    }
+    // Priority 3: First compiler message with suggested_fix
+    else {
+      const messageWithFix = diagnosis.compiler_messages?.find(
+        (msg) => msg.suggested_fix && msg.suggested_fix.trim()
+      );
+      if (messageWithFix) {
+        suggestedCode = messageWithFix.suggested_fix!.trim();
+        originalCode = diagnosis.problem_observed || "";
+        isFullFileReplacement = false;
+      }
+    }
+
+    if (suggestedCode) {
+      return {
+        originalCode,
+        suggestedCode,
+        language: getLanguageFromFilename(diffSourceFileNameForData),
+        isFullFileReplacement,
+      };
+    }
+    return null;
+  }, [diagnosis, activeFileName, diffSourceFileName]);
+
+  // Derived state for diff preview
+  const showSidePanel = Boolean(activeProject && diagnosis);
+  // Show inline diff only for full-file replacements AND only when not in preview mode AND user hasn't dismissed
+  const showInlineDiff = diffData?.isFullFileReplacement && !showDiffPreview && !userDismissedDiff;
+
+  // Auto-open diff preview when suggestion is available and user hasn't already closed it
+  // Also resets userDismissedDiff when the active file changes (prevents stale suggestions)
+  useEffect(() => {
+    // Reset userDismissedDiff when file changes to allow auto-open for new suggestions
+    if (diffSourceFileName !== activeFileName) {
+      setUserDismissedDiff(false);
+      setDiffSourceFileName(activeFileName ?? null);
+    }
+  }, [activeFileName, diffSourceFileName]);
+
+  useEffect(() => {
+    if (hasSuggestion && !showDiffPreview && !userDismissedDiff && diffData) {
+      setShowDiffPreview(true);
+      setDiffSourceFileName(activeFileName ?? null);
+    }
+  }, [hasSuggestion, showDiffPreview, userDismissedDiff, diffData, activeFileName]);
+
+  // Close handler that marks as user-dismissed to prevent auto-reopen
+  const handleCloseDiffPreview = () => {
+    setShowDiffPreview(false);
+    setUserDismissedDiff(true);
+  };
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
@@ -484,9 +618,46 @@ export default function WorkspacePage() {
             )}
 
             <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+              {/* AI Diff Preview - inline at top of main workspace when suggestion available */}
+              {showDiffPreview && diffData && (
+                <div className="border-b border-[var(--accent-purple)]/35 bg-[oklch(0.095_0.015_260)]">
+                  <CodeDiffPreview
+                    originalCode={diffData.originalCode}
+                    suggestedCode={diffData.suggestedCode}
+                    filename={activeFileName || "source.c"}
+                    language={diffData.language}
+                    onClose={handleCloseDiffPreview}
+                    isFullFileReplacement={diffData.isFullFileReplacement}
+                  />
+                </div>
+              )}
+
               <div className="grid min-h-0 flex-1 gap-0 lg:grid-cols-[minmax(0,1fr)_390px] xl:grid-cols-[minmax(0,1fr)_440px]">
                 <div className="flex min-w-0 flex-1 flex-col overflow-hidden border-r border-[oklch(0.30_0.015_260)]">
                   <div className="flex-1 min-h-0 overflow-hidden border-b border-[oklch(0.30_0.015_260)] p-2 sm:p-3">
+                    {showInlineDiff && diffData && (
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-xs font-medium text-muted-foreground">
+                            AI Suggested Fix
+                          </h3>
+                          {!diffData.isFullFileReplacement && (
+                            <span className="text-[9px] font-mono bg-[var(--color-warning-amber)]/20 text-[var(--color-warning-amber)] px-1.5 py-0.5 rounded border border-[var(--color-warning-amber)]/30">
+                              snippet
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => {
+                            setShowDiffPreview(true);
+                            setDiffSourceFileName(activeFileName ?? null);
+                          }}
+                          className="text-xs text-[var(--accent-purple)] hover:underline"
+                        >
+                          View Diff
+                        </button>
+                      </div>
+                    )}
                     <CodeWorkspace
                       value={firmwareCode}
                       onChange={setFirmwareCode}
@@ -514,17 +685,20 @@ export default function WorkspacePage() {
                   </div>
                 </div>
 
-                <div className="hidden lg:flex min-w-0 flex-col overflow-hidden border-l border-[var(--accent-purple)]/35 bg-[oklch(0.095_0.015_260)]">
-                  <AIAnalysisPanel
-                    diagnosis={diagnosis}
-                    isAnalyzing={isAnalyzing}
-                    sessionId={activeSessionId}
-                    feedback={feedback}
-                    onSubmitFeedback={handleSubmitFeedback}
-                    error={analysisError}
-                    onRetry={handleAnalyze}
-                  />
-                </div>
+                {showSidePanel && (
+                  <div className="hidden lg:flex min-w-0 flex-col overflow-hidden border-l border-[var(--accent-purple)]/35 bg-[oklch(0.095_0.015_260)]">
+                    <AIAnalysisPanel
+                      diagnosis={diagnosis}
+                      isAnalyzing={isAnalyzing}
+                      sessionId={activeSessionId}
+                      feedback={feedback}
+                      onSubmitFeedback={handleSubmitFeedback}
+                      error={analysisError}
+                      onRetry={handleAnalyze}
+                      activeFileName={activeFileName}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
