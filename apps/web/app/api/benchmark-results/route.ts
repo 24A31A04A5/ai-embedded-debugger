@@ -6,6 +6,14 @@ interface BenchmarkMetadata {
   status?: string;
   message?: string;
   version?: string;
+  use_mock?: boolean;
+  timestamp?: string;
+}
+
+interface ProvenanceInfo {
+  source: "genuine_benchmark" | "mock" | "generated";
+  verified: boolean;
+  reason?: string;
 }
 
 interface BenchmarkMetrics {
@@ -35,6 +43,7 @@ interface BenchmarkData {
   dev: Record<string, BenchmarkMetrics>;
   holdout: Record<string, BenchmarkMetrics>;
   metadata?: BenchmarkMetadata;
+  provenance?: ProvenanceInfo;
 }
 
 export async function GET() {
@@ -56,20 +65,39 @@ export async function GET() {
     try {
       const fileContent = readFileSync(newResultsPath, "utf-8");
       const parsed = JSON.parse(fileContent);
+
+      // Detect provenance: check if metadata indicates mock/simulated data
+      const isMock = parsed.metadata?.use_mock === true ||
+                     parsed.metadata?.status === "mock" ||
+                     parsed.metadata?.message?.toLowerCase().includes("mock");
+
       data = {
         dev: parsed.dev || {},
         holdout: parsed.holdout || {},
         metadata: parsed.metadata || {},
+        provenance: {
+          source: isMock ? "mock" : "genuine_benchmark",
+          verified: !isMock,
+          reason: isMock
+            ? "Results flagged as simulated/mock data in metadata"
+            : "Results generated from actual benchmark evaluation"
+        }
       };
     } catch {
       // Try legacy format
       try {
         const fileContent = readFileSync(legacyResultsPath, "utf-8");
         const parsed = JSON.parse(fileContent);
+
         data = {
           dev: parsed.dev || {},
           holdout: parsed.holdout || {},
           metadata: parsed.metadata || { status: "legacy_format" },
+          provenance: {
+            source: "genuine_benchmark",
+            verified: true,
+            reason: "Legacy benchmark results file"
+          }
         };
       } catch {
         // Return empty structure indicating no results
@@ -79,6 +107,11 @@ export async function GET() {
           metadata: {
             status: "no_results",
             message: "No benchmark results found. Run the evaluation harness to generate results."
+          },
+          provenance: {
+            source: "generated",
+            verified: false,
+            reason: "No benchmark files found on disk"
           }
         };
       }
@@ -86,6 +119,13 @@ export async function GET() {
 
     return NextResponse.json(data);
   } catch {
-    return NextResponse.json({ error: "Failed to load benchmark results" }, { status: 500 });
+    return NextResponse.json({
+      error: "Failed to load benchmark results",
+      provenance: {
+        source: "generated",
+        verified: false,
+        reason: "Error reading benchmark files"
+      }
+    }, { status: 500 });
   }
 }

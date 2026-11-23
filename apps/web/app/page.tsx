@@ -379,6 +379,7 @@ function BentoDashboard() {
       try {
         const baseUrl = getApiBaseUrl().replace(/\/v1\/?$/, "");
         const res = await fetch(`${baseUrl}/health`, {
+          headers: { "Accept": "application/json" },
           signal: AbortSignal.timeout(3000),
         });
         if (!isMounted) return;

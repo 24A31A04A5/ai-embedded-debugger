@@ -32,6 +32,11 @@ interface BenchmarkMetrics {
 interface BenchmarkData {
   dev: Record<string, BenchmarkMetrics>;
   holdout: Record<string, BenchmarkMetrics>;
+  provenance?: {
+    source: "genuine_benchmark" | "mock" | "generated";
+    verified: boolean;
+    reason?: string;
+  };
 }
 
 const APPROACH_LABELS: Record<string, { label: string; description: string; color: string }> = {
@@ -66,11 +71,16 @@ export function BenchmarkResultsCard() {
         }
         const json = await response.json();
 
+        // Check provenance first - if source is mock, treat as mock data
+        const isProvablyMock = json.provenance?.source === "mock" ||
+                               json.provenance?.verified === false ||
+                               json.provenance?.reason?.toLowerCase().includes("mock");
+
         // Check if data is empty (mock/placeholder)
         const hasRealData = json.dev && Object.keys(json.dev).length > 0 &&
                            json.dev.plain_gemini && json.dev.plain_gemini.total_cases > 0;
 
-        if (!hasRealData) {
+        if (isProvablyMock || !hasRealData) {
           setIsMockData(true);
           setData(null);
         } else {
