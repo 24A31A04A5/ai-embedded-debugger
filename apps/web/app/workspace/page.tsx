@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { AlertCircle, CheckCircle2, FolderOpen, Plus, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, FolderOpen, Plus, RotateCcw, Wrench, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +25,9 @@ import {
   type Project,
 } from "@/components/workspace";
 import { AIAnalysisPanel, type DiagnosisResult } from "@/components/ai";
+import { useCodeHistory } from "@/components/ai/diff-types";
+import { computeSimpleHash } from "@/lib/hash-utils";
+import { generateUnifiedDiff, formatUnifiedDiff } from "@/lib/diff-utils";
 
 /* ────────────────────────────────────────────────────────────
    Toast Notification
@@ -86,7 +89,6 @@ export default function WorkspacePage() {
   const [loading, setLoading] = useState(true);
 
   // Active Project Content State
-  const [firmwareCode, setFirmwareCode] = useState("");
   const [compilerOutput, setCompilerOutput] = useState("");
   const [serialLogs, setSerialLogs] = useState("");
   const [activeFileName, setActiveFileName] = useState<string | undefined>(undefined);
@@ -119,6 +121,20 @@ export default function WorkspacePage() {
   );
 
   const api = useApiClient();
+
+  // Per-file code history using useCodeHistory hook
+  // Always call the hook, but only use it when activeFileName is set
+  const defaultHistory = useCodeHistory({
+    initialCode: "",
+    filename: activeFileName || "default.c",
+    maxHistorySize: 50,
+  });
+
+  // Use history when we have a filename, otherwise use empty default
+  const firmwareHistory = activeFileName ? defaultHistory : null;
+
+  // Current firmware code from history
+  const firmwareCode = firmwareHistory?.currentCode ?? "";
 
   // Load projects on initial mount
   useEffect(() => {
@@ -227,8 +243,12 @@ export default function WorkspacePage() {
         const { metadata, content } = result;
 
         if (metadata.file_type === "code") {
-          setFirmwareCode(content);
+          // Set active file name - this will trigger the history hook
           setActiveFileName(metadata.filename);
+          // Update history with the loaded content
+          if (firmwareHistory) {
+            firmwareHistory.setCode(content, "manual_edit", { isAIFix: false });
+          }
         } else {
           const looksLikeCompiler =
             /error:|warning:|undefined reference|linker|gcc|g\+\+/i.test(
@@ -245,7 +265,7 @@ export default function WorkspacePage() {
         showToast("Failed to load file content", "error");
       }
     },
-    [activeProject, api, showToast]
+    [activeProject, api, showToast, firmwareHistory]
   );
 
   // Delete file
@@ -346,9 +366,16 @@ export default function WorkspacePage() {
               ? content.slice(textStart)
               : content.slice(textStart, nextBracket);
           };
-          setFirmwareCode(getSection("firmware_code"));
+          // Reset activeFileName to trigger new history
+          setActiveFileName("main.c");
+          // Load code into history when selecting from saved session
+          const loadedCode = getSection("firmware_code");
           setCompilerOutput(getSection("compiler_output"));
           setSerialLogs(getSection("serial_logs"));
+          // Use a ref to track that we're loading from session
+          if (firmwareHistory) {
+            firmwareHistory.setCode(loadedCode, "manual_edit", { isAIFix: false });
+          }
         }
 
         const aiMsg = sessionData.messages.find((m) => m.role === "assistant");
@@ -362,7 +389,7 @@ export default function WorkspacePage() {
         showToast("Failed to load session", "error");
       }
     },
-    [activeProject, api, showToast]
+    [activeProject, api, showToast, firmwareHistory, setDiffSourceFileName]
   );
 
   // Delete Session
@@ -490,7 +517,7 @@ export default function WorkspacePage() {
       };
     }
     return null;
-  }, [diagnosis, activeFileName, diffSourceFileName]);
+  }, [diagnosis, diffSourceFileNameForData]);
 
   // Derived state for diff preview
   const showSidePanel = Boolean(activeProject && diagnosis);
@@ -519,6 +546,56 @@ export default function WorkspacePage() {
     setShowDiffPreview(false);
     setUserDismissedDiff(true);
   };
+
+  // Apply fix handler with safety validation using history
+  const handleApplyFix = useCallback((suggestedCode: string) => {
+    if (firmwareHistory) {
+      firmwareHistory.applyFix(suggestedCode, "AI suggested fix");
+    }
+    setDiffSourceFileName(null); // Reset - new code is now the source
+    showToast("Fix applied successfully", "success");
+  }, [firmwareHistory, showToast]);
+
+  // Export patch handler - generates and downloads unified diff
+  const handleExportPatch = useCallback(() => {
+    if (!diffData) return;
+    try {
+      const diff = generateUnifiedDiff(
+        diffData.originalCode,
+        diffData.suggestedCode,
+        diffSourceFileNameForData || "source.c"
+      );
+      const blob = new Blob([formatUnifiedDiff(diff)], { type: "text/x-patch" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${activeFileName?.replace(/\.[^.]+$/, "") || "source"}.patch`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("Patch exported successfully", "success");
+    } catch (e) {
+      console.error("Failed to export patch", e);
+      showToast("Failed to export patch", "error");
+    }
+  }, [diffData, diffSourceFileNameForData, activeFileName, showToast]);
+
+  // Undo fix handler using history
+  const handleUndoFix = useCallback(() => {
+    if (firmwareHistory) {
+      return firmwareHistory.undo();
+    }
+    return null;
+  }, [firmwareHistory]);
+
+  // Redo fix handler using history
+  const handleRedoFix = useCallback(() => {
+    if (firmwareHistory) {
+      return firmwareHistory.redo();
+    }
+    return null;
+  }, [firmwareHistory]);
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-background">
@@ -628,6 +705,15 @@ export default function WorkspacePage() {
                     language={diffData.language}
                     onClose={handleCloseDiffPreview}
                     isFullFileReplacement={diffData.isFullFileReplacement}
+                    currentCode={firmwareCode}
+                    onApplyFix={handleApplyFix}
+                    fixApplied={false}
+                    onUndoFix={handleUndoFix}
+                    onRedoFix={handleRedoFix}
+                    canUndo={firmwareHistory?.canUndo ?? false}
+                    canRedo={firmwareHistory?.canRedo ?? false}
+                    suggestedCodeHash={computeSimpleHash(diffData.suggestedCode)}
+                    onExportPatch={handleExportPatch}
                   />
                 </div>
               )}
@@ -647,22 +733,45 @@ export default function WorkspacePage() {
                             </span>
                           )}
                         </div>
-                        <button
-                          onClick={() => {
-                            setShowDiffPreview(true);
-                            setDiffSourceFileName(activeFileName ?? null);
-                          }}
-                          className="text-xs text-[var(--accent-purple)] hover:underline"
-                        >
-                          View Diff
-                        </button>
+                        <div className="flex gap-2">
+                          {firmwareHistory?.canUndo ? (
+                            <button
+                              onClick={() => handleUndoFix()}
+                              className="flex items-center gap-1.5 text-xs text-[var(--color-amber-500)] hover:underline"
+                            >
+                              <RotateCcw className="h-3.5 w-3.5" />
+                              <span>Undo</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleApplyFix(diffData!.suggestedCode)}
+                              className="flex items-center gap-1.5 text-xs text-[var(--color-emerald)] hover:underline"
+                            >
+                              <Wrench className="h-3.5 w-3.5" />
+                              <span>Apply Fix</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              setShowDiffPreview(true);
+                              setDiffSourceFileName(activeFileName ?? null);
+                            }}
+                            className="text-xs text-[var(--accent-purple)] hover:underline"
+                          >
+                            View Diff
+                          </button>
+                        </div>
                       </div>
                     )}
                     <CodeWorkspace
                       value={firmwareCode}
-                      onChange={setFirmwareCode}
+                      onChange={(code) => firmwareHistory?.setCode(code, "manual_edit", { isAIFix: false })}
                       activeFileName={activeFileName}
-                      onClear={() => setFirmwareCode("")}
+                      onClear={() => firmwareHistory?.setCode("", "manual_edit", { isAIFix: false })}
+                      canUndo={firmwareHistory?.canUndo ?? false}
+                      canRedo={firmwareHistory?.canRedo ?? false}
+                      onUndo={handleUndoFix}
+                      onRedo={handleRedoFix}
                     />
                   </div>
 

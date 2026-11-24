@@ -6,6 +6,7 @@ import {
   Copy,
   FileCode,
   RotateCcw,
+  History,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,11 @@ interface CodeWorkspaceProps {
   activeFileName?: string;
   onClear?: () => void;
   className?: string;
+  // Undo/Redo support
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
 }
 
 export function CodeWorkspace({
@@ -31,6 +37,10 @@ export function CodeWorkspace({
   activeFileName = "main.c",
   onClear,
   className = "",
+  canUndo = false,
+  canRedo = false,
+  onUndo,
+  onRedo,
 }: CodeWorkspaceProps) {
   const [copied, setCopied] = useState(false);
   const [cleared, setCleared] = useState(false);
@@ -151,6 +161,50 @@ export function CodeWorkspace({
                 {cleared ? "Editor cleared" : "Clear editor contents"}
               </TooltipContent>
             </Tooltip>
+          )}
+
+          {/* Undo/Redo Buttons */}
+          {(canUndo || canRedo) && (
+            <div className="flex items-center gap-1 ml-2 pl-2 border-l border-border/30">
+              {canUndo && onUndo && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[11px] gap-1 rounded-md transition-all duration-150 active:scale-95 text-muted-foreground hover:text-foreground hover:bg-white/5"
+                      onClick={onUndo}
+                      aria-label="Undo (Ctrl+Z)"
+                    >
+                      <RotateCcw className="h-3 w-3" />
+                      <span className="hidden sm:inline">Undo</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    Undo (Ctrl+Z)
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              {canRedo && onRedo && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[11px] gap-1 rounded-md transition-all duration-150 active:scale-95 text-muted-foreground hover:text-foreground hover:bg-white/5"
+                      onClick={onRedo}
+                      aria-label="Redo (Ctrl+Y)"
+                    >
+                      <History className="h-3 w-3" />
+                      <span className="hidden sm:inline">Redo</span>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom">
+                    Redo (Ctrl+Y)
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </div>
           )}
         </div>
       </div>
