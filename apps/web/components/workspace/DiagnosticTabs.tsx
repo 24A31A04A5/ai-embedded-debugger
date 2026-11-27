@@ -8,6 +8,7 @@ import {
   FileTerminal,
   RotateCcw,
   Terminal,
+  Wifi,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { CodeEditor } from "@/components/CodeEditor";
+import { SerialMonitor } from "@/components/serial/SerialMonitor";
 
 interface DiagnosticTabsProps {
   compilerOutput: string;
@@ -38,7 +40,7 @@ export function DiagnosticTabs({
   onToggleCollapse,
   className = "",
 }: DiagnosticTabsProps) {
-  const [activeTab, setActiveTab] = useState<"compiler" | "serial">("compiler");
+  const [activeTab, setActiveTab] = useState<"compiler" | "serial" | "monitor">("compiler");
   const [cleared, setCleared] = useState(false);
 
   const compilerLines = compilerOutput ? compilerOutput.split("\n").length : 0;
@@ -47,20 +49,20 @@ export function DiagnosticTabs({
   const handleClearCurrent = () => {
     if (activeTab === "compiler") {
       onCompilerChange("");
-    } else {
+    } else if (activeTab === "serial") {
       onSerialChange("");
     }
     setCleared(true);
     setTimeout(() => setCleared(false), 1500);
   };
 
-  const hasCurrentContent = activeTab === "compiler" ? !!compilerOutput : !!serialLogs;
+  const hasCurrentContent = activeTab === "compiler" ? !!compilerOutput : activeTab === "serial" ? !!serialLogs : true;
 
   return (
     <div className={`flex flex-col bg-[oklch(0.09_0.015_260)] border-t border-border/40 overflow-hidden transition-all duration-200 ${className}`}>
       <Tabs
         value={activeTab}
-        onValueChange={(v) => setActiveTab(v as "compiler" | "serial")}
+        onValueChange={(v) => setActiveTab(v as "compiler" | "serial" | "monitor")}
         className="flex flex-1 flex-col h-full overflow-hidden"
       >
         {/* Diagnostic Bar Header */}
@@ -91,6 +93,14 @@ export function DiagnosticTabs({
                     {serialLines}
                   </span>
                 )}
+              </TabsTrigger>
+
+              <TabsTrigger
+                value="monitor"
+                className="h-6 px-2.5 text-xs gap-1.5 data-[state=active]:bg-[var(--accent-purple)]/15 data-[state=active]:text-foreground data-[state=active]:border-[var(--accent-purple)]/30 font-medium transition-all duration-150"
+              >
+                <Wifi className="h-3 w-3 text-[var(--color-emerald)]" />
+                <span>Live Serial Monitor</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -171,6 +181,16 @@ export function DiagnosticTabs({
                 onChange={onSerialChange}
                 language="bash"
                 placeholder="Paste Serial Monitor traces, UART console logs, panic dumps, or FreeRTOS assertion logs here…"
+              />
+            </TabsContent>
+
+            <TabsContent value="monitor" className="flex-1 h-full m-0 data-[state=inactive]:hidden overflow-hidden">
+              <SerialMonitor
+                onChange={onSerialChange}
+                isMockMode={true}
+                deviceType="esp32"
+                crashScenario="none"
+                className="h-full"
               />
             </TabsContent>
           </div>

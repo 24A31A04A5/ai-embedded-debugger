@@ -137,7 +137,8 @@ export function useApiClient() {
       });
 
       if (!response.ok) {
-        throw new Error(`API Error: ${response.statusText}`);
+        const errorBody = await response.text();
+        throw new Error(errorBody || `API Error: ${response.statusText}`);
       }
 
       // Handle 204 No Content
@@ -334,7 +335,59 @@ export function useApiClient() {
             document_ids: options?.documentIds,
           }),
         }),
+
+      // ── Serial Connection (Phase 10.1) ──
+      testSerialConnection: (
+        baudRate: number,
+        dataBits: number,
+        parity: "none" | "even" | "odd",
+        stopBits: number,
+        xOnXOff: boolean
+      ): Promise<boolean> =>
+        fetchWithAuth("/serial/test", {
+          method: "POST",
+          body: JSON.stringify({
+            baud_rate: baudRate,
+            data_bits: dataBits,
+            parity,
+            stop_bits: stopBits,
+            x_on_x_off: xOnXOff,
+          }),
+        }),
+
+      // ── ESP32 Crash Analysis (Phase 10.3) ──
+      analyzeCrashLog: (
+        projectId: string,
+        crashLog: string
+      ): Promise<CrashAnalysisResult> =>
+        fetchWithAuth(`/projects/${projectId}/crash-analyze`, {
+          method: "POST",
+          body: JSON.stringify({ crash_log: crashLog }),
+        }),
     }),
     [fetchWithAuth, fetchRawAuth]
   );
+}
+
+/* ── Crash Analysis Result type (Phase 10.3) ── */
+export interface CrashFrame {
+  function?: string;
+  offset?: number;
+  module?: string;
+}
+
+export interface CrashBacktrace {
+  frames: CrashFrame[];
+  full: string;
+}
+
+export interface CrashAnalysisResult {
+  type: string;
+  reason?: string;
+  crash?: string;
+  registers?: Record<string, string>;
+  backtrace?: CrashBacktrace;
+  likelyCause: string;
+  suggestedActions: string[];
+  rawLog: string;
 }
