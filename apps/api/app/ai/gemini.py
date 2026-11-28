@@ -3,6 +3,7 @@
 # This is intentional as it's a multi-line system prompt for the AI model.
 
 import json
+from typing import AsyncGenerator
 
 from google import genai
 from google.genai import types
@@ -246,3 +247,60 @@ Please analyze the following embedded debugging context:
         return TypeAdapter(DebugResponse).validate_python(parsed_json)
     except Exception as e:
         raise ValueError(f"Malformed response from Gemini API: {e}") from e
+
+
+async def analyze_debugging_context_stream(
+    context_or_firmware: AssembledDebugContext | str,
+    compiler_output: str = "",
+    serial_logs: str = "",
+) -> AsyncGenerator[str, None]:
+    """Analyze the debugging context using Gemini with streaming response.
+
+    Yields JSON chunks as they arrive from the streaming API.
+    Accepts either a structured AssembledDebugContext or legacy positional string arguments.
+    """
+    settings = get_settings()
+
+    # Initialize the genai client with the API key from settings
+    client = genai.Client(api_key=settings.gemini_api_key)
+
+    if isinstance(context_or_firmware, AssembledDebugContext):
+        assembled_body = context_or_firmware.format_prompt()
+        prompt = f"""
+Please analyze the following embedded debugging context:
+
+{assembled_body}
+"""
+    else:
+        firmware_code = context_or_firmware
+        prompt = f"""
+Please analyze the following embedded debugging context:
+
+<firmware_code>
+{firmware_code}
+</firmware_code>
+
+<compiler_output>
+{compiler_output}
+</compiler_output>
+
+<serial_logs>
+{serial_logs}
+</serial_logs>
+"""
+
+    # Call Gemini using the streaming interface with structured output
+    stream = await client.models.generate_content_stream(
+        model="gemini-3.5-flash",
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            system_instruction=SYSTEM_INSTRUCTION,
+            response_mime_type="application/json",
+            response_schema=DebugResponse,
+            temperature=0.2,
+        ),
+    )
+
+    async for chunk in stream:
+        if chunk.text:
+            yield chunk.text

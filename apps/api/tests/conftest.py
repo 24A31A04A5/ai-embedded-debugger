@@ -25,6 +25,14 @@ def _configure_test_environment(
     """Ensure settings and database state are isolated for each test."""
     is_integration = request.node.get_closest_marker("integration") is not None
 
+    # Set CORS origins for tests - allow local development origins
+    # This must be set before app settings are loaded
+    if not os.getenv("CORS_ORIGINS"):
+        monkeypatch.setenv(
+            "CORS_ORIGINS",
+            "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001",
+        )
+
     if is_integration and integration_tests_enabled():
         get_settings.cache_clear()
         database_url = os.getenv("DATABASE_URL") or get_settings().database_url

@@ -356,6 +356,7 @@ class ContextAssemblyService:
                 # Phase 5.3: Compose a richer technical query by appending peripheral/register
                 # keywords found in the user question and compiler output. This surfaces
                 # register, pinout and specification chunks over generic text.
+                # Phase 11.2: Also supports hybrid retrieval with BM25 + RRF
                 enriched_query = _build_technical_retrieval_query(
                     user_question=user_question or "",
                     compiler_output=compiler_output or "",
@@ -367,12 +368,14 @@ class ContextAssemblyService:
                     if selected_document_ids:
                         valid_doc_uuids = [uuid.UUID(str(did)) for did in selected_document_ids]
 
-                    retrieved_results = retrieval_service.search(
+                    # Phase 11.2: Use hybrid search with BM25 + vector retrieval
+                    retrieved_results = retrieval_service.search_hybrid(
                         project_id=project.id,
                         query=enriched_query,
                         top_k=top_k,
                         similarity_threshold=similarity_threshold,
                         document_ids=valid_doc_uuids,
+                        include_bm25=True,
                     )
                     raw_docs = [
                         DocumentContext(
@@ -392,7 +395,7 @@ class ContextAssemblyService:
                         for item in retrieved_results
                     ]
                 except Exception as e:
-                    logger.warning("Vector retrieval during context assembly failed: %s", e)
+                    logger.warning("Vector/BM25 retrieval during context assembly failed: %s", e)
                     raw_docs = []
 
         total_doc_chars = 0

@@ -226,3 +226,93 @@ class DocumentRetrievalService:
             has_pinout=has_pinout,
             query_text=cleaned_query,
         )
+
+    def search_hybrid(
+        self,
+        project_id: uuid.UUID,
+        query: str,
+        top_k: int = 10,
+        similarity_threshold: float = 0.0,
+        bm25_weight: float = 0.3,
+        vector_weight: float = 0.7,
+        rrf_k: int = 60,
+        document_ids: list[uuid.UUID] | None = None,
+        include_bm25: bool = True,
+    ) -> list[DocumentSearchResultItem]:
+        """Perform hybrid search combining BM25 and vector retrieval using RRF.
+
+        Reciprocal Rank Fusion (RRF) combines rankings from multiple retrieval methods:
+        score = sum(1 / (k + rank_position)) for each method
+
+        Args:
+            project_id: Project to search within
+            query: Search query string
+            top_k: Maximum results to return
+            similarity_threshold: Minimum vector similarity threshold
+            bm25_weight: Weight for BM25 scores (0.0-1.0)
+            vector_weight: Weight for vector scores (0.0-1.0)
+            rrf_k: RRF parameter k (higher = less penalty for lower ranks)
+            document_ids: Optional document ID filter
+            include_bm25: Whether to include BM25 search results
+
+        Returns:
+            List of hybrid search results with combined scores
+
+        Phase 11.2 implementation
+        """
+        from app.services.retrieval_bm25 import search_documents_bm25, BM25Retriever
+
+        # Get vector search results
+        vector_results = self.search(
+            project_id=project_id,
+            query=query,
+            top_k=top_k * 3,  # Oversample for RRF
+            similarity_threshold=similarity_threshold,
+            document_ids=document_ids,
+        )
+
+        # Get BM25 search results
+        bm25_results = []
+        if include_bm25:
+            bm25_retriever = BM25Retriever(self.db, project_id)
+            bm25_results = bm25_retriever.search_bm25(query, top_k * 3)
+
+        # Build result maps by chunk_id
+        vector_map: dict[uuid.UUID, tuple[DocumentSearchResultItem, float]] = {}
+        for i, item in enumerate(vector_results):
+            vector_map[item.chunk_id] = (item, float(i + 1))  # rank is 1-indexed
+
+        bm25_map: dict[uuid.UUID, tuple[DocumentSearchResultItem, float]] = {}
+        for i, item in enumerate(bm25_results):
+            bm25_map[item.chunk_id] = (item, float(i + 1))
+
+        # Combine all chunk IDs
+        all_chunk_ids = set(vector_map.keys()) | set(bm25_map.keys())
+
+        # Apply RRF to each chunk
+        combined_scores: list[tuple[uuid.UUID, float, DocumentSearchResultItem | None]] = []
+
+        for chunk_id in all_chunk_ids:
+            rrf_score = 0.0
+            result_item: DocumentSearchResultItem | None = None
+
+            if chunk_id in vector_map:
+                item, rank = vector_map[chunk_id]
+                rrf_score += vector_weight * (1.0 / (rrf_k + rank))
+                result_item = item
+
+            if chunk_id in bm25_map:
+                item, rank = bm25_map[chunk_id]
+                rrf_score += bm25_weight * (1.0 / (rrf_k + rank))
+                # Use this item if vector didn't have it
+                if result_item is None:
+                    result_item = item
+
+            if result_item is not None:
+                combined_scores.append((chunk_id, rrf_score, result_item))
+
+        # Sort by combined RRF score descending
+        combined_scores.sort(key=lambda x: x[1], reverse=True)
+
+        # Return top_k results
+        return [item for _, _, item in combined_scores[:top_k]]

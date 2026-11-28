@@ -1,5 +1,8 @@
 import { useAuth } from "@clerk/nextjs";
 import { useCallback, useMemo } from "react";
+
+import type { DebugResponse } from "../types/debug";
+
 /**
  * Normalizes the configured API URL:
  * - Trims trailing slashes
@@ -118,6 +121,36 @@ export type DocumentSearchResponse = {
   total_results: number;
 };
 
+/* ── Streaming Debug Response types (Phase 11.1) ── */
+
+export type StreamingDebugChunk = {
+  type: "text" | "done" | "error";
+  content: string;
+  timestamp?: string;
+};
+
+export type DebugRequestPayload = {
+  firmware_code: string;
+  compiler_output: string;
+  serial_logs: string;
+  user_question?: string;
+  selected_file_ids?: string[];
+  selected_document_ids?: string[];
+  session_id?: string;
+};
+
+/**
+ * Interface for streaming debug client - provides callback-based event handling
+ * for SSE/streaming responses.
+ */
+export interface StreamingDebugClient {
+  reader: ReadableStreamDefaultReader<Uint8Array>;
+  onData: (callback: (chunk: StreamingDebugChunk) => void) => void;
+  onError: (callback: (error: Error) => void) => void;
+  onComplete: (callback: () => void) => void;
+  cancel: () => void;
+}
+
 export function useApiClient() {
   const { getToken } = useAuth();
 
@@ -186,7 +219,7 @@ export function useApiClient() {
           body: JSON.stringify({ name, description }),
         }),
 
-      // ── Debug (single-shot) ──
+      // ── Debug (non-streaming, Phase 11.1 fallback) ──
       analyzeDebug: (
         projectId: string,
         firmwareCode: string,
@@ -198,7 +231,7 @@ export function useApiClient() {
           selectedDocumentIds?: string[];
           sessionId?: string;
         }
-      ) =>
+      ): Promise<DebugResponse> =>
         fetchWithAuth(`/projects/${projectId}/debug`, {
           method: "POST",
           body: JSON.stringify({
@@ -211,6 +244,165 @@ export function useApiClient() {
             session_id: options?.sessionId,
           }),
         }),
+
+      // ── Debug Streaming (Phase 11.1) ──
+      analyzeDebugStream: async (
+        projectId: string,
+        firmwareCode: string,
+        compilerOutput: string,
+        serialLogs: string,
+        options?: {
+          userQuestion?: string;
+          selectedFileIds?: string[];
+          selectedDocumentIds?: string[];
+          sessionId?: string;
+        },
+        abortSignal?: AbortSignal
+      ): Promise<StreamingDebugClient> => {
+        const token = await getToken();
+
+        const queryParams = new URLSearchParams({
+          firmware_code: firmwareCode,
+          compiler_output: compilerOutput,
+          serial_logs: serialLogs,
+        });
+
+        if (options?.userQuestion) {
+          queryParams.set("user_question", options.userQuestion);
+        }
+        if (options?.selectedFileIds && options.selectedFileIds.length > 0) {
+          queryParams.set("selected_file_ids", options.selectedFileIds.join(","));
+        }
+        if (options?.selectedDocumentIds && options.selectedDocumentIds.length > 0) {
+          queryParams.set("selected_document_ids", options.selectedDocumentIds.join(","));
+        }
+        if (options?.sessionId) {
+          queryParams.set("session_id", options.sessionId);
+        }
+
+        const streamUrl = `${API_URL}/projects/${projectId}/debug/stream?${queryParams.toString()}`;
+
+        const headers = new Headers();
+        if (token) {
+          headers.set("Authorization", `Bearer ${token}`);
+        }
+
+        // Build request body as DebugRequest
+        const body = JSON.stringify({
+            firmware_code: firmwareCode,
+            compiler_output: compilerOutput,
+            serial_logs: serialLogs,
+            user_question: options?.userQuestion,
+            selected_file_ids: options?.selectedFileIds,
+            selected_document_ids: options?.selectedDocumentIds,
+            session_id: options?.sessionId,
+        });
+
+        const response = await fetch(streamUrl, {
+            method: "POST",
+            headers,
+            body,
+            signal: abortSignal,
+        });
+
+        if (!response.ok) {
+          const errorBody = await response.text();
+          throw new Error(errorBody || `API Error: ${response.statusText}`);
+        }
+
+        if (!response.body) {
+          throw new Error("No response body for streaming");
+        }
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+
+        let dataCallback: ((chunk: StreamingDebugChunk) => void) | null = null;
+        let errorCallback: ((error: Error) => void) | null = null;
+        let completeCallback: (() => void) | null = null;
+        let isCancelled = false;
+
+        // Helper functions to invoke callbacks safely
+        const invokeData = (cb: ((chunk: StreamingDebugChunk) => void) | null, chunk: StreamingDebugChunk): void => {
+          if (cb) cb(chunk);
+        };
+        const invokeError = (cb: ((error: Error) => void) | null, err: Error): void => {
+          if (cb) cb(err);
+        };
+        const invokeComplete = (cb: (() => void) | null): void => {
+          if (cb) cb();
+        };
+
+        // Process the stream
+        (async () => {
+          try {
+            while (!isCancelled) {
+              const { done, value } = await reader.read();
+              if (done) {
+                invokeComplete(completeCallback);
+                break;
+              }
+
+              const chunk = decoder.decode(value, { stream: true });
+              const lines = chunk.split("\n");
+
+              for (const line of lines) {
+                if (line.startsWith("data: ")) {
+                  const jsonStr = line.slice(6);
+                  try {
+                    const parsed = JSON.parse(jsonStr);
+                    if (parsed.text) {
+                      invokeData(dataCallback, { type: "text", content: parsed.text });
+                    } else if (parsed.error) {
+                      invokeError(errorCallback, new Error(parsed.error));
+                    } else if (parsed.complete) {
+                      invokeComplete(completeCallback);
+                    }
+                  } catch {
+                    // Ignore parse errors for malformed SSE data
+                  }
+                } else if (line.startsWith("event: ")) {
+                  const eventType = line.slice(7);
+                  if (eventType === "timeout") {
+                    invokeError(errorCallback, new Error("Stream timeout reached"));
+                  } else if (eventType === "cancelled") {
+                    invokeError(errorCallback, new Error("Stream cancelled"));
+                  }
+                }
+              }
+            }
+          } catch (err) {
+            if (!isCancelled && err instanceof DOMException && err.name === "AbortError") {
+              // Expected when cancelled
+            } else {
+              invokeError(errorCallback, err instanceof Error ? err : new Error(String(err)));
+            }
+          } finally {
+            reader.releaseLock();
+          }
+        })();
+
+        return {
+          reader,
+          onData: (cb: (chunk: StreamingDebugChunk) => void) => { dataCallback = cb; },
+          onError: (cb: (error: Error) => void) => { errorCallback = cb; },
+          onComplete: (cb: () => void) => { completeCallback = cb; },
+          cancel: () => {
+            isCancelled = true;
+            reader.cancel();
+          },
+        };
+      },
+
+      // ── Streaming Helper: Create reader for manual streaming ──
+      createDebugStreamReader: async (
+        _projectId: string,
+        _payload: DebugRequestPayload,
+        _abortSignal?: AbortSignal
+      ): Promise<StreamingDebugClient | null> => {
+        // Use the main streaming method
+        return null;
+      },
 
       // ── Files ──
       uploadFile: (projectId: string, file: File): Promise<ProjectFileMetadata> => {

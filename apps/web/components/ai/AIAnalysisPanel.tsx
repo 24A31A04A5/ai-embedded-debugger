@@ -31,7 +31,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { type FeedbackResponse } from "@/lib/api-client";
+import { type FeedbackResponse, type StreamingDebugClient } from "@/lib/api-client";
 import { type DiagnosisResult } from "./types";
 import { CauseList } from "./CauseList";
 import { RecommendedSteps } from "./RecommendedSteps";
@@ -52,6 +52,9 @@ interface AIAnalysisPanelProps {
   error?: string | null;
   onRetry?: () => void;
   activeFileName?: string | null;
+  // Streaming support (Phase 11.1)
+  streamingClient?: StreamingDebugClient | null;
+  onStreamingComplete?: (diagnosis: DiagnosisResult) => void;
 }
 
 /** Collapsible section wrapper for dense item lists */
@@ -110,13 +113,104 @@ export function AIAnalysisPanel({
   error,
   onRetry,
   activeFileName,
+  streamingClient,
+  onStreamingComplete,
 }: AIAnalysisPanelProps) {
-  // Manage diff preview state
+  // Streaming state (Phase 11.1)
+  const [streamingDiagnosis, setStreamingDiagnosis] = useState<DiagnosisResult | null>(null);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamError, setStreamError] = useState<string | null>(null);
+  const [streamAccumulated, setStreamAccumulated] = useState<string>("");
+
+  // Manage diff preview state (uses streaming diagnosis if available, otherwise regular diagnosis)
+  const activeDiagnosis = streamingDiagnosis ?? diagnosis;
   const diffPreviewState: UseDiffPreviewStateReturn = useDiffPreviewState({
-    diagnosis,
+    diagnosis: activeDiagnosis,
     activeFileName: activeFileName ?? undefined,
   });
   const { hasSuggestion, diffPreviewProps } = diffPreviewState;
+
+  // Handle streaming connection
+  React.useEffect(() => {
+    if (!streamingClient || !isAnalyzing) {
+      return;
+    }
+
+    let isMounted = true;
+    setIsStreaming(true);
+    setStreamError(null);
+    setStreamAccumulated("");
+
+    // Helper to parse accumulated text into diagnosis result
+    const parseDiagnosisFromStream = (text: string): DiagnosisResult | null => {
+      try {
+        // Try to find the complete diagnosis JSON in the stream
+        const match = text.match(/{[\s\S]*"problem_observed"[\s\S]*}/);
+        if (match) {
+          return JSON.parse(match[0]) as DiagnosisResult;
+        }
+        return null;
+      } catch {
+        return null;
+      }
+    };
+
+    const handleData = (chunk: { type: "text" | "done" | "error"; content: string; timestamp?: string }) => {
+      if (!isMounted) return;
+      if (chunk.type === "text") {
+        setStreamAccumulated((prev) => {
+          const newAccumulated = prev + chunk.content;
+          // Try to parse diagnosis from accumulated stream
+          const diagnosis = parseDiagnosisFromStream(newAccumulated);
+          if (diagnosis) {
+            setStreamingDiagnosis(diagnosis);
+            setIsStreaming(false);
+            onStreamingComplete?.(diagnosis);
+          }
+          return newAccumulated;
+        });
+      }
+    };
+
+    const handleError = (err: Error) => {
+      if (!isMounted) return;
+      setStreamError(err.message);
+      setIsStreaming(false);
+    };
+
+    const handleComplete = () => {
+      if (!isMounted) return;
+      // Try to parse final diagnosis from accumulated content
+      setStreamAccumulated((prev) => {
+        const diagnosis = parseDiagnosisFromStream(prev);
+        if (diagnosis) {
+          setStreamingDiagnosis(diagnosis);
+          setIsStreaming(false);
+          onStreamingComplete?.(diagnosis);
+        }
+        return prev;
+      });
+    };
+
+    streamingClient.onData(handleData);
+    streamingClient.onError(handleError);
+    streamingClient.onComplete(handleComplete);
+
+    // The streamingClient is already started by analyzeDebugStream - it's a ready-to-use client
+    // Error handling is done via the onError callback
+
+    return () => {
+      isMounted = false;
+      streamingClient.cancel?.();
+      // The client uses callbacks, no off* methods in the interface
+      setIsStreaming(false);
+    };
+  }, [streamingClient, isAnalyzing, onStreamingComplete]);
+
+  // Combine streaming and regular states
+  const effectiveIsAnalyzing = isAnalyzing || isStreaming;
+  const effectiveError = error || streamError;
+  const effectiveDiagnosis = activeDiagnosis;
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden border-t border-border/60 lg:border-t-0 lg:border-l bg-background">
@@ -129,39 +223,39 @@ export function AIAnalysisPanel({
           <span className="text-xs font-semibold tracking-tight text-foreground flex items-center gap-1.5">
             <span>AI Diagnostic Intelligence</span>
           </span>
-          {diagnosis?.confidence_level && (
+          {effectiveDiagnosis?.confidence_level && (
             <span className="hidden sm:inline-block rounded bg-[var(--accent-purple)]/10 px-1.5 py-0.5 text-[9px] font-mono font-medium text-[var(--accent-purple)] border border-[var(--accent-purple)]/20 uppercase">
-              {diagnosis.confidence_level} Confidence
+              {effectiveDiagnosis.confidence_level} Confidence
             </span>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          {diagnosis && (
+          {effectiveDiagnosis && (
             <AIRetrievalBadge
-              evidenceCount={diagnosis.evidence_used?.length}
-              citationCount={diagnosis.datasheet_citations?.length}
+              evidenceCount={effectiveDiagnosis.evidence_used?.length}
+              citationCount={effectiveDiagnosis.datasheet_citations?.length}
               className="hidden sm:inline-flex"
             />
           )}
 
           <Badge
             variant={
-              isAnalyzing
+              effectiveIsAnalyzing
                 ? "ai"
-                : error
+                : effectiveError
                   ? "error"
-                  : diagnosis
+                  : effectiveDiagnosis
                     ? "success"
                     : "outline"
             }
             className="text-[10px] font-medium"
           >
-            {isAnalyzing
+            {effectiveIsAnalyzing
               ? "Analyzing..."
-              : error
+              : effectiveError
                 ? "Analysis Failed"
-                : diagnosis
+                : effectiveDiagnosis
                   ? "Diagnosis Complete"
                   : "Awaiting Analysis"}
           </Badge>
@@ -170,11 +264,24 @@ export function AIAnalysisPanel({
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto">
+        {/* Streaming indicator */}
+        {isStreaming && (
+          <div className="flex items-center justify-center gap-2 px-4 py-2 border-b border-border/40 bg-[var(--accent-purple)]/5">
+            <div className="flex h-5 w-5 animate-spin rounded-full border-2 border-[var(--accent-purple)] border-t-transparent" />
+            <span className="text-xs text-[var(--accent-purple)] font-medium">Streaming diagnosis...</span>
+            {streamAccumulated && (
+              <span className="text-[10px] text-muted-foreground font-mono">
+                {streamAccumulated.length} chars received
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Loading state */}
-        {isAnalyzing && <AIResponseSkeleton />}
+        {effectiveIsAnalyzing && !isStreaming && <AIResponseSkeleton />}
 
         {/* Error state */}
-        {!isAnalyzing && error && (
+        {!effectiveIsAnalyzing && effectiveError && (
           <div className="flex h-full flex-col items-center justify-center gap-4 px-6 py-12 text-center">
             <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-[var(--color-error-red)]/30 bg-[var(--color-error-red)]/10 text-[var(--color-error-red)] shadow-sm">
               <AlertCircle className="h-6 w-6" />
@@ -184,7 +291,7 @@ export function AIAnalysisPanel({
                 Diagnostic Analysis Error
               </h3>
               <p className="text-xs leading-relaxed text-muted-foreground">
-                {error}
+                {effectiveError}
               </p>
             </div>
             {onRetry && (
@@ -257,7 +364,7 @@ export function AIAnalysisPanel({
         )}
 
         {/* Diagnosis completed view */}
-        {!isAnalyzing && diagnosis && (
+        {!effectiveIsAnalyzing && effectiveDiagnosis && (
           <div className="flex flex-col gap-6 p-4 sm:p-6">
 
             {/* 1. Problem Observed */}
@@ -272,7 +379,7 @@ export function AIAnalysisPanel({
                   Diagnostic Symptom Identified
                 </AlertTitle>
                 <AlertDescription className="text-xs sm:text-sm leading-relaxed text-foreground/90 mt-1">
-                  {diagnosis.problem_observed}
+                  {effectiveDiagnosis.problem_observed}
                 </AlertDescription>
               </Alert>
             </section>
@@ -287,13 +394,13 @@ export function AIAnalysisPanel({
                   <span>Likely Causes &amp; Plausibility</span>
                 </div>
                 <span className="text-[11px] text-muted-foreground">
-                  {diagnosis.likely_causes.length} evaluated
+                  {effectiveDiagnosis.likely_causes.length} evaluated
                 </span>
               </div>
               <CauseList
-                causes={diagnosis.likely_causes}
-                rootCauseSummary={diagnosis.root_cause_summary}
-                confidenceLevel={diagnosis.confidence_level}
+                causes={effectiveDiagnosis.likely_causes}
+                rootCauseSummary={effectiveDiagnosis.root_cause_summary}
+                confidenceLevel={effectiveDiagnosis.confidence_level}
               />
             </section>
 
@@ -306,16 +413,16 @@ export function AIAnalysisPanel({
                 <span>Proposed Rectification &amp; Code Diff</span>
               </div>
               <ProposedFix
-                proposedFix={diagnosis.proposed_fix}
-                correctedCode={diagnosis.corrected_code}
+                proposedFix={effectiveDiagnosis.proposed_fix}
+                correctedCode={effectiveDiagnosis.corrected_code}
               />
 
-              {diagnosis.recommended_steps && diagnosis.recommended_steps.length > 0 && (
+              {effectiveDiagnosis.recommended_steps && effectiveDiagnosis.recommended_steps.length > 0 && (
                 <div className="pt-2 space-y-2">
                   <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Recommended Verification Steps
                   </span>
-                  <RecommendedSteps steps={diagnosis.recommended_steps} />
+                  <RecommendedSteps steps={effectiveDiagnosis.recommended_steps} />
                 </div>
               )}
             </section>
@@ -323,7 +430,7 @@ export function AIAnalysisPanel({
             <Separator className="bg-border/40" />
 
             {/* 4. Structured Code Issues (collapsible when more than 2 items) */}
-            {diagnosis.code_issues && diagnosis.code_issues.length > 0 && (
+            {effectiveDiagnosis.code_issues && effectiveDiagnosis.code_issues.length > 0 && (
               <>
                 <section className="space-y-2.5">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -331,11 +438,11 @@ export function AIAnalysisPanel({
                     <span>Detected C/C++ Code Issues</span>
                   </div>
                   <CollapsibleSection
-                    label={`${diagnosis.code_issues.length} issue${diagnosis.code_issues.length === 1 ? "" : "s"} detected`}
-                    count={diagnosis.code_issues.length}
-                    defaultOpen={diagnosis.code_issues.length <= 3}
+                    label={`${effectiveDiagnosis.code_issues.length} issue${effectiveDiagnosis.code_issues.length === 1 ? "" : "s"} detected`}
+                    count={effectiveDiagnosis.code_issues.length}
+                    defaultOpen={effectiveDiagnosis.code_issues.length <= 3}
                   >
-                    {diagnosis.code_issues.map((issue, idx) => (
+                    {effectiveDiagnosis.code_issues.map((issue, idx) => (
                       <div
                         key={idx}
                         className="p-3 rounded-xl border border-border/50 bg-card/60 space-y-1.5 transition-colors duration-150 hover:border-border/70"
@@ -387,7 +494,7 @@ export function AIAnalysisPanel({
             )}
 
             {/* 5. Parsed Compiler Messages (collapsible) */}
-            {diagnosis.compiler_messages && diagnosis.compiler_messages.length > 0 && (
+            {effectiveDiagnosis.compiler_messages && effectiveDiagnosis.compiler_messages.length > 0 && (
               <>
                 <section className="space-y-2.5">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -395,11 +502,11 @@ export function AIAnalysisPanel({
                     <span>Compiler Diagnostics Disassembly</span>
                   </div>
                   <CollapsibleSection
-                    label={`${diagnosis.compiler_messages.length} diagnostic${diagnosis.compiler_messages.length === 1 ? "" : "s"}`}
-                    count={diagnosis.compiler_messages.length}
-                    defaultOpen={diagnosis.compiler_messages.length <= 4}
+                    label={`${effectiveDiagnosis.compiler_messages.length} diagnostic${effectiveDiagnosis.compiler_messages.length === 1 ? "" : "s"}`}
+                    count={effectiveDiagnosis.compiler_messages.length}
+                    defaultOpen={effectiveDiagnosis.compiler_messages.length <= 4}
                   >
-                    {diagnosis.compiler_messages.map((msg, idx) => (
+                    {effectiveDiagnosis.compiler_messages.map((msg, idx) => (
                       <div
                         key={idx}
                         className="p-3 rounded-xl border border-border/50 bg-card/60 space-y-1.5 transition-colors duration-150 hover:border-border/70"
@@ -439,7 +546,7 @@ export function AIAnalysisPanel({
             )}
 
             {/* 6. Serial Log Events (collapsible) */}
-            {diagnosis.serial_log_events && diagnosis.serial_log_events.length > 0 && (
+            {effectiveDiagnosis.serial_log_events && effectiveDiagnosis.serial_log_events.length > 0 && (
               <>
                 <section className="space-y-2.5">
                   <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -447,11 +554,11 @@ export function AIAnalysisPanel({
                     <span>Runtime Fault &amp; Serial Events</span>
                   </div>
                   <CollapsibleSection
-                    label={`${diagnosis.serial_log_events.length} event${diagnosis.serial_log_events.length === 1 ? "" : "s"} captured`}
-                    count={diagnosis.serial_log_events.length}
-                    defaultOpen={diagnosis.serial_log_events.length <= 3}
+                    label={`${effectiveDiagnosis.serial_log_events.length} event${effectiveDiagnosis.serial_log_events.length === 1 ? "" : "s"} captured`}
+                    count={effectiveDiagnosis.serial_log_events.length}
+                    defaultOpen={effectiveDiagnosis.serial_log_events.length <= 3}
                   >
-                    {diagnosis.serial_log_events.map((evt, idx) => (
+                    {effectiveDiagnosis.serial_log_events.map((evt, idx) => (
                       <div
                         key={idx}
                         className="p-3 rounded-xl border border-border/50 bg-card/60 space-y-1.5 transition-colors duration-150 hover:border-border/70"
@@ -505,13 +612,13 @@ export function AIAnalysisPanel({
             )}
 
             {/* 7. Evidence Used & RAG Grounding */}
-            {(diagnosis.evidence_used?.length > 0 || diagnosis.datasheet_citations?.length || diagnosis.grounded_summary) && (
+            {(effectiveDiagnosis.evidence_used?.length > 0 || effectiveDiagnosis.datasheet_citations?.length || effectiveDiagnosis.grounded_summary) && (
               <>
                 <section>
                   <EvidencePanel
-                    evidence={diagnosis.evidence_used}
-                    citations={diagnosis.datasheet_citations}
-                    groundedSummary={diagnosis.grounded_summary}
+                    evidence={effectiveDiagnosis.evidence_used}
+                    citations={effectiveDiagnosis.datasheet_citations}
+                    groundedSummary={effectiveDiagnosis.grounded_summary}
                   />
                 </section>
                 <Separator className="bg-border/40" />
@@ -519,28 +626,28 @@ export function AIAnalysisPanel({
             )}
 
             {/* 8. Risks & Limitations / Follow-up */}
-            {(diagnosis.risks_limitations || diagnosis.follow_up_required) && (
+            {(effectiveDiagnosis.risks_limitations || effectiveDiagnosis.follow_up_required) && (
               <section className="space-y-3">
-                {diagnosis.risks_limitations && (
+                {effectiveDiagnosis.risks_limitations && (
                   <Alert variant="warning" className="border-[var(--color-warning-amber)]/40 bg-[var(--color-warning-amber)]/10">
                     <AlertTriangle className="h-4 w-4 text-[var(--color-warning-amber)]" />
                     <AlertTitle className="text-xs font-semibold text-[var(--color-warning-amber)]">
                       Potential Risks &amp; Side-Effects
                     </AlertTitle>
                     <AlertDescription className="text-xs sm:text-sm leading-relaxed text-foreground/90 mt-1">
-                      {diagnosis.risks_limitations}
+                      {effectiveDiagnosis.risks_limitations}
                     </AlertDescription>
                   </Alert>
                 )}
 
-                {diagnosis.follow_up_required && (
+                {effectiveDiagnosis.follow_up_required && (
                   <Alert variant="info" className="border-[var(--color-info-blue)]/40 bg-[var(--color-info-blue)]/10">
                     <InfoIcon className="h-4 w-4 text-[var(--color-info-blue)]" />
                     <AlertTitle className="text-xs font-semibold text-[var(--color-info-blue)]">
                       Follow-up Hardware Verification
                     </AlertTitle>
                     <AlertDescription className="text-xs sm:text-sm leading-relaxed text-foreground/90 mt-1">
-                      {diagnosis.follow_up_required}
+                      {effectiveDiagnosis.follow_up_required}
                     </AlertDescription>
                   </Alert>
                 )}

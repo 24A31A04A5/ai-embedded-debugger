@@ -64,6 +64,17 @@ class Settings(BaseSettings):
     rate_limit_ai_requests_per_minute: int = 20
     rate_limit_upload_requests_per_minute: int = 30
 
+    # Streaming Timeout Settings
+    stream_timeout_seconds: int = 30
+    stream_heartbeat_seconds: int = 15
+
+    # Hybrid Retrieval Settings (Phase 11.2)
+    rrf_k: int = 60  # Reciprocal Rank Fusion k parameter
+    bm25_weight: float = 0.3  # Weight for BM25 scores in hybrid search
+    vector_weight: float = 0.7  # Weight for vector scores in hybrid search
+    bm25_k1: float = 1.5  # BM25 term frequency saturation parameter
+    bm25_b: float = 0.75  # BM25 length normalization parameter
+
     # Product Analytics Settings
     analytics_enabled: bool = True
 

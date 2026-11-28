@@ -17,16 +17,22 @@ Covers:
 
 from __future__ import annotations
 
+import os
 import tempfile
 import uuid
 from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
+from fastapi import HTTPException, status
 from fastapi.testclient import TestClient
 
+# Set CORS origins before importing app (tests need CORS allowed)
+if not os.getenv("CORS_ORIGINS"):
+    os.environ["CORS_ORIGINS"] = "http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001"
+
 from app.core.auth import get_current_user
-from app.core.config import Settings
+from app.core.config import get_settings
 from app.core.database import get_db
 from app.core.security import (
     sanitize_error_detail,
@@ -40,6 +46,9 @@ from app.models.project import Project
 from app.models.project_file import ProjectFile
 from app.models.user import User
 from app.services.storage import LocalStorageService
+
+# Clear settings cache to pick up CORS_ORIGINS
+get_settings.cache_clear()
 
 
 # ─────────────────────────────────────────────
@@ -89,18 +98,45 @@ def project_b(user_b: User) -> Project:
 
 class TestAuthenticationEnforcement:
     def test_unauthenticated_request_to_projects_fails(self) -> None:
+        # Override get_current_user to raise 401 for unauthenticated requests
+        def raise_unauthenticated():
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated"
+            )
+
+        mock_db = MagicMock()
+        app.dependency_overrides[get_db] = lambda: mock_db
+        app.dependency_overrides[get_current_user] = raise_unauthenticated
+
         client = TestClient(app)
-        response = client.get("/v1/projects")
-        # Should be 401 Unauthorized
-        assert response.status_code == 401
+        try:
+            response = client.get("/v1/projects")
+            # Should be 401 Unauthorized
+            assert response.status_code == 401
+        finally:
+            app.dependency_overrides.clear()
 
     def test_unauthenticated_request_to_debug_fails(self) -> None:
+        def raise_unauthenticated():
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated"
+            )
+
+        mock_db = MagicMock()
+        app.dependency_overrides[get_db] = lambda: mock_db
+        app.dependency_overrides[get_current_user] = raise_unauthenticated
+
         client = TestClient(app)
-        response = client.post(
-            f"/v1/projects/{uuid.uuid4()}/debug",
-            json={"user_question": "Help me debug"},
-        )
-        assert response.status_code == 401
+        try:
+            response = client.post(
+                f"/v1/projects/{uuid.uuid4()}/debug",
+                json={"user_question": "Help me debug"},
+            )
+            assert response.status_code == 401
+        finally:
+            app.dependency_overrides.clear()
 
 
 # ─────────────────────────────────────────────

@@ -137,7 +137,7 @@ class TestGroundedContextAssembly:
         mock_retrieval = MagicMock(spec=DocumentRetrievalService)
         chunk_uuid = uuid.uuid4()
         doc_uuid = uuid.uuid4()
-        mock_retrieval.search.return_value = [
+        mock_retrieval.search_hybrid.return_value = [
             DocumentSearchResultItem(
                 chunk_id=chunk_uuid,
                 document_id=doc_uuid,
@@ -184,7 +184,7 @@ class TestGroundedContextAssembly:
         mock_db.query.return_value.filter.return_value.first.return_value = mock_project
 
         mock_retrieval = MagicMock(spec=DocumentRetrievalService)
-        mock_retrieval.search.return_value = []
+        mock_retrieval.search_hybrid.return_value = []
 
         svc = ContextAssemblyService(db=mock_db)
         context = svc.assemble_context(
@@ -208,7 +208,7 @@ class TestGroundedContextAssembly:
         mock_db.query.return_value.filter.return_value.first.return_value = mock_project
 
         mock_retrieval = MagicMock(spec=DocumentRetrievalService)
-        mock_retrieval.search.side_effect = RuntimeError("Embedding service unavailable")
+        mock_retrieval.search_hybrid.side_effect = RuntimeError("Embedding service unavailable")
 
         svc = ContextAssemblyService(db=mock_db)
         context = svc.assemble_context(
@@ -230,7 +230,7 @@ class TestGroundedContextAssembly:
         mock_db.query.return_value.filter.return_value.first.return_value = mock_project
 
         mock_retrieval = MagicMock(spec=DocumentRetrievalService)
-        mock_retrieval.search.return_value = []
+        mock_retrieval.search_hybrid.return_value = []
 
         selected_doc = uuid.uuid4()
         svc = ContextAssemblyService(db=mock_db)
@@ -242,12 +242,13 @@ class TestGroundedContextAssembly:
             retrieval_service=mock_retrieval,
         )
 
-        mock_retrieval.search.assert_called_once_with(
+        mock_retrieval.search_hybrid.assert_called_once_with(
             project_id=mock_project.id,
             query="Check timing constraints",
             top_k=5,
             similarity_threshold=0.0,
             document_ids=[selected_doc],
+            include_bm25=True,
         )
 
 
